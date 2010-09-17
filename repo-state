@@ -1,0 +1,11 @@
+#!/bin/sh
+
+a=$(date +%Y%m%d+%H%M)
+mkdir -p $a
+cd $a
+
+. /home/joshpar/programas/arch2parabola/repo-list-diff
+# scp parabolavnx@parabolagnulinux.org:~/tmp/rsyncBlacklist.txt ./
+
+cd ..
+exit 0
