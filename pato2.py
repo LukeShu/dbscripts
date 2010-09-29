@@ -51,7 +51,7 @@ emptydb= path + "/files/repo-empty.db.tar.gz"
 
 # Repo, arch, and other folders to use for repo
 repo_list = ("core", "extra", "community","multilib")
-dir_list  = ("pool",)
+dir_list  = ("pool","sources")
 arch_list = ("i686", "x86_64")
 other     = ("any",)
 
