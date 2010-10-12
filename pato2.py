@@ -109,7 +109,11 @@ def get_info(repo_,arch_,db_tar_file=False,verbose_=verbose):
 	if not db_tar_file:
 		db_tar_file = repodir + db(repo_,arch_)
 	if isfile(db_tar_file):
-		db_open_tar = tarfile.open(db_tar_file, 'r:gz')
+		try:
+			db_open_tar = tarfile.open(db_tar_file, 'r:gz')
+		except tarfile.ReadError:
+			printf("No valid db_file %s" % db_tar_file)
+			return(tuple())
 	else:
 		printf("No db_file %s" % db_tar_file)
 		return(tuple())
