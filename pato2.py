@@ -34,7 +34,7 @@ from os.path import isdir, isfile, realpath
 time__ = commands.getoutput("date +%Y%m%d-%H:%M")
 
 # Mirror Parameters
-mirror = "mirrors.kernel.org"
+mirror = "mirrors.eu.kernel.org"
 mirrorpath = "::mirrors/archlinux"
 
 # Directories and files
@@ -49,7 +49,7 @@ tmp    = home + "/tmp"
 archdb = tmp  + "/db"
 
 # Repo, arch, and other folders to use for repo
-repo_list = ("core", "extra", "community","multilib")
+repo_list = ("core", "extra", "community", "testing", "community-testing", "multilib")
 dir_list  = ("pool","sources")
 arch_list = ("i686", "x86_64")
 other     = ("any",)
@@ -90,7 +90,7 @@ def packages(repo_, arch_, expr="*"):
 
 def sync_all_repo(verbose_=verbose):
 	folders = ",".join(repo_list + dir_list)
-	cmd_ = "rsync -av --delete-after --delay-updates " + mirror + mirrorpath + "/{" + folders + "} " + repodir
+	cmd_ = "rsync -av --progress --delete-after --delay-updates " + mirror + mirrorpath + "/{" + folders + "} " + repodir
 	printf(cmd_)
 	a=commands.getoutput(cmd_)
 	if verbose_: printf(a)
