@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 time__ = commands.getoutput("date +%Y%m%d-%H:%M")
 
 # Mirror Parameters
