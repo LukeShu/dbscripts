@@ -24,7 +24,7 @@
                                                                              
 
 """
-from repo_maintainer.config import *
+from repm.config import *
 
 import tarfile, commands
 from glob import glob
@@ -136,7 +136,7 @@ def remove_from_blacklist(repo_,arch_,info_,blacklist_):
 
 def link(repo_,arch_,file_):
 	""" Makes a link in the repo for the package """
-	cmd_="ln -sf " + file_ + " " + repodir + "/" + repo_ + "/os/" + arch_
+	cmd_="ln -f " + file_ + " " + repodir + "/" + repo_ + "/os/" + arch_
 	a=commands.getoutput(cmd_)
 	if verbose:
 		printf(cmd_ + a)

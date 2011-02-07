@@ -8,10 +8,12 @@ mirror = "mirrors.eu.kernel.org"
 mirrorpath = "::mirrors/archlinux"
 
 # Directories and files
+
 ## Optionals
 path   = home + "/parabolagnulinux.org"
 docs   = path + "/docs"
 logdir = path + "/log"
+
 ## Must be defined
 logname= logdir + "/" + time__ + "-repo-maintainer.log"
 repodir= path + "/repo"
