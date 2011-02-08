@@ -26,10 +26,9 @@
 """
 from repm.config import *
 
-import tarfile, commands
+import tarfile
 from glob import glob
-from user import home
-from os.path import isdir, isfile, realpath
+from os.path import isdir, isfile
 
 def printf(text,output_=output):
 	"""Guarda el texto en la variable log y puede imprimir en pantalla."""
