@@ -46,25 +46,25 @@ class KnownValues(unittest.TestCase):
         results=self.generate_results(self.examples)
         var = [version for rsync_out, name, version, arch, release, location in self.examples]
         for i in range(len(results)):
-            self.assertEqual(results[i]["name"], var[i])
+            self.assertEqual(results[i]["version"], var[i])
 
     def testArchs(self):
         results=self.generate_results(self.examples)
         var = [arch for rsync_out, name, version, arch, release, location in self.examples]
         for i in range(len(results)):
-            self.assertEqual(results[i]["name"], var[i])
+            self.assertEqual(results[i]["arch"], var[i])
 
     def testReleases(self):
         results=self.generate_results(self.examples)
         var = [release for rsync_out, name, version, arch, release, location in self.examples]
         for i in range(len(results)):
-            self.assertEqual(results[i]["name"], var[i])
+            self.assertEqual(results[i]["release"], var[i])
 
     def testLocations(self):
         results=self.generate_results(self.examples)
         var = [location for rsync_out, name, version, arch, release, location in self.examples]
         for i in range(len(results)):
-            self.assertEqual(results[i]["name"], var[i])
+            self.assertEqual(results[i]["location"], var[i])
         
 if __name__ == "__main__":
     unittest.main()
