@@ -89,20 +89,19 @@ def get_file_list_from_rsync_output(rsync_output):
     return tuple(a)
 
 def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
-                                         blacklist_file=rsync_blacklist, debug=verbose):
+                                         exclude_file=rsync_blacklist, debug=verbose):
     """ Generate an exclude list for rsync 
     
     Parameters:
     ----------
-    package_iterable -> list or tuple          Contains Package objects
-    blacklisted_names-> list or tuple          Contains blacklisted names
-    blacklist_file   -> str                    Path to file
-    debug            -> bool
+    package_iterable -> list or tuple       Contains Package objects
+    blacklisted_names-> list or tuple       Contains blacklisted names
+    exclude_file     -> str                 Path to file
+    debug            -> bool                If True, file list gets logged
 
     Output:
     ----------
-    if debug == False -> None
-    if debug == True  -> blacklist """
+    None """
     a=list()
 
     for package in packages_iterable:
@@ -115,7 +114,7 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
         printf(a)
     
     try:
-        fsock = open(blacklist_file,"w")
+        fsock = open(exclude_file,"w")
         try:
             fsock.write("\n".join(a))
         finally:

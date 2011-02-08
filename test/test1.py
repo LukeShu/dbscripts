@@ -13,7 +13,8 @@ import unittest
 
 class KnownValues(unittest.TestCase):
     directory_list=("drwxrwxr-x          15 2010/09/11 11:28:50 community-staging",
-                    "drwxrwxr-x          30 2010/09/11 11:28:50 community-staging/os")
+                    "drwxrwxr-x          30 2010/09/11 11:28:50 community-staging/os",
+                    'dr-xr-sr-x        4096 2010/09/11 11:37:10 .')
     # (rsync_out, name, version, arch, release, location)
     examples=(
         ("lrwxrwxrwx          53 2011/01/31 01:52:06 community-testing/os/i686/apvlv-0.1.0-2-i686.pkg.tar.xz -> ../../../pool/community/apvlv-0.1.0-2-i686.pkg.tar.xz", "apvlv","0.1.0","i686", "2", "community-testing/os/i686/apvlv-0.1.0-2-i686.pkg.tar.xz"),
@@ -60,6 +61,6 @@ class KnownValues(unittest.TestCase):
         for i in self.examples:
             k,v = self.generate_results(example_tuple=i,attr="location")
             self.assertEqual(k, v)
-        
+      
 if __name__ == "__main__":
     unittest.main()
