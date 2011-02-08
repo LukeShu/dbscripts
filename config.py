@@ -39,3 +39,27 @@ blacklist = docs + "/blacklist.txt"
 whitelist = docs + "/whitelist.txt"
 pending   = docs + "/pending"
 rsyncBlacklist = docs + "/rsyncBlacklist"
+
+# Classes and Exceptions
+class NonValidFile(ValueError): pass
+class NonValidDir(ValueError): pass
+class NonValidCommand(ValueError): pass
+
+class Package:
+    """ An object that has information about a package. """
+    package_info={ "name"    : False,
+                   "version" : False,
+                   "arch"    : False,
+                   "license" : False,
+                   "location": False}
+    
+    def __setitem__(self, key, item):
+        return self.package_info.__setitem__(key, item)
+
+    def __getitem__(self, key):
+        return self.package_info.__getitem__(key)
+    
+    def __unicode__(self):
+        return str(self.package_info)
+
+
