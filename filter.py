@@ -6,7 +6,7 @@ import re
 from repm.config import *
 from repm.pato2 import *
 
-rsync_list_command="rsync -av --no-motd --list-only "
+rsync_list_command="rsync -a --no-motd --list-only "
 
 def generate_rsync_command(base_command, dir_list, destdir=repodir, mirror_name=mirror,
                            mirror_path=mirrorpath, blacklist_file=False):
@@ -18,8 +18,8 @@ def generate_rsync_command(base_command, dir_list, destdir=repodir, mirror_name=
     mirror_name    -> str
     mirror_path    -> str
     dir_list       -> list or tuple
-    destdir        -> str                  Must be a dir
-    blacklist_file -> False or str         File must exist
+    destdir        -> str                  Path to dir, dir must exist.
+    blacklist_file -> False or str         Path to file, file must exist.
     
     Return:
     ----------
@@ -54,11 +54,11 @@ def get_file_list_from_rsync_output(rsync_output):
 
     Parameters:
     ----------
-    rsync_output -> str containing output from rsync
+    rsync_output -> str          Contains output from rsync
     
     Returns:
     ----------
-    package_list -> tuple of Package objects. """
+    package_list -> tuple        Contains Package objects. """
     a=list()
 
     def directory(line):
@@ -81,10 +81,45 @@ def get_file_list_from_rsync_output(rsync_output):
                 "-": package_or_link}
     
     for line in rsync_output.split("\n"):
-        if ".pkg.tar.gz" or ".pkg.tar.xz" in line:
-           pkginfo=options[line[0]](line)
-           if pkginfo:
-               a.append(pkginfo)
+        if ".pkg.tar" in line:
+            pkginfo=options[line[0]](line)
+            if pkginfo:
+                a.append(pkginfo)
 
     return tuple(a)
 
+def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
+                                         blacklist_file=rsync_blacklist, debug=verbose):
+    """ Generate an exclude list for rsync 
+    
+    Parameters:
+    ----------
+    package_iterable -> list or tuple          Contains Package objects
+    blacklisted_names-> list or tuple          Contains blacklisted names
+    blacklist_file   -> str                    Path to file
+    debug            -> bool
+
+    Output:
+    ----------
+    if debug == False -> None
+    if debug == True  -> blacklist """
+    a=list()
+
+    for package in packages_iterable:
+        if not isinstance(package, Package):
+            raise ValueError(" %s is not a Package object " % package)
+        if package["name"] in blacklisted_names:
+            a.append(package["location"])
+
+    if debug:
+        printf(a)
+    
+    try:
+        fsock = open(blacklist_file,"w")
+        try:
+            fsock.write("\n".join(a))
+        finally:
+            fsock.close()
+    except IOError:
+        printf("%s wasnt written" % blacklist_file)
+        

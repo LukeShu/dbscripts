@@ -47,15 +47,21 @@ class NonValidCommand(ValueError): pass
 
 class Package:
     """ An object that has information about a package. """
-    package_info={ "name"    : False,
-                   "version" : False,
-                   "release" : False,
-                   "arch"    : False,
-                   "license" : False,
-                   "location": False}
+    package_info=dict()
     
+    def __init__(self):
+        self.package_info={ "name"    : False,
+                            "version" : False,
+                            "release" : False,
+                            "arch"    : False,
+                            "license" : False,
+                            "location": False}
+        
     def __setitem__(self, key, item):
-        return self.package_info.__setitem__(key, item)
+        if key in self.package_info.keys():
+            return self.package_info.__setitem__(key, item)
+        else:
+            raise ValueError("Package has no %s attribute" % key)
 
     def __getitem__(self, key):
         return self.package_info.__getitem__(key)
@@ -63,4 +69,15 @@ class Package:
     def __unicode__(self):
         return str(self.package_info)
 
+    def __repr__(self):
+        return str(self.package_info)
+
+    def __eq__(self,x):
+        if not isinstance(x, Package):
+            return False
+        for key in self.package_info.keys():
+                if x[key] != self[key]:
+                    return False
+        else:
+            return True
 
