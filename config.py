@@ -49,6 +49,7 @@ class Package:
     """ An object that has information about a package. """
     package_info={ "name"    : False,
                    "version" : False,
+                   "release" : False,
                    "arch"    : False,
                    "license" : False,
                    "location": False}
