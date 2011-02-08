@@ -26,9 +26,9 @@ class KnownValues(unittest.TestCase):
          "acetoneiso2","2.3","x86_64","2","pool/community/acetoneiso2-2.3-2-x86_64.pkg.tar.xz")
         )
 
-    def generate_results(self, example_tuple):
-        rsync_out="\n".join([a for a,b,c,d,e,f in example_tuple])
-        return get_file_list_from_rsync_output(rsync_out)
+    def generate_results(self, example_tuple, attr):
+        rsync_out, name, version, arch, release, location = example_tuple
+        return get_file_list_from_rsync_output(rsync_out)[0][attr], locals()[attr]
     
     def testDirectoryOutput(self):
         """get_file_list_from_rsync_output should ignore directories"""
@@ -37,34 +37,29 @@ class KnownValues(unittest.TestCase):
         self.assertEqual(tuple(), result)
 
     def testNames(self):
-        results=self.generate_results(self.examples)
-        var =[name for rsync_out, name, version, arch, release, location in self.examples]
-        for i in range(len(results)):
-            self.assertEqual(results[i]["name"], var[i])
+        for i in self.examples:
+            k,v = self.generate_results(example_tuple=i,attr="name")
+            self.assertEqual(k, v)
 
     def testVersions(self):
-        results=self.generate_results(self.examples)
-        var = [version for rsync_out, name, version, arch, release, location in self.examples]
-        for i in range(len(results)):
-            self.assertEqual(results[i]["version"], var[i])
+        for i in self.examples:
+            k,v = self.generate_results(example_tuple=i,attr="version")
+            self.assertEqual(k, v)
 
     def testArchs(self):
-        results=self.generate_results(self.examples)
-        var = [arch for rsync_out, name, version, arch, release, location in self.examples]
-        for i in range(len(results)):
-            self.assertEqual(results[i]["arch"], var[i])
+        for i in self.examples:
+            k,v = self.generate_results(example_tuple=i,attr="arch")
+            self.assertEqual(k, v)
 
     def testReleases(self):
-        results=self.generate_results(self.examples)
-        var = [release for rsync_out, name, version, arch, release, location in self.examples]
-        for i in range(len(results)):
-            self.assertEqual(results[i]["release"], var[i])
+        for i in self.examples:
+            k,v = self.generate_results(example_tuple=i,attr="release")
+            self.assertEqual(k, v)
 
     def testLocations(self):
-        results=self.generate_results(self.examples)
-        var = [location for rsync_out, name, version, arch, release, location in self.examples]
-        for i in range(len(results)):
-            self.assertEqual(results[i]["location"], var[i])
+        for i in self.examples:
+            k,v = self.generate_results(example_tuple=i,attr="location")
+            self.assertEqual(k, v)
         
 if __name__ == "__main__":
     unittest.main()
