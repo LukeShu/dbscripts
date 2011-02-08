@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from user import home
+import commands
 
 time__ = commands.getoutput("date +%Y%m%d-%H:%M")
 
@@ -19,6 +21,8 @@ logname= logdir + "/" + time__ + "-repo-maintainer.log"
 repodir= path + "/repo"
 tmp    = home + "/tmp"
 archdb = tmp  + "/db"
+
+free_path= path + "/free/"
 
 # Repo, arch, and other folders to use for repo
 repo_list = ("core", "extra", "community", "testing", "community-testing", "multilib")

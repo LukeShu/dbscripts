@@ -145,11 +145,11 @@ def add_free_repo(verbose_=verbose):
 	for repo_ in repo_list:
 		for arch_ in arch_list:
 			lista_=list()
-			for file_ in glob(repodir + "/free/" + repo_ + "/os/" + arch_ + "/*"):
+			for file_ in glob(free_path + repo_ + "/os/" + arch_ + "/*"):
 				lista_.append(file_)
 				link(repo_,arch_,file_)
 			for dir_ in other:
-				for file_ in glob(repodir + "/free/" + repo_ + "/os/" + dir_ + "/*"):
+				for file_ in glob(free_path + repo_ + "/os/" + dir_ + "/*"):
 					lista_.append(file_)
 					link(repo_,arch_,file_)
 			if lista_:
