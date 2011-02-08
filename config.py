@@ -38,7 +38,7 @@ verbose   = False
 blacklist = docs + "/blacklist.txt"
 whitelist = docs + "/whitelist.txt"
 pending   = docs + "/pending"
-rsyncBlacklist = docs + "/rsyncBlacklist"
+rsync_blacklist = docs + "/rsyncBlacklist"
 
 # Classes and Exceptions
 class NonValidFile(ValueError): pass
