@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 """ """
 
 __author__ = "Joshua Ismael Haase Hernández <hahj87@gmail.com>"
@@ -27,10 +28,10 @@ class KnownValues(unittest.TestCase):
          "acetoneiso2","2.3","x86_64")
         )
 
-    def generate_results(example_tuple):
+    def generate_results(self, example_tuple):
         a=list()
         for output, name, version, arch in example_tuple:
-            pkg=Packages()
+            pkg=Package()
             pkg["name"] = name
             pkg["version"] = version
             pkg["arch"] = arch
@@ -39,24 +40,23 @@ class KnownValues(unittest.TestCase):
     
     def testDirectoryOutput(self):
         """get_file_list_from_rsync_output should ignore directories"""
-        rsync_out="\n".join(directory_list)
+        rsync_out="\n".join(self.directory_list)
         result=get_file_list_from_rsync_output(output)
         self.assertEqual(tuple(), result)
 
     def testLinkOutput(self):
         """get_file_list_from_rsync_output should make a Package Object
         from links """
-        correct_result=generate_results(link_list)
-        rsync_out="\n".join([a for a,b,c,d in link_list])
+        correct_result=self.generate_results(self.link_list)
+        rsync_out="\n".join([a for a,b,c,d in self.link_list])
         result=get_file_list_from_rsync_output(rsync_out)
         self.assertEqual(correct_result, result)
-
 
     def testPackageOutput(self):
         """get_file_list_from_rsync_output should make a Package Object
         from links """
-        correct_result=generate_results(package_list)
-        rsync_out="\n".join([a for a,b,c,d in package_list])
+        correct_result=self.generate_results(self.package_list)
+        rsync_out="\n".join([a for a,b,c,d in self.package_list])
         result=get_file_list_from_rsync_output(rsync_out)
         self.assertEqual(correct_result, result)
         
