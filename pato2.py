@@ -54,7 +54,7 @@ def packages(repo_, arch_, expr="*"):
 
 def sync_all_repo(verbose_=verbose):
 	folders = ",".join(repo_list + dir_list)
-	cmd_ = "rsync -av --progress --delete-after --delay-updates " + mirror + mirrorpath + "/{" + folders + "} " + repodir
+	cmd_ = "rsync -av --delete-after --delay-updates " + mirror + mirrorpath + "/{" + folders + "} " + repodir
 	printf(cmd_)
 	a=commands.getoutput(cmd_)
 	if verbose_: printf(a)
@@ -144,11 +144,11 @@ def add_free_repo(verbose_=verbose):
 	for repo_ in repo_list:
 		for arch_ in arch_list:
 			lista_=list()
-			for file_ in glob(free_path + repo_ + "/os/" + arch_ + "/*"):
+			for file_ in glob(free_path + repo_ + "/os/" + arch_ + "/*.pkg.tar.*"):
 				lista_.append(file_)
 				link(repo_,arch_,file_)
 			for dir_ in other:
-				for file_ in glob(free_path + repo_ + "/os/" + dir_ + "/*"):
+				for file_ in glob(free_path + repo_ + "/os/" + dir_ + "/*.pkg.tar.*"):
 					lista_.append(file_)
 					link(repo_,arch_,file_)
 			if lista_:
