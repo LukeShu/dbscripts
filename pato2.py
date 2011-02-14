@@ -195,8 +195,8 @@ def generate_rsync_command(base_command, dir_list, destdir=repodir,
 
     if blacklist_file:
         return " ".join((base_command, "--exclude-from-file="+blacklist_file,
-                        os.join(source, dir_list), destdir))
-    return " ".join((base_command, os.join(source, dir_list), destdir))
+                        os.path.join(source, dir_list), destdir))
+    return " ".join((base_command, os.path.join(source, dir_list), destdir))
 
 def run_rsync(base_for_rsync, dir_list_for_rsync=(repo_list + dir_list),
               debug=verbose):
