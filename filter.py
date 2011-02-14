@@ -1,4 +1,4 @@
-#! /usr/bin/python
+ #! /usr/bin/python
 #-*- encoding: utf-8 -*-
 import commands
 import os
@@ -79,3 +79,7 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
     except IOError:
         printf("%s wasnt written" % blacklist_file)
         
+if name == "__main__":
+    a=run_rsync(rsync_list_command)
+    packages=get_file_list_from_rsync_output(a)
+    generate_exclude_list_from_blacklist(packages,listado(blacklist))
