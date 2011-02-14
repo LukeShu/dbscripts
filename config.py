@@ -40,6 +40,11 @@ whitelist = docs + "/whitelist.txt"
 pending   = docs + "/pending"
 rsync_blacklist = docs + "/rsyncBlacklist"
 
+# Rsync commands
+
+rsync_list_command="rsync -a --no-motd --list-only "
+
+
 # Classes and Exceptions
 class NonValidFile(ValueError): pass
 class NonValidDir(ValueError): pass

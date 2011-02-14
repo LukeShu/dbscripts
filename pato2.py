@@ -166,6 +166,46 @@ def get_licenses(verbose_=verbose):
 	a=commands.getoutput(cmd_)
 	if verbose_: printf(a)
 
+def generate_rsync_command(base_command, dir_list, destdir=repodir,
+                           source=mirror+mirrorpath, blacklist_file=False):
+    """ Generates an rsync command for executing it by combining all parameters.
+    
+    Parameters:
+    ----------
+    base_command   -> str
+    dir_list       -> list or tuple
+    destdir        -> str                  Path to dir, dir must exist.
+    source         -> str                  The source for rsync
+    blacklist_file -> False or str         Path to file, file must exist.
+    
+    Return:
+    ----------
+    rsync_command -> str """
+    from os.path import isfile, isdir
+
+    if blacklist_file and not isfile(blacklist_file):
+        print(blacklist_file + " is not a file")
+        raise NonValidFile
+
+    if not os.path.isdir(destdir):
+        print(destdir + " is not a directory")
+        raise NonValidDir
+
+    dir_list="{" + ",".join(dir_list) + "}"
+
+    if blacklist_file:
+        return " ".join((base_command, "--exclude-from-file="+blacklist_file,
+                        mirror_name + mirror_path + dir_list, destdir))
+    return " ".join((base_command, mirror_name + mirror_path + dir_list, destdir))
+
+def run_rsync(base_for_rsync=rsync_list_command, dir_list_for_rsync=(repo_list + dir_list),
+              debug=verbose):
+    """ Runs rsync and gets returns it's output """
+    cmd = str(generate_rsync_command(rsync_list_command, (repo_list + dir_list)))
+    if debug:
+        printf("rsync_command" + cmd)
+    return commands.getoutput(cmd)
+
 if __name__ == "__main__":
 	from time import time
 	start_time = time()
