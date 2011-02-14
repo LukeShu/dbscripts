@@ -195,13 +195,13 @@ def generate_rsync_command(base_command, dir_list, destdir=repodir,
 
     if blacklist_file:
         return " ".join((base_command, "--exclude-from-file="+blacklist_file,
-                        mirror_name + mirror_path + dir_list, destdir))
-    return " ".join((base_command, mirror_name + mirror_path + dir_list, destdir))
+                        source + dir_list, destdir))
+    return " ".join((base_command, source + dir_list, destdir))
 
 def run_rsync(base_for_rsync, dir_list_for_rsync=(repo_list + dir_list),
               debug=verbose):
     """ Runs rsync and gets returns it's output """
-    cmd = str(generate_rsync_command(rsync_list_command, (repo_list + dir_list)))
+    cmd = str(generate_rsync_command(base_for_rsync, (repo_list + dir_list)))
     if debug:
         printf("rsync_command" + cmd)
     return commands.getoutput(cmd)
