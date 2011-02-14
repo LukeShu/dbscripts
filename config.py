@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from user import home
 import commands
+import os
 
 time__ = commands.getoutput("date +%Y%m%d-%H:%M")
 
