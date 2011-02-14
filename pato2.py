@@ -203,7 +203,7 @@ def run_rsync(base_for_rsync, dir_list_for_rsync=(repo_list + dir_list),
     """ Runs rsync and gets returns it's output """
     cmd = str(generate_rsync_command(base_for_rsync, (repo_list + dir_list)))
     if debug:
-        printf("rsync_command" + cmd)
+        printf("rsync_command: " + cmd)
     return commands.getoutput(cmd)
 
 if __name__ == "__main__":
