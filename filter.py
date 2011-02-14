@@ -1,13 +1,34 @@
  #! /usr/bin/python
 #-*- encoding: utf-8 -*-
 import commands
-import os
 import re
 from repm.config import *
 from repm.pato2 import *
 
-def get_file_list_from_rsync_output(rsync_output):
-    """ Generates a list of packages and versions from an rsync output using --list-only --no-motd.
+def pkginfo_from_filename(filename):
+    """ Generates a Package object with info from a filename,
+    filename can be relative or absolute 
+    
+    Parameters:
+    ----------
+    filename -> str
+
+    Returns:
+    ----------
+    pkg -> Package object"""
+    pkg = Package()
+    pkg["location"] = filename
+    fileattrs = os.path.basename(filename).split("-")
+    pkg["arch"] = fileattrs.pop(-1).split(".")[0]
+    pkg["release"] = fileattrs.pop(-1)
+    pkg["version"] = fileattrs.pop(-1)
+    pkg["name"] = "-".join(fileattrs)
+    return pkg
+
+
+def pkginfo_from_rsync_output(rsync_output):
+    """ Generates a list of packages and versions from an rsync output
+    wich uses --list-only and --no-motd options.
 
     Parameters:
     ----------
@@ -18,32 +39,29 @@ def get_file_list_from_rsync_output(rsync_output):
     package_list -> tuple        Contains Package objects. """
     a=list()
 
-    def directory(line):
-        pass
-
     def package_or_link(line):
         """ Take info out of filename """
         location_field = 4
-        pkg = Package()
-        pkg["location"] = line.rsplit()[location_field]
-        fileattrs = pkg["location"].split("/")[-1].split("-")
-        pkg["arch"] = fileattrs.pop(-1).split(".")[0]
-        pkg["release"] = fileattrs.pop(-1)
-        pkg["version"] = fileattrs.pop(-1)
-        pkg["name"] = "-".join(fileattrs)
-        return pkg
-                
+        pkginfo_from_filename(line.rsplit()[location_field])
+
+    def directory(line):
+        pass
+               
     options = { "d": directory,
                 "l": package_or_link,
                 "-": package_or_link}
     
     for line in rsync_output.split("\n"):
         if ".pkg.tar" in line:
-            pkginfo=options[line[0]](line)
-            if pkginfo:
-                a.append(pkginfo)
+            pkginfo_=options[line[0]](line)
+            if pkginfo_:
+                a.append(pkginfo_)
 
     return tuple(a)
+
+def pkginfo_from_files_in_dir(directory):
+    """ Returns pkginfo from filenames of packages in dir
+    wich has .pkg.tar.{xz,gz} on them """
 
 def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
                                          exclude_file=rsync_blacklist, debug=verbose):
@@ -78,8 +96,9 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
             fsock.close()
     except IOError:
         printf("%s wasnt written" % blacklist_file)
+
         
 if __name__ == "__main__":
     a=run_rsync(rsync_list_command)
-    packages=get_file_list_from_rsync_output(a)
+    packages=pkginfo_from_rsync_output(a)
     generate_exclude_list_from_blacklist(packages,listado(blacklist))

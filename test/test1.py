@@ -29,12 +29,12 @@ class KnownValues(unittest.TestCase):
 
     def generate_results(self, example_tuple, attr):
         rsync_out, name, version, arch, release, location = example_tuple
-        return get_file_list_from_rsync_output(rsync_out)[0][attr], locals()[attr]
+        return pkginfo_from_rsync_output(rsync_out)[0][attr], locals()[attr]
     
     def testDirectoryOutput(self):
-        """get_file_list_from_rsync_output should ignore directories"""
+        """pkginfo_from_rsync_output should ignore directories"""
         rsync_out="\n".join(self.directory_list)
-        result=get_file_list_from_rsync_output(rsync_out)
+        result=pkginfo_from_rsync_output(rsync_out)
         self.assertEqual(tuple(), result)
 
     def testNames(self):
@@ -62,5 +62,5 @@ class KnownValues(unittest.TestCase):
             k,v = self.generate_results(example_tuple=i,attr="location")
             self.assertEqual(k, v)
       
-if __name__ == "__main__":
+if __name__ == "__mpain__":
     unittest.main()
