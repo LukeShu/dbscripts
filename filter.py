@@ -1,7 +1,6 @@
  #! /usr/bin/python
 #-*- encoding: utf-8 -*-
-import commands
-import re
+import glob
 from repm.config import *
 from repm.pato2 import *
 
@@ -11,11 +10,13 @@ def pkginfo_from_filename(filename):
     
     Parameters:
     ----------
-    filename -> str
+    filename -> str         Must contain .pkg.tar.
 
     Returns:
     ----------
     pkg -> Package object"""
+    if ".pkg.tar." not in filename:
+        raise NonValidFile
     pkg = Package()
     pkg["location"] = filename
     fileattrs = os.path.basename(filename).split("-")
@@ -37,31 +38,49 @@ def pkginfo_from_rsync_output(rsync_output):
     Returns:
     ----------
     package_list -> tuple        Contains Package objects. """
-    a=list()
+    package_list=list()
 
     def package_or_link(line):
         """ Take info out of filename """
         location_field = 4
         pkginfo_from_filename(line.rsplit()[location_field])
 
-    def directory(line):
+    def do_nothing():
         pass
-               
-    options = { "d": directory,
+
+    options = { "d": do_nothing,
                 "l": package_or_link,
-                "-": package_or_link}
+                "-": package_or_link,
+                " ": do_nothing}
     
     for line in rsync_output.split("\n"):
         if ".pkg.tar" in line:
-            pkginfo_=options[line[0]](line)
+            pkginfo=options[line[0]](line)
             if pkginfo_:
-                a.append(pkginfo_)
+                package_list.append(pkginfo)
 
-    return tuple(a)
+    return tuple(package_list)
 
 def pkginfo_from_files_in_dir(directory):
     """ Returns pkginfo from filenames of packages in dir
-    wich has .pkg.tar.{xz,gz} on them """
+    wich has .pkg.tar. on them 
+    
+    Parameters:
+    ----------
+    directory -> str          Directory must exist
+    
+    Returns:
+    ----------
+    package_list -> tuple     Contains Package objects """
+    package_list=list()
+
+    if not os.path.isdir(directory):
+        raise NonValidDir
+
+    for filename in glob(os.path.join(directory,"*")):
+        if ".pkg.tar." in filename:
+            package_list.append(pkginfo_from_filename(filename))
+    return tuple(package_list)
 
 def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
                                          exclude_file=rsync_blacklist, debug=verbose):
@@ -97,7 +116,6 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
     except IOError:
         printf("%s wasnt written" % blacklist_file)
 
-        
 if __name__ == "__main__":
     a=run_rsync(rsync_list_command)
     packages=pkginfo_from_rsync_output(a)

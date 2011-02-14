@@ -62,5 +62,5 @@ class KnownValues(unittest.TestCase):
             k,v = self.generate_results(example_tuple=i,attr="location")
             self.assertEqual(k, v)
       
-if __name__ == "__mpain__":
+if __name__ == "__main__":
     unittest.main()
