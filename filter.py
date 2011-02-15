@@ -107,7 +107,6 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
             a.append(package["location"])
 
     if debug:
-        printf(a)
         return a
     try:
         fsock = open(exclude_file,"w")

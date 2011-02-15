@@ -47,14 +47,19 @@ class pkginfoFromRsyncOutput(unittest.TestCase):
             self.assertIsInstance(pkg,Package)
 
     def testPackageInfo(self): 
-        if self.pkglist:
-            first_package=self.pkglist[0]
-        else:
-            self.fail(self.pkglist)
-        self.assertEqual(first_package,example_package_list[0])
+        if not self.pkglist:
+            self.fail("Pkglist doesn't exist: " + str(self.pkglist))
+        self.assertEqual(self.pkglist,example_package_list)
 
 class generateRsyncBlacklist(unittest.TestCase):
     """ Test Blacklist generation """
-  
+    def testListado(self):
+        self.assertEqual(listado("blacklist_sample"),["alex","gmime22"])
+
+    def testExcludeFiles(self):
+        a=generate_exclude_list_from_blacklist(example_package_list,listado("blacklist_sample"),debug=True)
+        b=[example_package_list[0]["location"],example_package_list[2]["location"]]
+        self.assertEqual(a,b)
+
 if __name__ == "__main__":
     unittest.main()

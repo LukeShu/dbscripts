@@ -42,7 +42,7 @@ def listado(filename_):
 	archivo = open(filename_,"r")
 	lista   = archivo.read().split("\n")
 	archivo.close()
-	return [pkg.split(":")[0] for pkg in lista if pkg]
+	return [pkg.split(":")[0].rstrip() for pkg in lista if pkg]
 
 def db(repo_,arch_):
 	"""Construye un nombre para sincronizar una base de datos."""
