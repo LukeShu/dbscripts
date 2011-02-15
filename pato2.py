@@ -25,7 +25,7 @@
 
 """
 from repm.config import *
-
+from repm.filter import *
 import tarfile
 from glob import glob
 from os.path import isdir, isfile
@@ -52,12 +52,14 @@ def packages(repo_, arch_, expr="*"):
 	""" Get packages on a repo, arch folder """
 	return tuple( glob( repodir + "/" + repo_ + "/os/" + arch_ + "/" + expr ) )
 
-def sync_all_repo(verbose_=verbose):
-	folders = ",".join(repo_list + dir_list)
-	cmd_ = "rsync -av --delete-after --delay-updates " + mirror + mirrorpath + "/{" + folders + "} " + repodir
-	printf(cmd_)
-	a=commands.getoutput(cmd_)
-	if verbose_: printf(a)
+def sync_all_repo(debug=verbose):
+	cmd=generate_rsync_command(rsync_list_command)
+	rsout=run_rsync(cmd)
+	pkgs=pkginfo_from_rsync_output(rsout)
+	generate_exclude_list_from_blacklist(pkgs,listado(blacklist))
+	cmd=generate_rsync_command(rsync_update_command,blacklist_file=blacklist)
+	a=run_rsync(cmd)
+	if debug: printf(a)
 
 def get_from_desc(desc, var,db_tar_file=False):
 	""" Get a var from desc file """
@@ -166,7 +168,7 @@ def get_licenses(verbose_=verbose):
 	a=commands.getoutput(cmd_)
 	if verbose_: printf(a)
 
-def generate_rsync_command(base_command, dir_list, destdir=repodir,
+def generate_rsync_command(base_command, dir_list=(repo_list + dir_list), destdir=repodir,
                            source=mirror+mirrorpath, blacklist_file=False):
     """ Generates an rsync command for executing it by combining all parameters.
     
@@ -198,10 +200,8 @@ def generate_rsync_command(base_command, dir_list, destdir=repodir,
                         os.path.join(source, dir_list), destdir))
     return " ".join((base_command, os.path.join(source, dir_list), destdir))
 
-def run_rsync(base_for_rsync, dir_list_for_rsync=(repo_list + dir_list),
-              debug=verbose):
+def run_rsync(command,debug=verbose):
     """ Runs rsync and gets returns it's output """
-    cmd = str(generate_rsync_command(base_for_rsync, (repo_list + dir_list)))
     if debug:
         printf("rsync_command: " + cmd)
     return commands.getoutput(cmd)
