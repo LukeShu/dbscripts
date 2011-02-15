@@ -82,7 +82,7 @@ class Package:
         if not isinstance(x, Package):
             return False
         for key in self.package_info.keys():
-                if x[key] != self[key]:
+                if x[key] != self.package_info[key]:
                     return False
         else:
             return True

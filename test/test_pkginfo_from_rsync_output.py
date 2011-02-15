@@ -12,55 +12,33 @@ from repm.filter import *
 import unittest
 
 class KnownValues(unittest.TestCase):
-    directory_list=("drwxrwxr-x          15 2010/09/11 11:28:50 community-staging",
-                    "drwxrwxr-x          30 2010/09/11 11:28:50 community-staging/os",
-                    'dr-xr-sr-x        4096 2010/09/11 11:37:10 .')
-    # (rsync_out, name, version, arch, release, location)
-    examples=(
-        ("lrwxrwxrwx          53 2011/01/31 01:52:06 community-testing/os/i686/apvlv-0.1.0-2-i686.pkg.tar.xz -> ../../../pool/community/apvlv-0.1.0-2-i686.pkg.tar.xz", "apvlv","0.1.0","i686", "2", "community-testing/os/i686/apvlv-0.1.0-2-i686.pkg.tar.xz"),
-        ("lrwxrwxrwx          56 2011/02/04 14:34:08 community-testing/os/i686/calibre-0.7.44-2-i686.pkg.tar.xz -> ../../../pool/community/calibre-0.7.44-2-i686.pkg.tar.xz","calibre","0.7.44","i686", "2", "community-testing/os/i686/calibre-0.7.44-2-i686.pkg.tar.xz"),
-        ("-rw-rw-r--     5846249 2010/11/13 10:54:25 pool/community/abuse-0.7.1-1-x86_64.pkg.tar.gz",
-         "abuse","0.7.1","x86_64","1","pool/community/abuse-0.7.1-1-x86_64.pkg.tar.gz"),
-        ("-rw-rw-r--      982768 2011/02/05 14:38:17 pool/community/acetoneiso2-2.3-2-i686.pkg.tar.xz",
-         "acetoneiso2","2.3","i686", "2", "pool/community/acetoneiso2-2.3-2-i686.pkg.tar.xz"),
-        ("-rw-rw-r--      982764 2011/02/05 14:38:40 pool/community/acetoneiso2-2.3-2-x86_64.pkg.tar.xz",
-         "acetoneiso2","2.3","x86_64","2","pool/community/acetoneiso2-2.3-2-x86_64.pkg.tar.xz")
-        )
+    try:
+        output_file = open("rsync_output_sample")
+        rsync_out= output_file.read()
+        output_file.close()
+    except IOError: print("There is no rsync_output_sample file")
 
-    def generate_results(self, example_tuple, attr):
-        rsync_out, name, version, arch, release, location = example_tuple
-        return pkginfo_from_rsync_output(rsync_out)[0][attr], locals()[attr]
-    
-    def testDirectoryOutput(self):
-        """pkginfo_from_rsync_output should ignore directories"""
-        rsync_out="\n".join(self.directory_list)
-        result=pkginfo_from_rsync_output(rsync_out)
-        self.assertEqual(tuple(), result)
+    pkglist = pkginfo_from_rsync_output(rsync_out)
 
-    def testNames(self):
-        for i in self.examples:
-            k,v = self.generate_results(example_tuple=i,attr="name")
-            self.assertEqual(k, v)
+    def testOutputArePackages(self):
+        if not self.pkglist:
+            self.fail("not pkglist:" + str(self.pkglist))
+        for pkg in self.pkglist:
+            self.assertIsInstance(pkg,Package)
 
-    def testVersions(self):
-        for i in self.examples:
-            k,v = self.generate_results(example_tuple=i,attr="version")
-            self.assertEqual(k, v)
-
-    def testArchs(self):
-        for i in self.examples:
-            k,v = self.generate_results(example_tuple=i,attr="arch")
-            self.assertEqual(k, v)
-
-    def testReleases(self):
-        for i in self.examples:
-            k,v = self.generate_results(example_tuple=i,attr="release")
-            self.assertEqual(k, v)
-
-    def testLocations(self):
-        for i in self.examples:
-            k,v = self.generate_results(example_tuple=i,attr="location")
-            self.assertEqual(k, v)
+    def testFirstPkg(self): 
+        first_package_info=Package()
+        first_package_info.package_info={ "name"    : "alex",
+                                          "version" : "2.3.4",
+                                          "release" : "1",
+                                          "arch"    : "i686",
+                                          "license" : False,
+                                          "location": "community-staging/os/i686/alex-2.3.4-1-i686.pkg.tar.xz"}
+        if self.pkglist:
+            first_package=self.pkglist[0]
+        else:
+            self.fail(self.pkglist)
+        self.assertEqual(first_package,first_package_info)
       
 if __name__ == "__main__":
     unittest.main()

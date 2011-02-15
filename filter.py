@@ -38,26 +38,28 @@ def pkginfo_from_rsync_output(rsync_output):
     Returns:
     ----------
     package_list -> tuple        Contains Package objects. """
-    package_list=list()
 
     def package_or_link(line):
         """ Take info out of filename """
         location_field = 4
-        pkginfo_from_filename(line.rsplit()[location_field])
+        return pkginfo_from_filename(line.rsplit()[location_field])
 
     def do_nothing():
-        pass
+        """"""
 
     options = { "d": do_nothing,
                 "l": package_or_link,
                 "-": package_or_link,
                 " ": do_nothing}
+
+    package_list=list()
     
-    for line in rsync_output.split("\n"):
-        if ".pkg.tar" in line:
-            pkginfo=options[line[0]](line)
-            if pkginfo_:
-                package_list.append(pkginfo)
+    lines=[x for x in rsync_output.split("\n") if ".pkg.tar" in x]
+
+    for line in lines:
+        pkginfo=options[line[0]](line)
+        if pkginfo:
+            package_list.append(pkginfo)
 
     return tuple(package_list)
 
