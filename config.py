@@ -33,7 +33,7 @@ other     = ("any",)
 
 # Output
 output    = True
-verbose   = False
+verbose   = True
 
 # Files
 blacklist = docs + "/blacklist.txt"
