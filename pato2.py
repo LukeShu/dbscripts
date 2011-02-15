@@ -196,15 +196,15 @@ def generate_rsync_command(base_command, dir_list=(repo_list + dir_list), destdi
     dir_list="{" + ",".join(dir_list) + "}"
 
     if blacklist_file:
-        return " ".join((base_command, "--exclude-from-file="+blacklist_file,
+        return " ".join((base_command, "--exclude-from="+blacklist_file,
                         os.path.join(source, dir_list), destdir))
     return " ".join((base_command, os.path.join(source, dir_list), destdir))
 
 def run_rsync(command,debug=verbose):
     """ Runs rsync and gets returns it's output """
     if debug:
-        printf("rsync_command: " + cmd)
-    return commands.getoutput(cmd)
+        printf("rsync_command: " + command)
+    return commands.getoutput(command)
 
 if __name__ == "__main__":
 	from time import time
