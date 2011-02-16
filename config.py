@@ -19,6 +19,7 @@ logdir = path + "/log"
 
 ## Must be defined
 logname= logdir + "/" + time__ + "-repo-maintainer.log"
+freedir= path + "/free/"
 repodir= path + "/repo"
 tmp    = home + "/tmp"
 archdb = tmp  + "/db"
