@@ -74,7 +74,7 @@ in_array() {
 script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.$(basename $0)"
 	if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
-		local _owner="$(/usr/bin/stat -c %U $LOCKDIR)"
+		local _owner="$(stat -c %U $LOCKDIR)"
 		error "Script $(basename $0) is already locked by $_owner."
 		exit 1
 	else
@@ -160,7 +160,7 @@ repo_lock () {
 	_count=0
 	while [ $_count -le $_trial ] || $_lockblock ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
-			_owner="$(/usr/bin/stat -c %U $LOCKDIR)"
+			_owner="$(stat -c %U $LOCKDIR)"
 			warning "Repo [${1}] (${2}) is already locked by $_owner. "
 			msg2 "Retrying in $LOCK_DELAY seconds..."
 		else
@@ -193,7 +193,7 @@ repo_unlock () { #repo_unlock <repo-name> <arch>
 _grep_pkginfo() {
 	local _ret
 
-	_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | /bin/grep -m 1 "^${2} = ")"
+	_ret="$(bsdtar -xOqf "$1" .PKGINFO | /bin/grep -m 1 "^${2} = ")"
 	echo "${_ret#${2} = }"
 }
 
@@ -358,9 +358,24 @@ check_splitpkgs() {
 
 		if [ ! -f "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" ]; then
 			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
-			svn export -q "${SVNREPO}/${_pkgbase}/repos/${repo}-${_pkgarch}/PKGBUILD" \
-				"${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null
-			[ $? -ge 1 ] && return 1
+
+# Decide whether to look for PKGBUILD on [libre] or [libre-testing]
+            case $repo in
+                testing)
+                    altrepo=libre-testing
+                ;;
+                *)
+                    altrepo=libre
+                ;;
+            esac
+
+            cp -r ${SVNREPO}/$repo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
+            cp -r ${SVNREPO}/$altrepo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
+
+			[[ $? -ge 1 ]] && {
+                echo "Failed $_pkgbase-$_pkgver-$_pkgarch"
+                return 1
+            }
 		fi
 
 		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
@@ -443,7 +458,7 @@ set_repo_permission() {
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
 
 	if [ -w "${dbfile}" ]; then
-		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
+		local group=$(stat --printf='%G' "$(dirname "${dbfile}")")
 		chgrp $group "${dbfile}" || error "Could not change group of ${dbfile} to $group"
 		chmod g+w "${dbfile}" || error "Could not set write permission for group $group to ${dbfile}"
 	else
@@ -458,7 +473,7 @@ arch_repo_add() {
 
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
-	/usr/bin/repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
+	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
 		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
@@ -474,7 +489,7 @@ arch_repo_remove() {
 		error "No database found at '${dbfile}'"
 		return 1
 	fi
-	/usr/bin/repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
+	repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
 		|| error "repo-remove ${dbfile} ${pkgs[@]}"
 	set_repo_permission "${repo}" "${arch}"
 }

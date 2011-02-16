@@ -35,12 +35,9 @@ for repo in ${repos[@]}; do
 			if ! check_pkgfile "${pkg}"; then
 				die "Package ${repo}/$(basename ${pkg}) is not consistent with its meta data"
 			fi
-			if ! check_pkgsvn "${pkg}" "${repo}"; then
-				die "Package ${repo}/$(basename ${pkg}) is not consistent with svn repository"
-			fi
-			if ! check_pkgrepos "${pkg}"; then
-				die "Package ${repo}/$(basename ${pkg}) already exists in another repository"
-			fi
+			#if ! check_pkgrepos "${pkg}"; then
+			#	die "Package ${repo}/$(basename ${pkg}) already exists in another repository"
+			#fi
 		done
 		if ! check_splitpkgs ${repo} ${pkgs[@]}; then
 			die "Missing split packages for ${repo}"
