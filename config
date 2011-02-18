@@ -19,7 +19,7 @@ LOCK_TIMEOUT=300
 
 STAGING="$FTP_BASE/staging"
 TMPDIR="$HOME/tmp"
-ARCHES=(i686 x86_64)
+ARCHES=(i686 x86_64 mipsel)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.*"

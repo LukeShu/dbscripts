@@ -63,10 +63,11 @@ for repo in ${PKGREPOS[@]}; do
 		if grep -Fqx "${pkgbase}" "${dirname}/sourceballs.skip"; then
 			continue
 		fi
+        # Commenting out, we'll sourceball everything
 		# Check if the license or .force file does not enforce creating a source package
-		if ! (chk_license ${pkglicense[@]} || grep -Fqx "${pkgbase}" "${dirname}/sourceballs.force"); then
-			continue
-		fi
+#		if ! (chk_license ${pkglicense[@]} || grep -Fqx "${pkgbase}" "${dirname}/sourceballs.force"); then
+#			continue
+#		fi
 		# Store the expected file name of the source package
 		echo "${pkgbase}-${pkgver}${SRCEXT}" >> "${WORKDIR}/expected-src-pkgs"
 
@@ -79,8 +80,10 @@ for repo in ${PKGREPOS[@]}; do
 
 			# Get the sources from svn
 			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}"
-			svn export -q "${SVNREPO}/${pkgbase}/repos/${repo}-${pkgarch}" \
-				"${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/${pkgbase}" >/dev/null 2>&1
+			#svn export -q "${SVNREPO}/${pkgbase}/repos/${repo}-${pkgarch}" \
+			#	"${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/${pkgbase}" >/dev/null 2>&1
+            cp -r "${SVNREPO}/libre/${pkgbase}" "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/" >/dev/null 2>&1 || \
+            cp -r "${SVNREPO}/libre-testing/${pkgbase}" "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/" >/dev/null 2>&1
 			if [ $? -ge 1 ]; then
 				failedpkgs[${#failedpkgs[*]}]="${pkgbase}-${pkgver}${SRCEXT}"
 				continue
