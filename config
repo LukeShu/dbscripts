@@ -1,25 +1,25 @@
-FTP_BASE="/srv/ftp"
-SVNREPO=''
-PKGREPOS=()
-PKGPOOL=''
-SRCPOOL=''
+FTP_BASE="/home/parabolavnx/parabolagnulinux.org/free"
+SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
+PKGREPOS=('core' 'extra' 'community' 'libre' 'libre-testing' 'social' 'sugar' 'testing')
+PKGPOOL='pool/packages'
+SRCPOOL='sources/packages'
 
-CLEANUP_DESTDIR="/srv/package-cleanup"
+CLEANUP_DESTDIR="$FTP_BASE/old/packages"
 CLEANUP_DRYRUN=false
 # Time in days to keep moved packages
 CLEANUP_KEEP=30
 
-SOURCE_CLEANUP_DESTDIR="/srv/source-cleanup"
+SOURCE_CLEANUP_DESTDIR="$FTP_BASE/old/sources"
 SOURCE_CLEANUP_DRYRUN=false
 # Time in days to keep moved sourcepackages
-SOURCE_CLEANUP_KEEP=14
+SOURCE_CLEANUP_KEEP=30
 
 LOCK_DELAY=10
 LOCK_TIMEOUT=300
 
-STAGING="$HOME/staging"
-TMPDIR="/srv/tmp"
-ARCHES=(i686 x86_64)
+STAGING="$FTP_BASE/staging"
+TMPDIR="$HOME/tmp"
+ARCHES=(i686 x86_64 mipsel)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.*"
@@ -29,4 +29,4 @@ SRCEXT=".src.tar.gz"
 ALLOWED_LICENSES=('GPL' 'GPL1' 'GPL2' 'LGPL' 'LGPL1' 'LGPL2' 'LGPL2.1')
 
 # Override default config with config.local
-[ -f "$(dirname ${BASH_SOURCE[0]})/config.local" ] && . "$(dirname ${BASH_SOURCE[0]})/config.local"
+#[ -f "$(dirname ${BASH_SOURCE[0]})/config.local" ] && . "$(dirname ${BASH_SOURCE[0]})/config.local"
