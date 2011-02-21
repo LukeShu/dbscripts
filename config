@@ -1,4 +1,5 @@
 FTP_BASE="/home/parabolavnx/parabolagnulinux.org/free"
+ARCH_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
 SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
 PKGREPOS=('core' 'extra' 'community' 'libre' 'libre-testing' 'social' 'sugar' 'testing')
 PKGPOOL='pool/packages'
