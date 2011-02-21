@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. config
+
 # Some PKGBUILDs need CARCH to be set
 CARCH="x86_64"
 
@@ -16,7 +18,7 @@ restore_umask () {
 }
 
 # set up general environment
-WORKDIR=$(mktemp -d /home/parabolavnx/tmp/$(basename $0).XXXXXXXXXX)
+WORKDIR=$(mktemp -d ${TMPDIR}/$(basename $0).XXXXXXXXXX)
 LOCKS=()
 
 # check if messages are to be printed using color
@@ -359,26 +361,14 @@ check_splitpkgs() {
 		if [ ! -f "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" ]; then
 			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
 
-# Decide whether to look for PKGBUILD on [libre] or [libre-testing]
-            case $repo in
-                testing)
-                    altrepo=libre-testing
-                ;;
-                *)
-                    altrepo=libre
-                ;;
-            esac
-
             cp -r ${SVNREPO}/$repo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
-            cp -r ${SVNREPO}/$altrepo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
+            cp -r ${SVNREPO}/libre/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
+            cp -r ${SVNREPO}/libre-testing/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
 
 			[[ $? -ge 1 ]] && {
                 echo "Failed $_pkgbase-$_pkgver-$_pkgarch"
                 return 1
             }
-
-            sleep 20s
-
 		fi
 
 		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
