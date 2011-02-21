@@ -16,7 +16,7 @@ restore_umask () {
 }
 
 # set up general environment
-WORKDIR=$(mktemp -d /tmp/$(basename $0).XXXXXXXXXX)
+WORKDIR=$(mktemp -d /home/parabolavnx/tmp/$(basename $0).XXXXXXXXXX)
 LOCKS=()
 
 # check if messages are to be printed using color
@@ -376,6 +376,9 @@ check_splitpkgs() {
                 echo "Failed $_pkgbase-$_pkgver-$_pkgarch"
                 return 1
             }
+
+            sleep 20s
+
 		fi
 
 		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
