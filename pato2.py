@@ -128,12 +128,6 @@ def remove_from_blacklist(repo_,arch_,info_,blacklist_):
         printf(com_)
         a = commands.getoutput(com_) 
         if verbose: printf(a)
-    if pack_:
-        pack_=" ".join(pack_)
-        com_="chmod a-r " + pack_
-        printf(com_)
-        a=commands.getoutput(com_)
-        if verbose: printf(a)
 
 def link(repo_,arch_,file_):
     """ Makes a link in the repo for the package """
@@ -152,11 +146,9 @@ def add_free_repo(verbose_=verbose):
             lista_=list()
             for file_ in glob(freedir + repo_ + "/os/" + arch_ + "/*.pkg.tar.*"):
                 lista_.append(file_)
-    #            link(repo_,arch_,file_)
             for dir_ in other:
                 for file_ in glob(freedir + repo_ + "/os/" + dir_ + "/*.pkg.tar.*"):
                     lista_.append(file_)
-    #                link(repo_,arch_,file_)
 
             printf(lista_)
 
