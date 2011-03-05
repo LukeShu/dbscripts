@@ -27,9 +27,10 @@ archdb = tmp  + "/db"
 free_path= path + "/free/"
 
 # Repo, arch, and other folders to use for repo
-repo_list = ("core", "extra", "community", "testing", "community-testing", "multilib")
-dir_list  = ("pool","sources")
-arch_list = ("i686", "x86_64")
+# This are tuples, so **always keep a comma before closing parenthesis **
+repo_list = ("core", "extra", "community", "testing", "community-testing", "multilib",)
+dir_list  = ("pool",)
+arch_list = ("i686", "x86_64",)
 other     = ("any",)
 
 # Output
