@@ -62,7 +62,8 @@ class Package:
                             "release" : False,
                             "arch"    : False,
                             "license" : False,
-                            "location": False}
+                            "location": False,
+                            "depends" : False,}
         
     def __setitem__(self, key, item):
         if key in self.package_info.keys():

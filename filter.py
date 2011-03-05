@@ -26,6 +26,37 @@ def pkginfo_from_filename(filename):
     pkg["name"] = "-".join(fileattrs)
     return pkg
 
+def pkginfo_from_desc(filename):
+    """ Returns pkginfo from desc file.
+    
+    Parameters:
+    ----------
+    filename -> str          File must exist
+    
+    Returns:
+    ----------
+    pkg -> Package object"""
+    if not os.path.isfile(filename):
+        raise NonValidFile
+    try:
+        f=open(filename)
+        info=f.read().rsplit()
+    finally:
+        f.close()
+    pkg = Package()
+    info_map={"name"    :("%NAME%"    , None),
+              "version" :("%VERSION%" , 0    ),
+              "release" :("%VERSION%" , 1    ),
+              "arch"    :("%ARCH%"    , None),
+              "license" :("%LICENSE%" , None),
+              "location":("%FILENAME%", None),}
+
+    for key in info_map.keys():
+        field,pos=info_map[key]
+        pkg[key]=info[info.index(field)+1]
+        if pos is not None:
+            pkg[key]=pkg[key].split("-")[pos]
+    return pkg
 
 def pkginfo_from_rsync_output(rsync_output):
     """ Generates a list of packages and versions from an rsync output
@@ -45,7 +76,7 @@ def pkginfo_from_rsync_output(rsync_output):
         return pkginfo_from_filename(line.rsplit()[location_field])
 
     def do_nothing():
-        """"""
+        pass
 
     options = { "d": do_nothing,
                 "l": package_or_link,
@@ -83,6 +114,8 @@ def pkginfo_from_files_in_dir(directory):
         if ".pkg.tar." in filename:
             package_list.append(pkginfo_from_filename(filename))
     return tuple(package_list)
+
+    
 
 def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
                                          exclude_file=rsync_blacklist, debug=verbose):
