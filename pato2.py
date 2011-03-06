@@ -137,7 +137,7 @@ def link(repo_,arch_,file_):
         printf(cmd_ + a)
 
 def add_free_repo(verbose_=verbose):
-    cmd_=home + "/usr/bin/sync-free"
+    cmd_=os.path.join(home,"/usr/bin/sync-free")
     printf(cmd_)
     a=commands.getoutput(cmd_)
     if verbose_: printf(a)
