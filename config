@@ -20,14 +20,10 @@ LOCK_TIMEOUT=300
 
 STAGING="$FTP_BASE/staging"
 TMPDIR="$HOME/tmp"
-ARCHES=(i686 x86_64 mipsel)
+ARCHES=(i686 x86_64 mips64el)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.*"
 SRCEXT=".src.tar.gz"
 
-# Allowed licenses: get sourceballs only for licenses in this array
-ALLOWED_LICENSES=('GPL' 'GPL1' 'GPL2' 'LGPL' 'LGPL1' 'LGPL2' 'LGPL2.1')
-
-# Override default config with config.local
-#[ -f "$(dirname ${BASH_SOURCE[0]})/config.local" ] && . "$(dirname ${BASH_SOURCE[0]})/config.local"
+MAKEPKGCONF="$HOME/etc/makepkg.conf"
