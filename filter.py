@@ -1,6 +1,6 @@
  #! /usr/bin/python
 #-*- encoding: utf-8 -*-
-import glob
+from glob import glob
 from repm.config import *
 from repm.pato2 import *
 
