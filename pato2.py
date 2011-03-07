@@ -129,6 +129,12 @@ def remove_from_blacklist(repo_,arch_,info_,blacklist_):
         a = commands.getoutput(com_) 
         if verbose: printf(a)
 
+def cleanup_nonfree_in_dir(directory,blacklisted_names):
+    pkgs=pkginfo_from_files_in_dir(directory)
+    for package in pkgs:
+        if package["name"] in blacklisted_names:
+            os.remove(package["location"])
+
 def link(repo_,arch_,file_):
     """ Makes a link in the repo for the package """
     cmd_="ln -f " + file_ + " " + repodir + "/" + repo_ + "/os/" + arch_
