@@ -56,7 +56,7 @@ def sync_all_repo(debug=verbose):
     cmd=generate_rsync_command(rsync_list_command)
     rsout=run_rsync(cmd)
     pkgs=pkginfo_from_rsync_output(rsout)
-    generate_exclude_list_from_blacklist(pkgs,listado(blacklist))
+    generate_exclude_list_from_blacklist(pkgs,listado(blacklist),debug=False)
     cmd=generate_rsync_command(rsync_update_command,blacklist_file=blacklist)
     a=run_rsync(cmd)
     if debug: printf(a)
