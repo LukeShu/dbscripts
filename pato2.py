@@ -111,7 +111,7 @@ def make_pending(repo_,arch_,info_):
             printf( pkg_ + " package has no %NAME% attibute " )
     if verbose: printf( lista_ )
     a=open( pending + "-" + repo_ + ".txt", "w" ).write(
-        "\n".join([name + ":" + license_ for (name,license_) in lista_]) )
+        "\n".join([name + ":" + license_ for (name,license_) in lista_]) + "\n")
 
 def remove_from_blacklist(repo_,arch_,info_,blacklist_):
     """ Check the blacklist and remove packages on the db"""
