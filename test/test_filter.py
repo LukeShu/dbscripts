@@ -163,7 +163,30 @@ class pkginfo_from_descKnownValues(unittest.TestCase):
         
 class pkginfo_from_db(unittest.TestCase):
     archdb = os.path.join("./workdir")
+    example_package_list=(Package(),Package(),Package())
+    example_package_list[0].package_info={ "name"    : "acl",
+                                           "version" : "2.2.49",
+                                           "release" : "2",
+                                           "arch"    : "x86_64",
+                                           "license" : ("LGPL",),
+                                           "location": "acl-2.2.49-2-x86_64.pkg.tar.xz"
+                                           "depends" : ("attr>=2.4.41"),}
+    example_package_list[1].package_info={ "name"    : "glibc",
+                                           "version" : "2.13",
+                                           "release" : "4",
+                                           "arch"    : "x86_64",
+                                           "license" : ("GPL","LGPL"),
+                                           "location": "glibc-2.13-4-x86_64.pkg.tar.xz"
+                                           "depends" : ("linux-api-headers>=2.6.37","tzdata",),}
+    example_package_list[2].package_info={ "name"    : "",
+                                           "version" : "2.2.26",
+                                           "release" : "1",
+                                           "arch"    : "x86_64",
+                                           "license" : False,
+                                           "location": ""
+                                           "depends" : False,}    
     
     
 if __name__ == "__main__":
     unittest.main()
+

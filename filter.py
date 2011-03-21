@@ -115,7 +115,8 @@ def pkginfo_from_files_in_dir(directory):
             package_list.append(pkginfo_from_filename(filename))
     return tuple(package_list)
 
-    
+def pkginfo_from_db(path_to_db):
+    """ """
 
 def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
                                          exclude_file=rsync_blacklist, debug=verbose):

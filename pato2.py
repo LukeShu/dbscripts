@@ -59,7 +59,11 @@ def sync_all_repo(debug=verbose):
     generate_exclude_list_from_blacklist(pkgs,listado(blacklist),debug=False)
     cmd=generate_rsync_command(rsync_update_command,blacklist_file=rsync_blacklist)
     a=run_rsync(cmd)
-    if debug: printf(a)
+    cmd=generate_rsync_command(rsync_post_command,blacklist_file=rsync_blacklist)
+    b=run_rsync(cmd)
+    if debug:
+        printf(a)
+        printf(b)
 
 def get_from_desc(desc, var,db_tar_file=False):
     """ Get a var from desc file """
