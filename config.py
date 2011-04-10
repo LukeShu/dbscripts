@@ -7,7 +7,7 @@ except(ImportError):
 import os
 
 stringvars=("mirror", "mirrorpath", "logname", "tempdir", "docs_dir",
-           "repodir",)
+           "repodir", "rsync_blacklist")
 listvars=("repo_list", "dir_list", "arch_list", "other",)
 boolvars=("output", "debug",)
 

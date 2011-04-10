@@ -17,6 +17,7 @@ logname=${paraboladir}/${logtime}-repo-maintainer.log
 tempdir=~/tmp/
 docs_dir=${paraboladir}/docs
 repodir=${paraboladir}/repo
+rsync_blacklist=${docs_dir}/rsyncBlacklist
 
 # Repos, arches, and dirs for repo
 repo_list="core:extra:community:testing:community-testing:multilib"
@@ -29,8 +30,8 @@ output="True"
 debug="False"
 
 # Rsync commands
-rsync_update_command="rsync -av --delay-updates --exclude=*.{abs|db}.tar.* "
-rsync_post_command="rsync -av --delete --exclude=*.abs.tar.* "
+rsync_update_command="rsync -av --delay-updates --exclude='*.{abs|db}.tar.*' "
+rsync_post_command="rsync -av --delete --exclude='*.abs.tar.*' "
 
 
 function run_python_cmd {
@@ -39,6 +40,7 @@ function run_python_cmd {
 	mirrorpath=${mirrorpath} \
 	logname=${logname} \
 	tempdir=${tempdir} \
+	rsync_blacklist=${rsync_blacklist} \
 	docs_dir=${docs_dir} \
 	repodir=${repodir} \
 	repo_list=${repo_list} \
@@ -49,3 +51,5 @@ function run_python_cmd {
 	debug=${debug} \
 	$1
 }
+
+source libremessages
