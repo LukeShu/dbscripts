@@ -1,0 +1,14 @@
+dr-xr-sr-x        4096 2010/09/11 11:37:10 .
+-rw-r--r--          11 2011/02/08 00:00:01 lastsync
+drwxrwxr-x          15 2010/09/11 11:28:50 community-staging
+drwxrwxr-x          30 2010/09/11 11:28:50 community-staging/os
+drwxrwxr-x        8192 2011/02/07 17:00:01 community-staging/os/i686
+lrwxrwxrwx          52 2010/12/23 16:51:01 community-staging/os/i686/alex-2.3.4-1-i686.pkg.tar.xz -> ../../../pool/community/alex-2.3.4-1-i686.pkg.tar.xz
+lrwxrwxrwx          27 2011/02/07 14:02:54 community-staging/os/i686/community-staging.db -> community-staging.db.tar.gz
+-rw-rw-r--        2237 2011/02/07 14:02:54 community-staging/os/i686/community-staging.db.tar.gz
+-rw-rw-r--        3209 2011/02/07 14:00:13 community-staging/os/i686/community-staging.db.tar.gz.old
+drwxrwxr-x          15 2009/07/22 15:07:56 community
+drwxrwxr-x          40 2009/08/04 15:57:42 community/os
+drwxrwsr-x       36864 2011/02/03 05:00:01 community/os/any
+-rw-rw-r--      303336 2010/07/16 10:06:28 community/os/any/any2dvd-0.34-4-any.pkg.tar.xz
+-rw-rw-r--      221664 2010/03/28 15:55:48 community/os/x86_64/gmime22-2.2.26-1-x86_64.pkg.tar.xz

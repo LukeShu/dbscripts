@@ -1,56 +1,66 @@
-#! /usr/bin/python
+ #! /usr/bin/python
 #-*- encoding: utf-8 -*-
-import commands
-import os
-import re
+from glob import glob
 from repm.config import *
 from repm.pato2 import *
 
-rsync_list_command="rsync -a --no-motd --list-only "
-
-def generate_rsync_command(base_command, dir_list, destdir=repodir, mirror_name=mirror,
-                           mirror_path=mirrorpath, blacklist_file=False):
-    """ Generates an rsync command for executing it by combining all parameters.
+def pkginfo_from_filename(filename):
+    """ Generates a Package object with info from a filename,
+    filename can be relative or absolute 
     
     Parameters:
     ----------
-    base_command   -> str
-    mirror_name    -> str
-    mirror_path    -> str
-    dir_list       -> list or tuple
-    destdir        -> str                  Path to dir, dir must exist.
-    blacklist_file -> False or str         Path to file, file must exist.
-    
-    Return:
+    filename -> str         Must contain .pkg.tar.
+
+    Returns:
     ----------
-    rsync_command -> str """
-    from os.path import isfile, isdir
-
-    if blacklist_file and not isfile(blacklist_file):
-        print(blacklist_file + " is not a file")
+    pkg -> Package object"""
+    if ".pkg.tar." not in filename:
         raise NonValidFile
+    pkg = Package()
+    pkg["location"] = filename
+    fileattrs = os.path.basename(filename).split("-")
+    pkg["arch"] = fileattrs.pop(-1).split(".")[0]
+    pkg["release"] = fileattrs.pop(-1)
+    pkg["version"] = fileattrs.pop(-1)
+    pkg["name"] = "-".join(fileattrs)
+    return pkg
 
-    if not os.path.isdir(destdir):
-        print(destdir + " is not a directory")
-        raise NonValidDir
+def pkginfo_from_desc(filename):
+    """ Returns pkginfo from desc file.
+    
+    Parameters:
+    ----------
+    filename -> str          File must exist
+    
+    Returns:
+    ----------
+    pkg -> Package object"""
+    if not os.path.isfile(filename):
+        raise NonValidFile
+    try:
+        f=open(filename)
+        info=f.read().rsplit()
+    finally:
+        f.close()
+    pkg = Package()
+    info_map={"name"    :("%NAME%"    , None),
+              "version" :("%VERSION%" , 0    ),
+              "release" :("%VERSION%" , 1    ),
+              "arch"    :("%ARCH%"    , None),
+              "license" :("%LICENSE%" , None),
+              "location":("%FILENAME%", None),}
 
-    dir_list="{" + ",".join(dir_list) + "}"
+    for key in info_map.keys():
+        field,pos=info_map[key]
+        pkg[key]=info[info.index(field)+1]
+        if pos is not None:
+            pkg[key]=pkg[key].split("-")[pos]
+    return pkg
 
-    if blacklist_file:
-        return " ".join((base_command, "--exclude-from-file="+blacklist_file,
-                        mirror_name + mirror_path + dir_list, destdir))
-    return " ".join((base_command, mirror_name + mirror_path + dir_list, destdir))
-
-def run_rsync(base_for_rsync=rsync_list_command, dir_list_for_rsync=(repo_list + dir_list),
-              debug=verbose):
-    """ Runs rsync and gets returns it's output """
-    cmd = str(generate_rsync_command(rsync_list_command, (repo_list + dir_list)))
-    if debug:
-        printf("rsync_command" + cmd)
-    return commands.getoutput(cmd)
-
-def get_file_list_from_rsync_output(rsync_output):
-    """ Generates a list of packages and versions from an rsync output using --list-only --no-motd.
+def pkginfo_from_rsync_output(rsync_output):
+    """ Generates a list of packages and versions from an rsync output
+    wich uses --list-only and --no-motd options.
 
     Parameters:
     ----------
@@ -59,34 +69,54 @@ def get_file_list_from_rsync_output(rsync_output):
     Returns:
     ----------
     package_list -> tuple        Contains Package objects. """
-    a=list()
-
-    def directory(line):
-        pass
 
     def package_or_link(line):
         """ Take info out of filename """
         location_field = 4
-        pkg = Package()
-        pkg["location"] = line.rsplit()[location_field]
-        fileattrs = pkg["location"].split("/")[-1].split("-")
-        pkg["arch"] = fileattrs.pop(-1).split(".")[0]
-        pkg["release"] = fileattrs.pop(-1)
-        pkg["version"] = fileattrs.pop(-1)
-        pkg["name"] = "-".join(fileattrs)
-        return pkg
-                
-    options = { "d": directory,
-                "l": package_or_link,
-                "-": package_or_link}
-    
-    for line in rsync_output.split("\n"):
-        if ".pkg.tar" in line:
-            pkginfo=options[line[0]](line)
-            if pkginfo:
-                a.append(pkginfo)
+        return pkginfo_from_filename(line.rsplit()[location_field])
 
-    return tuple(a)
+    def do_nothing():
+        pass
+
+    options = { "d": do_nothing,
+                "l": package_or_link,
+                "-": package_or_link,
+                " ": do_nothing}
+
+    package_list=list()
+    
+    lines=[x for x in rsync_output.split("\n") if ".pkg.tar" in x]
+
+    for line in lines:
+        pkginfo=options[line[0]](line)
+        if pkginfo:
+            package_list.append(pkginfo)
+
+    return tuple(package_list)
+
+def pkginfo_from_files_in_dir(directory):
+    """ Returns pkginfo from filenames of packages in dir
+    wich has .pkg.tar. on them 
+    
+    Parameters:
+    ----------
+    directory -> str          Directory must exist
+    
+    Returns:
+    ----------
+    package_list -> tuple     Contains Package objects """
+    package_list=list()
+
+    if not os.path.isdir(directory):
+        raise NonValidDir
+
+    for filename in glob(os.path.join(directory,"*")):
+        if ".pkg.tar." in filename:
+            package_list.append(pkginfo_from_filename(filename))
+    return tuple(package_list)
+
+def pkginfo_from_db(path_to_db):
+    """ """
 
 def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
                                          exclude_file=rsync_blacklist, debug=verbose):
@@ -111,8 +141,7 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
             a.append(package["location"])
 
     if debug:
-        printf(a)
-    
+        return a
     try:
         fsock = open(exclude_file,"w")
         try:
@@ -121,4 +150,8 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
             fsock.close()
     except IOError:
         printf("%s wasnt written" % blacklist_file)
-        
+
+if __name__ == "__main__":
+    a=run_rsync(rsync_list_command)
+    packages=pkginfo_from_rsync_output(a)
+    generate_exclude_list_from_blacklist(packages,listado(blacklist))

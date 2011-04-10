@@ -32,6 +32,9 @@ for var in boolvars:
     else:
         print('%s is not True or False' % var)
 
+# Rsync commands
+rsync_list_command="rsync -a --no-motd --list-only "
+
 # Classes and Exceptions
 class NonValidFile(ValueError): pass
 class NonValidDir(ValueError): pass
