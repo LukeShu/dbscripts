@@ -1,44 +1,36 @@
-#!/usr/bin/python
+#!/usr/bin/pythonn
 # -*- coding: utf-8 -*-
-from user import home
-import commands
+try:
+    from subprocess import check_output
+except(ImportError):
+    from commands import getoutput as check_output
+import os
 
-time__ = commands.getoutput("date +%Y%m%d-%H:%M")
+stringvars=("mirror", "mirrorpath", "logname", "tempdir", "docs_dir",
+           "repodir",)
+listvars=("repo_list", "dir_list", "arch_list", "other",)
+boolvars=("output", "debug",)
 
-# Mirror Parameters
-mirror = "mirrors.eu.kernel.org"
-mirrorpath = "::mirrors/archlinux"
+config=dict()
 
-# Directories and files
+def exit_if_none:
+    if os.environ.get(var) is None:
+        exit("%s is not defined" % var)
 
-## Optionals
-path   = home + "/parabolagnulinux.org"
-docs   = path + "/docs"
-logdir = path + "/log"
-
-## Must be defined
-logname= logdir + "/" + time__ + "-repo-maintainer.log"
-repodir= path + "/repo"
-tmp    = home + "/tmp"
-archdb = tmp  + "/db"
-
-free_path= path + "/free/"
-
-# Repo, arch, and other folders to use for repo
-repo_list = ("core", "extra", "community", "testing", "community-testing", "multilib")
-dir_list  = ("pool","sources")
-arch_list = ("i686", "x86_64")
-other     = ("any",)
-
-# Output
-output    = True
-verbose   = False
-
-# Files
-blacklist = docs + "/blacklist.txt"
-whitelist = docs + "/whitelist.txt"
-pending   = docs + "/pending"
-rsync_blacklist = docs + "/rsyncBlacklist"
+for var in stringvars:
+    exit_if_none(var)
+        config[var]=os.environ.get(var)
+for var in listvars:
+    exit_if_none(var)
+    config[var]=tuple(os.environ.get(var).split(":"))
+for var in boolvars:
+    exit_if_none(var)
+    if os.environ.get(var) == "True":
+        config[var]=True
+    elif os.environ.get(var) =="False":
+        config[var]=False
+    else:
+        print('%s is not True or False' % var)
 
 # Classes and Exceptions
 class NonValidFile(ValueError): pass
@@ -55,7 +47,8 @@ class Package:
                             "release" : False,
                             "arch"    : False,
                             "license" : False,
-                            "location": False}
+                            "location": False,
+                            "depends" : False,}
         
     def __setitem__(self, key, item):
         if key in self.package_info.keys():
@@ -76,8 +69,11 @@ class Package:
         if not isinstance(x, Package):
             return False
         for key in self.package_info.keys():
-                if x[key] != self[key]:
+                if x[key] != self.package_info[key]:
                     return False
         else:
             return True
 
+if __name__=="__main__":
+    for key in config.keys():
+        print("%s : %s" % (key,config[key]))
