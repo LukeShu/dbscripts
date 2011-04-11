@@ -33,7 +33,9 @@ for repo in $(echo ${repo_list} | tr ':' ' '); do
 	msg2 "Making pending list for ${repo} ${arch}"
 	run_python_cmd "mkpending.py -r ${repo} -b ${repodir}/${repo}/os/${arch}"
 	msg2 "Cleaning ${repo} ${arch}"
-	run_python_cmd "clean-repo.py -b ${repodir}/${repo}/os/${arch}/${repo}.db.tar.gz -d ${repodir}/${repo}/os/${arch}/"
-        get_license.sh
+	run_python_cmd "clean_repo.py -b ${repodir}/${repo}/os/${arch}/${repo}.db.tar.gz -d ${repodir}/${repo}/os/${arch}/"
     done
 done
+
+msg "Checking licenses"
+get_license.sh
