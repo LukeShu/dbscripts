@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/bash
 # -*- coding: utf-8 -*-
 
 source config.sh
