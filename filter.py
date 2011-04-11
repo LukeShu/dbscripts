@@ -4,12 +4,17 @@ from glob import glob
 from repm.config import *
 from repm.pato2 import *
 
-def listado(filename):
+def listado(filename,start=0,end=None):
     """Obtiene una lista de paquetes de un archivo."""
-    archivo = open(filename,"r")
-    lista   = archivo.read().split("\n")
-    archivo.close()
-    return [pkg.split(":")[0].rstrip() for pkg in lista if pkg]
+    fsock = open(filename,"r")
+    lista   = fsock.read().split("\n")
+    fsock.close()
+    if end is not None:
+        return [pkg.split(":")[start:end].rstrip()
+                for pkg in lista if pkg]
+    else:
+        return [pkg.split(":")[start].rstrip()
+                for pkg in lista if pkg]
 
 def pkginfo_from_filename(filename):
     """ Generates a Package object with info from a filename,
@@ -135,29 +140,26 @@ def pkginfo_from_db(path_to_db):
     package_list=list()
     
     if not os.path.isfile(path_to_db):
-        raise NonValidFile(path_to_db + "is not a file")
+        raise NonValidFile(path_to_db + " is not a file")
     
-    check_output("mkdir -p " + config["archdb"])
+    check_output(["mkdir", "-p", config["archdb"]])
 
     try:
         db_open_tar = tarfile.open(path_to_db, 'r:gz')
     except tarfile.ReadError:
-        printf("No valid db_file %s or not readable" % path_to_db)
-        return(tuple())
-    else:
-        printf("No db_file %s" % path_to_db)
+        raise NonValidFile("No valid db_file %s or not readable" % path_to_db)
         return(tuple())
 
     for file in db_open_tar.getmembers():
-        db_open_tar.extract(file, archdb)
+        db_open_tar.extract(file, config["archdb"])
     db_open_tar.close()
     # Get info from file
-    for dir_ in glob(archdb + "/*"):
+    for dir_ in glob(config["archdb"] + "/*"):
         if isdir(dir_) and isfile(dir_ + "/desc"):
             package_list.append(pkginfo_from_desc(
                     os.path.join(dir_,"desc")))
-    check_output("rm -r %s/*"  % archdb)
-    if verbose_:
+    check_output(["rm", "-r", config["archdb"]])
+    if config["debug"]:
         printf(package_list)
     return package_list
 

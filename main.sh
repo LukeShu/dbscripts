@@ -20,7 +20,8 @@ mkrsexclude
 msg "Syncing repos without delete"
 # rsync_update_command does not sync db or abs
 ${rsync_update_command} --exclude-from=${rsync_blacklist} \
-    ${mirror}${mirropath}/{$(echo ${repo_list} | tr ':' ',')} ${repodir}
+    ${mirror}${mirropath}/{$(echo ${repo_list} | tr ':' ','),\
+    $(echo ${dir_list} | tr ':' ',')} ${repodir}
 
 msg "Syncing each repo and cleaning"
 msg2 "Remove pending files"

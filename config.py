@@ -3,11 +3,15 @@
 try:
     from subprocess import check_output
 except(ImportError):
-    from commands import getoutput as check_output
+    from commands import getoutput
+    def check_output(*popenargs,**kwargs):
+        cmd=" ".join(*popenargs)
+        return getoutput(cmd)
 import os
 
-stringvars=("mirror", "mirrorpath", "logname", "tempdir", "archdb", "docs_dir",
-            "repodir", "blacklist", "whitelist", "pending", "rsync_blacklist")
+stringvars=("mirror", "mirrorpath", "logname", "tempdir", "archdb",
+            "repodir", "blacklist", "whitelist", "pending",
+            "rsync_blacklist",)
 listvars=("repo_list", "dir_list", "arch_list", "other",)
 boolvars=("output", "debug",)
 
@@ -37,10 +41,29 @@ for var in boolvars:
 # Rsync commands
 rsync_list_command="rsync -a --no-motd --list-only "
 
+def printf(text,output=config["output"]):
+    """Guarda el texto en la variable log y puede imprimir en pantalla."""
+    log_file = open(config["logname"], 'a')
+    log_file.write("\n" + str(text) + "\n")
+    log_file.close()
+    if output:
+        print (str(text) + "\n")
+
+del exit_if_none
+
 # Classes and Exceptions
-class NonValidFile(ValueError): pass
-class NonValidDir(ValueError): pass
-class NonValidCommand(ValueError): pass
+class NonValidFile(ValueError):
+    def __init__(self):
+        ValueError.__init__(self)
+        printf(self.message)
+class NonValidDir(ValueError):
+    def __init__(self):
+        ValueError.__init__(self)
+        printf(self.message)
+class NonValidCommand(ValueError):
+    def __init__(self):
+        ValueError.__init__(self)
+        printf(self.message)
 
 class Package:
     """ An object that has information about a package. """

@@ -2,10 +2,6 @@
 # -*- coding: utf-8 -*-
 source local_config
 
-# Rsync commands
-rsync_update_command="rsync -av --delay-updates --exclude='*.{abs|db}.tar.*' "
-rsync_post_command="rsync -av --delete --exclude='*.abs.tar.*' "
-
 function run_python_cmd {
     env \
 	mirror=${mirror} \
@@ -13,7 +9,6 @@ function run_python_cmd {
 	logname=${logname} \
 	tempdir=${tempdir} \
 	archdb=${archdb} \
-	docs_dir=${docs_dir} \
 	repodir=${repodir} \
 	blacklist=${blacklist} \
 	whitelist=${whitelist} \

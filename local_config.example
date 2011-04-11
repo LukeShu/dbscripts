@@ -2,19 +2,19 @@
 mirror="mirrors.eu.kernel.org"
 mirrorpath="::mirrors/archlinux"
 
-# Directories
+# Directories: they should end without /
 ## Optionals
 paraboladir=~/parabolagnulinux.org
 logtime=$(date -u +%Y%m%d-%H:%M)
 ## Must be defined
-logname=${paraboladir}/${logtime}-repo-maintainer.log
-tempdir=~/tmp/
+tempdir=~/tmp
 archdb=${tempdir}/db
 docs_dir=${paraboladir}/docs
 repodir=${paraboladir}/repo
 # End Directories
 
 # Files
+logname=${paraboladir}/log/${logtime}-repo-maintainer.log
 blacklist=${docs_dir}/blacklist.txt
 whitelist=${docs_dir}/whitelist.txt
 pending=${docs_dir}/pending
@@ -29,3 +29,7 @@ other="any"
 # Output options
 output="True"
 debug="False"
+
+# Rsync commands
+rsync_update_command="rsync -av --delay-updates --exclude='*.{abs|db}.tar.*' "
+rsync_post_command="rsync -av --delete --exclude='*.abs.tar.*' "

@@ -29,14 +29,6 @@ from repm.filter import *
 import tarfile
 from os.path import isdir, isfile
 
-def printf(text,output=config["output"]):
-    """Guarda el texto en la variable log y puede imprimir en pantalla."""
-    log_file = open(config["logname"], 'a')
-    log_file.write("\n" + str(text) + "\n")
-    log_file.close()
-    if output_:
-        print (str(text) + "\n")
-
 def generate_rsync_command(base_command,
                            dir_list=(config["repo_list"] +
                                      config["dir_list"]),
@@ -68,4 +60,4 @@ def run_rsync(command,debug=config["debug"]):
     """ Runs rsync and gets returns it's output """
     if debug:
         printf("rsync_command: " + command)
-    return check_output(command)
+    return check_output(command.split())

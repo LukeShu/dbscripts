@@ -6,7 +6,9 @@ import argparse
 def remove_from_blacklist(path_to_db, blacklisted_names,
                           debug=config["debug"]):
     """ Check the blacklist and remove packages on the db"""
-    
+    if "~" in path_to_db:
+        path_to_db=(os.path.expanduser(path_to_db))
+
     pkgs=[pkg for pkg in pkginfo_from_db(path_to_db) if
           pkg["name"] in blacklisted_names]
     if pkgs:
@@ -19,6 +21,8 @@ def remove_from_blacklist(path_to_db, blacklisted_names,
         return pkgs, cmd
 
 def cleanup_nonfree_in_dir(directory, blacklisted_names):
+    if "~" in directory:
+        directory=(os.path.expanduser(directory))
     pkgs=pkginfo_from_files_in_dir(directory)
     for package in pkgs:
         if package["name"] in blacklisted_names:
