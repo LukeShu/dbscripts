@@ -1,4 +1,4 @@
-#!/usr/bin/pythonn
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 try:
     from subprocess import check_output
@@ -7,22 +7,24 @@ except(ImportError):
 import os
 
 stringvars=("mirror", "mirrorpath", "logname", "tempdir", "docs_dir",
-           "repodir", "rsync_blacklist")
+            "repodir", "rsync_blacklist")
 listvars=("repo_list", "dir_list", "arch_list", "other",)
 boolvars=("output", "debug",)
 
 config=dict()
 
-def exit_if_none:
+def exit_if_none(var):
     if os.environ.get(var) is None:
         exit("%s is not defined" % var)
 
 for var in stringvars:
     exit_if_none(var)
-        config[var]=os.environ.get(var)
+    config[var]=os.environ.get(var)
+
 for var in listvars:
     exit_if_none(var)
     config[var]=tuple(os.environ.get(var).split(":"))
+
 for var in boolvars:
     exit_if_none(var)
     if os.environ.get(var) == "True":

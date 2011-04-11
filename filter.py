@@ -4,6 +4,13 @@ from glob import glob
 from repm.config import *
 from repm.pato2 import *
 
+def listado(filename):
+    """Obtiene una lista de paquetes de un archivo."""
+    archivo = open(filename,"r")
+    lista   = archivo.read().split("\n")
+    archivo.close()
+    return [pkg.split(":")[0].rstrip() for pkg in lista if pkg]
+
 def pkginfo_from_filename(filename):
     """ Generates a Package object with info from a filename,
     filename can be relative or absolute 
@@ -116,10 +123,48 @@ def pkginfo_from_files_in_dir(directory):
     return tuple(package_list)
 
 def pkginfo_from_db(path_to_db):
-    """ """
+    """ Get PKGINFO from db.
+    
+    Parameters:
+    ----------
+    path_to_db -> str                 Path to file
 
-def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
-                                         exclude_file=rsync_blacklist, debug=verbose):
+    Output:
+    ----------
+    None """
+    package_list=list()
+    
+    if not os.path.isfile(path_to_db):
+        raise NonValidFile(path_to_db + "is not a file")
+    
+    check_output("mkdir -p " + archdb)
+
+    try:
+        db_open_tar = tarfile.open(db_tar_file, 'r:gz')
+    except tarfile.ReadError:
+        printf("No valid db_file %s or not readable" % db_tar_file)
+        return(tuple())
+    else:
+        printf("No db_file %s" % db_tar_file)
+        return(tuple())
+
+    for file in db_open_tar.getmembers():
+        db_open_tar.extract(file, archdb)
+    db_open_tar.close()
+    # Get info from file
+    for dir_ in glob(archdb + "/*"):
+        if isdir(dir_) and isfile(dir_ + "/desc"):
+            package_list.append(pkginfo_from_desc(
+                    os.path.join(dir_,"desc")))
+    check_output("rm -r %s/*"  % archdb)
+    if verbose_:
+        printf(package_list)
+    return package_list
+
+def generate_exclude_list_from_blacklist(packages_iterable,
+                                         blacklisted_names,
+                                         exclude_file=config["rsync_blacklist"],
+                                         debug=config["debug"]):
     """ Generate an exclude list for rsync 
     
     Parameters:
@@ -132,16 +177,12 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
     Output:
     ----------
     None """
-    a=list()
-
-    for package in packages_iterable:
-        if not isinstance(package, Package):
-            raise ValueError(" %s is not a Package object " % package)
-        if package["name"] in blacklisted_names:
-            a.append(package["location"])
+    pkgs=[pkg["location"] for pkg in packages_iterable
+          if isinstance(pkg, Package)
+          and pkg["name"] in blacklisted_names]
 
     if debug:
-        return a
+        return pkgs
     try:
         fsock = open(exclude_file,"w")
         try:
@@ -149,9 +190,10 @@ def generate_exclude_list_from_blacklist(packages_iterable, blacklisted_names,
         finally:
             fsock.close()
     except IOError:
-        printf("%s wasnt written" % blacklist_file)
+        printf("%s wasnt written" % exclude_file)
 
 if __name__ == "__main__":
-    a=run_rsync(rsync_list_command)
+    cmd=generate_rsync_command(rsync_list_command)
+    a=run_rsync(cmd)
     packages=pkginfo_from_rsync_output(a)
     generate_exclude_list_from_blacklist(packages,listado(blacklist))

@@ -169,21 +169,21 @@ class pkginfo_from_db(unittest.TestCase):
                                            "release" : "2",
                                            "arch"    : "x86_64",
                                            "license" : ("LGPL",),
-                                           "location": "acl-2.2.49-2-x86_64.pkg.tar.xz"
+                                           "location": "acl-2.2.49-2-x86_64.pkg.tar.xz",
                                            "depends" : ("attr>=2.4.41"),}
     example_package_list[1].package_info={ "name"    : "glibc",
                                            "version" : "2.13",
                                            "release" : "4",
                                            "arch"    : "x86_64",
                                            "license" : ("GPL","LGPL"),
-                                           "location": "glibc-2.13-4-x86_64.pkg.tar.xz"
+                                           "location": "glibc-2.13-4-x86_64.pkg.tar.xz",
                                            "depends" : ("linux-api-headers>=2.6.37","tzdata",),}
     example_package_list[2].package_info={ "name"    : "",
                                            "version" : "2.2.26",
                                            "release" : "1",
                                            "arch"    : "x86_64",
                                            "license" : False,
-                                           "location": ""
+                                           "location": "",
                                            "depends" : False,}    
     
     

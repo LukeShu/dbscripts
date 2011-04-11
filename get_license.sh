@@ -31,12 +31,12 @@ rm -rf $dir/*
 tempdir=$(mktemp -d)
 cd $tempdir
 
-a=($(cut -d: -f1 $docs/pending*.txt))
-echo ${a[@]}
+pending=($(cut -d: -f1 $docs/pending*.txt))
+echo ${pending[@]}
 
-for x in ${a[@]}; do
-    b=( $(ls $repo/*/os/*/$x*) )
-    for y in ${b[@]}; do
+for pkg in ${pending[@]}; do
+    pkg_in_repo=( $(ls ${repo}/*/os/*/${pkg}*) )
+    for y in ${pkg_in_repo[@]}; do
 	echo "chmod +r $y"
 	chmod +r $y
 	echo "tar -xf $y usr/share/licenses"
