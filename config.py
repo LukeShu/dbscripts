@@ -46,8 +46,8 @@ rsync_blacklist = docs + "/rsyncBlacklist"
 # Rsync commands
 
 rsync_list_command="rsync -a --no-motd --list-only "
-rsync_update_command="rsync -av --delay-updates --exclude=*.{abs|db}.tar.* "
-rsync_post_command="rsync -av --delete --exclude=*.abs.tar.* "
+rsync_update_command="rsync -av --delay-updates --exclude='*.{abs|db}.tar.*' "
+rsync_post_command="rsync -av --delete --exclude='*.abs.tar.*' "
 
 # Classes and Exceptions
 class NonValidFile(ValueError): pass
