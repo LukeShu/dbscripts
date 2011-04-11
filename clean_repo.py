@@ -34,7 +34,7 @@ if __name__ == "__main__":
     args=parser.parse_args()
 
     if args.directory:
-        cleanup_nonfree_in_dir(args.database, listado(config["blacklist"]))
+        cleanup_nonfree_in_dir(args.directory, listado(config["blacklist"]))
 
     if args.database:
         pkgs=pkginfo_from_db(args.database)

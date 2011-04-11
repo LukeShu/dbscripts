@@ -6,8 +6,8 @@ except(ImportError):
     from commands import getoutput as check_output
 import os
 
-stringvars=("mirror", "mirrorpath", "logname", "tempdir", "docs_dir",
-            "repodir", "rsync_blacklist")
+stringvars=("mirror", "mirrorpath", "logname", "tempdir", "archdb", "docs_dir",
+            "repodir", "blacklist", "whitelist", "pending", "rsync_blacklist")
 listvars=("repo_list", "dir_list", "arch_list", "other",)
 boolvars=("output", "debug",)
 

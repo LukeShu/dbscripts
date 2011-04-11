@@ -12,6 +12,7 @@ logtime=$(date -u +%Y%m%d-%H:%M)
 ## Must be defined
 logname=${paraboladir}/${logtime}-repo-maintainer.log
 tempdir=~/tmp/
+archdb=${tempdir}/db
 docs_dir=${paraboladir}/docs
 repodir=${paraboladir}/repo
 # End Directories
@@ -42,6 +43,7 @@ function run_python_cmd {
 	mirrorpath=${mirrorpath} \
 	logname=${logname} \
 	tempdir=${tempdir} \
+	archdb=${archdb} \
 	docs_dir=${docs_dir} \
 	repodir=${repodir} \
 	blacklist=${blacklist} \

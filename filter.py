@@ -137,15 +137,15 @@ def pkginfo_from_db(path_to_db):
     if not os.path.isfile(path_to_db):
         raise NonValidFile(path_to_db + "is not a file")
     
-    check_output("mkdir -p " + archdb)
+    check_output("mkdir -p " + config["archdb"])
 
     try:
-        db_open_tar = tarfile.open(db_tar_file, 'r:gz')
+        db_open_tar = tarfile.open(path_to_db, 'r:gz')
     except tarfile.ReadError:
-        printf("No valid db_file %s or not readable" % db_tar_file)
+        printf("No valid db_file %s or not readable" % path_to_db)
         return(tuple())
     else:
-        printf("No db_file %s" % db_tar_file)
+        printf("No db_file %s" % path_to_db)
         return(tuple())
 
     for file in db_open_tar.getmembers():

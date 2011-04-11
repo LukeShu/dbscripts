@@ -32,9 +32,9 @@ def write_pending(packages_iterable, repo, prefix=config["pending"]):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Clean a repo db and packages")
-    parser.add_argument("-b", "--dababase", type=str, required=True
+    parser.add_argument("-b", "--dababase", type=str, required=True,
                         help="database to check")
-    parser.add_argument("-r", "--repo", type=str, required=True
+    parser.add_argument("-r", "--repo", type=str, required=True,
                         help="repo of database")
     args=parser.parse_args()
 
