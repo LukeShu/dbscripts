@@ -142,7 +142,8 @@ class generateRsyncBlacklist(unittest.TestCase):
         self.assertEqual(listado("blacklist_sample"),["alex","gmime22"])
 
     def testExcludeFiles(self):
-        a=generate_exclude_list_from_blacklist(self.example_package_list,listado("blacklist_sample"),debug=True)
+        a=rsyncBlacklist_from_blacklist(self.example_package_list, 
+                                        listado("blacklist_sample"))
         b=[self.example_package_list[0]["location"],self.example_package_list[2]["location"]]
         self.assertEqual(a,b)
 
@@ -155,7 +156,9 @@ class pkginfo_from_descKnownValues(unittest.TestCase):
                             "license" : "GPL",
                             "location": "binutils-2.21-4-x86_64.pkg.tar.xz",
                             "depends" : False,}
-    pkggen=pkginfo_from_desc("desc")
+    fsock=open("desc")
+    pkggen=pkginfo_from_desc(fsock.read())
+    fsock.close()
     def testPkginfoFromDesc(self):
         if self.pkggen is None:
             self.fail("return value is None")

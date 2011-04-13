@@ -31,9 +31,8 @@ for repo in $(echo ${repo_list} | tr ':' ' '); do
 	msg2 "Syncing ${repo} ${arch}"
 	${rsync_post_command} --exclude-from=${rsync_blacklist} \
 	    ${mirror}${mirropath}/${repo} ${repodir}/${repo}
-	msg2 "Making pending list for ${repo} ${arch}"
-	run_python_cmd "mkpending.py -r ${repo} -b ${repodir}/${repo}/os/${arch}"
 	msg2 "Cleaning ${repo} ${arch}"
+	# This also generates pending lists
 	run_python_cmd "clean_repo.py -b ${repodir}/${repo}/os/${arch}/${repo}.db.tar.gz -d ${repodir}/${repo}/os/${arch}/"
     done
 done

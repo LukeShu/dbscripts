@@ -38,7 +38,7 @@ def pkginfo_from_filename(filename):
     pkg["name"] = "-".join(fileattrs)
     return pkg
 
-def pkginfo_from_desc(filename):
+def pkginfo_from_desc(info_from_desc, pkg=Package()):
     """ Returns pkginfo from desc file.
     
     Parameters:
@@ -48,14 +48,7 @@ def pkginfo_from_desc(filename):
     Returns:
     ----------
     pkg -> Package object"""
-    if not os.path.isfile(filename):
-        raise NonValidFile
-    try:
-        f=open(filename)
-        info=f.read().rsplit()
-    finally:
-        f.close()
-    pkg = Package()
+    info=info_from_desc.rsplit()
     info_map={"name"    :("%NAME%"    , None),
               "version" :("%VERSION%" , 0    ),
               "release" :("%VERSION%" , 1    ),
@@ -128,7 +121,7 @@ def pkginfo_from_files_in_dir(directory):
     return tuple(package_list)
 
 def pkginfo_from_db(path_to_db):
-    """ Get PKGINFO from db.
+    """ Get pkginfo from db.
     
     Parameters:
     ----------
@@ -136,37 +129,30 @@ def pkginfo_from_db(path_to_db):
 
     Output:
     ----------
-    None """
+    package_list -> tuple of Package objects"""
     package_list=list()
     
     if not os.path.isfile(path_to_db):
         raise NonValidFile(path_to_db + " is not a file")
     
-    check_output(["mkdir", "-p", config["archdb"]])
-
     try:
-        db_open_tar = tarfile.open(path_to_db, 'r:gz')
+        dbsock = tarfile.open(path_to_db, 'r:gz')
+        desc_files=[desc for desc in db_open_tar.getnames()
+                    if "/desc" in desc]
+        for name in desc_files:
+            desc=dbsock.extractfile(name)
+            package_list.append(pkginfo_from_desc(desc.read()))
     except tarfile.ReadError:
-        raise NonValidFile("No valid db_file %s or not readable" % path_to_db)
+        raise NonValidFile("No valid db_file %s or not readable"
+                           % path_to_db)
         return(tuple())
-
-    for file in db_open_tar.getmembers():
-        db_open_tar.extract(file, config["archdb"])
-    db_open_tar.close()
-    # Get info from file
-    for dir_ in glob(config["archdb"] + "/*"):
-        if isdir(dir_) and isfile(dir_ + "/desc"):
-            package_list.append(pkginfo_from_desc(
-                    os.path.join(dir_,"desc")))
-    check_output(["rm", "-r", config["archdb"]])
-    if config["debug"]:
-        printf(package_list)
+    finally:
+        db_open_tar.close()
     return package_list
 
-def generate_exclude_list_from_blacklist(packages_iterable,
-                                         blacklisted_names,
-                                         exclude_file=config["rsync_blacklist"],
-                                         debug=config["debug"]):
+def rsyncBlacklist_from_blacklist(packages_iterable,
+                                 blacklisted_names,
+                                 exclude_file=config["rsync_blacklist"]):
     """ Generate an exclude list for rsync 
     
     Parameters:
@@ -183,19 +169,19 @@ def generate_exclude_list_from_blacklist(packages_iterable,
           if isinstance(pkg, Package)
           and pkg["name"] in blacklisted_names]
 
-    if debug:
-        return pkgs
     try:
         fsock = open(exclude_file,"w")
-        try:
-            fsock.write("\n".join(a))
-        finally:
-            fsock.close()
+        fsock.write("\n".join(pkgs) + "\n")
     except IOError:
         printf("%s wasnt written" % exclude_file)
+        exit(1)
+    finally:
+        fsock.close()
+    return pkgs
+
 
 if __name__ == "__main__":
     cmd=generate_rsync_command(rsync_list_command)
     a=run_rsync(cmd)
     packages=pkginfo_from_rsync_output(a)
-    generate_exclude_list_from_blacklist(packages,listado(blacklist))
+    rsyncBlaclist_from_blacklist(packages,listado(blacklist))
