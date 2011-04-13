@@ -147,7 +147,7 @@ def pkginfo_from_db(path_to_db):
                            % path_to_db)
         return(tuple())
     finally:
-        db_open_tar.close()
+        dbsock.close()
     return package_list
 
 def rsyncBlacklist_from_blacklist(packages_iterable,
