@@ -137,7 +137,7 @@ def pkginfo_from_db(path_to_db):
     
     try:
         dbsock = tarfile.open(path_to_db, 'r:gz')
-        desc_files=[desc for desc in db_open_tar.getnames()
+        desc_files=[desc for desc in dbsock.getnames()
                     if "/desc" in desc]
         for name in desc_files:
             desc=dbsock.extractfile(name)

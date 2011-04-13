@@ -31,5 +31,5 @@ output="True"
 debug="False"
 
 # Rsync commands
-rsync_update_command="rsync -av --delay-updates --exclude='*.{abs|db}.tar.*' "
-rsync_post_command="rsync -av --delete --exclude='*.abs.tar.*' "
+rsync_update_command="rsync -nav --delay-updates --exclude='*.{abs|db}.tar.*' "
+rsync_post_command="rsync -nav --delete --exclude='*.abs.tar.*' "

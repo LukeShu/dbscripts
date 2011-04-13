@@ -29,8 +29,10 @@ stdnull "rm -rf ${pending}*"
 for repo in $(echo ${repo_list} | tr ':' ' '); do
     for arch in $(echo ${arch_list} | tr ':' ' '); do
 	msg2 "Syncing ${repo} ${arch}"
-	${rsync_post_command} --exclude-from=${rsync_blacklist} \
-	    ${mirror}${mirropath}/${repo} ${repodir}/${repo}
+	cmd=$(echo ${rsync_post_command} --exclude-from=${rsync_blacklist} \
+	    ${mirror}${mirropath}/${repo} ${repodir}/${repo})
+	plain "${cmd}"
+	${cmd}
 	msg2 "Cleaning ${repo} ${arch}"
 	# This also generates pending lists
 	run_python_cmd "clean_repo.py -b ${repodir}/${repo}/os/${arch}/${repo}.db.tar.gz -d ${repodir}/${repo}/os/${arch}/"
