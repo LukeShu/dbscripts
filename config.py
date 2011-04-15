@@ -9,61 +9,26 @@ except(ImportError):
         return getoutput(cmd)
 import os
 
-stringvars=("mirror", "mirrorpath", "logname", "tempdir", "archdb",
-            "repodir", "blacklist", "whitelist", "pending",
-            "rsync_blacklist",)
-listvars=("repo_list", "dir_list", "arch_list", "other",)
-boolvars=("output", "debug",)
-
-config=dict()
-
-def exit_if_none(var):
-    if os.environ.get(var) is None:
-        exit("%s is not defined" % var)
-
-for var in stringvars:
-    exit_if_none(var)
-    config[var]=os.environ.get(var)
-
-for var in listvars:
-    exit_if_none(var)
-    config[var]=tuple(os.environ.get(var).split(":"))
-
-for var in boolvars:
-    exit_if_none(var)
-    if os.environ.get(var) == "True":
-        config[var]=True
-    elif os.environ.get(var) =="False":
-        config[var]=False
-    else:
-        print('%s is not True or False' % var)
 
 # Rsync commands
-rsync_list_command="rsync -a --no-motd --list-only "
 
-def printf(text,output=config["output"]):
+def printf(text, logfile=False):
     """Guarda el texto en la variable log y puede imprimir en pantalla."""
-    log_file = open(config["logname"], 'a')
-    log_file.write("\n" + str(text) + "\n")
-    log_file.close()
-    if output:
-        print (str(text) + "\n")
+    print (str(text) + "\n")
+    if logfile:
+        try:
+            log = open(logfile, 'a')
+            log.write("\n" + str(text) + "\n")
+        except:
+            print("Can't open %s" % logfile)
+        finally:
+            log.close()
 
-del exit_if_none
 
 # Classes and Exceptions
-class NonValidFile(ValueError):
-    def __init__(self):
-        ValueError.__init__(self)
-        printf(self.message)
-class NonValidDir(ValueError):
-    def __init__(self):
-        ValueError.__init__(self)
-        printf(self.message)
-class NonValidCommand(ValueError):
-    def __init__(self):
-        ValueError.__init__(self)
-        printf(self.message)
+class NonValidFile(ValueError): pass
+class NonValidDir(ValueError): pass
+class NonValidCommand(ValueError): pass
 
 class Package:
     """ An object that has information about a package. """
@@ -101,7 +66,3 @@ class Package:
                     return False
         else:
             return True
-
-if __name__=="__main__":
-    for key in config.keys():
-        print("%s : %s" % (key,config[key]))

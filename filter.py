@@ -2,7 +2,7 @@
 #-*- encoding: utf-8 -*-
 from glob import glob
 from repm.config import *
-from repm.pato2 import *
+import tarfile
 
 def listado(filename,start=0,end=None):
     """Obtiene una lista de paquetes de un archivo."""
@@ -28,7 +28,7 @@ def pkginfo_from_filename(filename):
     ----------
     pkg -> Package object"""
     if ".pkg.tar." not in filename:
-        raise NonValidFile
+        raise NonValidFile("File is not a pacman package")
     pkg = Package()
     pkg["location"] = filename
     fileattrs = os.path.basename(filename).split("-")
@@ -140,19 +140,18 @@ def pkginfo_from_db(path_to_db):
         desc_files=[desc for desc in dbsock.getnames()
                     if "/desc" in desc]
         for name in desc_files:
-            desc=dbsock.extractfile(name)
-            package_list.append(pkginfo_from_desc(desc.read()))
+            desc=dbsock.extractfile(name).read().decode("UTF-8")
+            package_list.append(pkginfo_from_desc(desc))
     except tarfile.ReadError:
         raise NonValidFile("No valid db_file %s or not readable"
                            % path_to_db)
-        return(tuple())
     finally:
         dbsock.close()
     return package_list
 
 def rsyncBlacklist_from_blacklist(packages_iterable,
                                  blacklisted_names,
-                                 exclude_file=config["rsync_blacklist"]):
+                                 exclude_file):
     """ Generate an exclude list for rsync 
     
     Parameters:
@@ -168,20 +167,31 @@ def rsyncBlacklist_from_blacklist(packages_iterable,
     pkgs=[pkg["location"] for pkg in packages_iterable
           if isinstance(pkg, Package)
           and pkg["name"] in blacklisted_names]
-
-    try:
-        fsock = open(exclude_file,"w")
-        fsock.write("\n".join(pkgs) + "\n")
-    except IOError:
-        printf("%s wasnt written" % exclude_file)
-        exit(1)
-    finally:
-        fsock.close()
+    if exclude_file:
+        try:
+            fsock = open(exclude_file,"w")
+            fsock.write("\n".join(pkgs) + "\n")
+        except IOError:
+            printf("%s wasnt written" % exclude_file)
+            exit(1)
+        finally:
+            fsock.close()
     return pkgs
 
 
 if __name__ == "__main__":
-    cmd=generate_rsync_command(rsync_list_command)
-    a=run_rsync(cmd)
-    packages=pkginfo_from_rsync_output(a)
-    rsyncBlaclist_from_blacklist(packages,listado(blacklist))
+    import argparse
+    parser=argparse.ArgumentParser()
+    parser.add_argument("-r", "--rsync-exclude-file", type=str,
+                        help="File in which to generate exclude list",
+                        required=True,)
+    parser.add_argument("-k", "--blacklist-file", type=str,
+                        help="File containing blacklisted names",
+                        required=True,)
+    parser.add_argument("-c", "--rsync-command", type=str,
+                        help="This command will be run to get a pkg list")
+    args=parser.parse_args()
+    rsout=check_output(args.rsync_command)
+    packages=pkginfo_from_rsync_output(rsout)
+    rsyncBlaclist_from_blacklist(packages, listado(args.blacklist_file),
+                                 args.rsync_exclude_file)

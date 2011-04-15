@@ -3,21 +3,16 @@
 from repm.filter import *
 import argparse
 
-def mkpending(path_to_db, repo, prefix=config["pending"]):
+def mkpending(packages_iterable, pending_file, blacklisted_names,
+              whitelisted_names):
     """ Determine wich packages are pending for license auditing."""
-    if "~" in path_to_db:
-        path_to_db=(os.path.expanduser(path_to_db))
-
-    search = tuple(listado(config["blacklist"]) +
-                   listado(config["whitelist"]))
+    search = tuple(blacklisted_names +
+                   whitelisted_names)
     
-    pkgs=list(pkginfo_from_db(path_to_db))
-
-    filename=prefix + "-" + repo + ".txt"
     try:
-        fsock=open(filename, "rw")
-        pkgs=[pkg for pkg in pkginfo_from_db(path_to_db)
-              if pkg["name"] not in listado(filename)]
+        fsock=open(pending_file, "r")
+        pkgs=[pkg for pkg in packages_iterable
+              if pkg["name"] not in listado(pending_file)]
         for line in fsock.readlines():
             if line:
                 pkg=Package()
@@ -26,16 +21,16 @@ def mkpending(path_to_db, repo, prefix=config["pending"]):
                 pkgs.append(pkg)
         pkgs=[pkg for pkg in pkgs if pkg["name"] not in search
               and "custom" in pkg["license"]]
+        fsock=open(pending_file, "w")
         fsock.write("\n".join([pkg["name"] + ":" + pkg["license"]
                                for pkg in pkgs]) + "\n")
     except(IOError):
-        raise NonValidFile("Can't read or write %s" % filename)
+        raise NonValidFile("Can't read or write %s" % pending_file)
     finally:
         fsock.close()
     return pkgs
 
-def remove_from_blacklist(path_to_db, blacklisted_names,
-                          debug=config["debug"]):
+def remove_from_blacklist(path_to_db, blacklisted_names):
     """ Check the blacklist and remove packages on the db"""
     if "~" in path_to_db:
         path_to_db=(os.path.expanduser(path_to_db))
@@ -47,9 +42,7 @@ def remove_from_blacklist(path_to_db, blacklisted_names,
         cmd =  "repo-remove " + path_to_db + " " + lista
         printf(cmd)
         a = check_output(cmd)
-    if debug:
-        printf(a)
-        return pkgs, cmd
+    return pkgs
 
 def cleanup_nonfree_in_dir(directory, blacklisted_names):
     if "~" in directory:
@@ -61,25 +54,42 @@ def cleanup_nonfree_in_dir(directory, blacklisted_names):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Clean a repo db and packages")
-    parser.add_argument("-b", "--database", type=str,
-                        help="dabatase to clean")
-    parser.add_argument("-d", "--directory", type=str,
-                        help="directory to clean")
+        prog="clean_repo",
+        description="Clean a repo db and packages",)
+
+    parser.add_argument("-k", "--blacklist-file", type=str,
+                        help="File containing blacklisted names",
+                        required=True,)
+
+    group_dir=parser.add_argument_group("Clean non-free packages in dir")
+    group_dir.add_argument("-d", "--directory", type=str,
+                        help="directory to clean",)
+
+    group_db=parser.add_argument_group("Clean non-free packages in db",
+                                       "All arguments need to be specified")
+    group_db.add_argument("-b", "--database", type=str,
+                          help="dabatase to clean")
+    group_db.add_argument("-p", "--pending-file", type=str,
+                          help="File in which to write pending list")
+    group_db.add_argument("-w", "--whitelist-file", type=str,
+                          help="File containing whitelisted names")
+
     args=parser.parse_args()
-
-    if args.database:
-        repo=os.path.basename(args.database).split(".")[0]
-        pkgs=pkginfo_from_db(args.database)
-        remove_from_blacklist(args.database, pkgs,
-                              tuple(listado(config["blacklist"]) +
-                                    listado(config["pending"] + 
-                                            "-" + repo + ".txt")))
-        mkpending(args.database, args.repo)
-
-    if args.directory:
-        cleanup_nonfree_in_dir(args.directory,
-                               listado(config["blacklist"]))
 
     if not args.directory and not args.database:
         parser.print_help()
+    elif not args.pending_file or not args.whitelist_file \
+            and args.database:
+        parser.print_help()
+    else:
+        blacklisted=listado(args.blacklist_file)
+
+    if args.database:
+        whitelisted=listado(args.whitelist_file)
+        pkgs=pkginfo_from_db(args.database)
+        remove_from_blacklist(args.database, blacklisted)
+        mkpending(pkgs, args.pending_file,
+                  blacklisted, whitelisted)
+
+    if args.directory:
+        cleanup_nonfree_in_dir(args.directory, blacklisted)

@@ -143,7 +143,8 @@ class generateRsyncBlacklist(unittest.TestCase):
 
     def testExcludeFiles(self):
         a=rsyncBlacklist_from_blacklist(self.example_package_list, 
-                                        listado("blacklist_sample"))
+                                        listado("blacklist_sample"),
+                                        False)
         b=[self.example_package_list[0]["location"],self.example_package_list[2]["location"]]
         self.assertEqual(a,b)
 
