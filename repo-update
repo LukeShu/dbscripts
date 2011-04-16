@@ -27,6 +27,7 @@ for repo in ${PKGREPOS[@]}; do
 		-b ${repodir}/${repo}/${repo}${DBEXT}
 	fi
 	clean_repo.py -k ${blacklist} -d ${repodir}/${repo}
+    done
 done
 
 db-update
