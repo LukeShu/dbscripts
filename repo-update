@@ -8,7 +8,7 @@ source ./libremessages
 for repo in ${PKGREPOS[@]}; do
     for arch in ${ARCHES[@]} 'any'; do
 	msg "Syncing ${repo} ${arch}"
-	filter.py -r "${rsync_blacklist}" -k "${blacklist}" -c \
+	python filter.py -r "${rsync_blacklist}" -k "${blacklist}" -c \
 	    \"${rsync_list_command}\ \
 	    ${mirror}${mirrorpath}/${repo}/os/${arch}\ \
 	    ${repodir}/${repo}/\"
@@ -22,11 +22,11 @@ for repo in ${PKGREPOS[@]}; do
     done
     for arch in ${ARCHES[@]}; do
 	if [ -r ${repodir}/${repo}/os/${arch}/${repo}${DBEXT} ]; then
-	    clean_repo.py -k ${blacklist} -w ${whitelist} \
+	    python clean_repo.py -k ${blacklist} -w ${whitelist} \
 		-p ${docs_dir}/pending-${repo} \
 		-b ${repodir}/${repo}/${repo}${DBEXT}
 	fi
-	clean_repo.py -k ${blacklist} -d ${repodir}/${repo}
+	python clean_repo.py -k ${blacklist} -d ${repodir}/${repo}
     done
 done
 
