@@ -71,6 +71,19 @@ in_array() {
 	return 1 # Not Found
 }
 
+##
+#  usage : get_full_version( $epoch, $pkgver, $pkgrel )
+# return : full version spec, including epoch (if necessary), pkgver, pkgrel
+##
+get_full_version() {
+	if [[ $1 -eq 0 ]]; then
+		# zero epoch case, don't include it in version
+		echo $2-$3
+	else
+		echo $1:$2-$3
+	fi
+}
+
 script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.$(basename $0)"
 	if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
@@ -135,7 +148,8 @@ trap cleanup EXIT
 #repo_lock <repo-name> <arch> [timeout]
 repo_lock () {
 	local LOCKDIR="$TMPDIR/.repolock.$1.$2"
-	local LOCKFILE="${FTP_BASE}/${1}/os/${2}/${1}${DBEXT}.lck"
+	local DBLOCKFILE="${FTP_BASE}/${1}/os/${2}/${1}${DBEXT}.lck"
+	local FILESLOCKFILE="${FTP_BASE}/${1}/os/${2}/${1}${FILESEXT}.lck"
 	local _count
 	local _trial
 	local _timeout
@@ -143,8 +157,12 @@ repo_lock () {
 	local _owner
 
 	# This is the lock file used by repo-add and repo-remove
-	if [ -f "${LOCKFILE}" ]; then
-		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat $LOCKFILE)"
+	if [ -f "${DBLOCKFILE}" ]; then
+		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat $DBLOCKFILE)"
+		return 1
+	fi
+	if [ -f "${FILESLOCKFILE}" ]; then
+		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat ${FILESLOCKFILE})"
 		return 1
 	fi
 
@@ -266,6 +284,9 @@ getpkgfile() {
 	elif [ ! -f "${1}" ]; then
 		error "Package ${1} not found!"
 		exit 1
+	elif ${REQUIRE_SIGNATURE} && [ ! -f "${1}.sig" ]; then
+		error "Package signature ${1}.sig not found!"
+		exit 1
 	fi
 
 	echo ${1}
@@ -281,6 +302,9 @@ getpkgfiles() {
 	for f in ${@}; do
 		if  [ ! -f "${f}" ]; then
 			error "Package ${f} not found!"
+			exit 1
+		elif ${REQUIRE_SIGNATURE} && [ ! -f "${f}.sig" ]; then
+			error "Package signature ${f}.sig not found!"
 			exit 1
 		fi
 	done
@@ -328,7 +352,7 @@ check_pkgsvn() {
 		[ $? -ge 1 ] && return 1
 	fi
 
-	local svnver="$(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo "${pkgver}-${pkgrel}")"
+	local svnver="$(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}) )"
 	[ "${svnver}" == "${_pkgver}" ] || return 1
 
 	local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
@@ -400,14 +424,18 @@ check_pkgrepos() {
 	[ $? -ge 1 ] && return 1
 
 	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
+	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT}.sig ] && return 1
 	[ -f "${FTP_BASE}/${PKGPOOL}/$(basename ${pkgfile})" ] && return 1
+	[ -f "${FTP_BASE}/${PKGPOOL}/$(basename ${pkgfile}).sig" ] && return 1
 
 	local repo
 	local arch
 	for repo in ${PKGREPOS[@]}; do
 		for arch in ${ARCHES[@]}; do
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
+			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT}.sig ] && return 1
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/$(basename ${pkgfile})" ] && return 1
+			[ -f "${FTP_BASE}/${repo}/os/${arch}/$(basename ${pkgfile}).sig" ] && return 1
 		done
 	done
 
@@ -439,6 +467,7 @@ check_repo_permission() {
 		local dir="${FTP_BASE}/${repo}/os/${arch}/"
 		[ -w "${dir}" ] || return 1
 		[ -f "${dir}"${repo}${DBEXT} -a ! -w "${dir}"${repo}${DBEXT} ] && return 1
+		[ -f "${dir}"${repo}${FILESEXT} -a ! -w "${dir}"${repo}${FILESEXT} ] && return 1
 	done
 
 	return 0
@@ -448,11 +477,14 @@ set_repo_permission() {
 	local repo=$1
 	local arch=$2
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
+	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
 	if [ -w "${dbfile}" ]; then
 		local group=$(stat --printf='%G' "$(dirname "${dbfile}")")
 		chgrp $group "${dbfile}" || error "Could not change group of ${dbfile} to $group"
+		chgrp $group "${filesfile}" || error "Could not change group of ${filesfile} to $group"
 		chmod g+w "${dbfile}" || error "Could not set write permission for group $group to ${dbfile}"
+		chmod g+w "${filesfile}" || error "Could not set write permission for group $group to ${filesfile}"
 	else
 		error "You don't have permission to change ${dbfile}"
 	fi
@@ -467,6 +499,8 @@ arch_repo_add() {
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
 	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
 		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
+	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
+		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[@]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
 }
@@ -476,6 +510,7 @@ arch_repo_remove() {
 	local arch=$2
 	local pkgs=(${@:3})
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
+	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
 	if [ ! -f "${dbfile}" ]; then
 		error "No database found at '${dbfile}'"
@@ -483,5 +518,7 @@ arch_repo_remove() {
 	fi
 	repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
 		|| error "repo-remove ${dbfile} ${pkgs[@]}"
+	/usr/bin/repo-remove -q "${filesfile}" ${pkgs[@]} \
+		|| error "repo-remove ${filesfile} ${pkgs[@]}"
 	set_repo_permission "${repo}" "${arch}"
 }

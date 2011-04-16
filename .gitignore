@@ -2,4 +2,4 @@
 *.pyc
 local_config
 /config.local
-test/packages/*/*.pkg.tar.*
+test/packages/*/*.pkg.tar.?z

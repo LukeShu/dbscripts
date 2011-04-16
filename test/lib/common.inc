@@ -18,7 +18,7 @@ oneTimeSetUp() {
 		pushd $d >/dev/null
 		pkgname=($(. PKGBUILD; echo ${pkgname[@]}))
 		pkgarch=($(. PKGBUILD; echo ${arch[@]}))
-		pkgversion=$(. PKGBUILD; echo ${pkgver}-${pkgrel})
+		pkgversion=$(. PKGBUILD; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
 
 		build=true
 		for a in ${pkgarch[@]}; do
@@ -29,10 +29,10 @@ oneTimeSetUp() {
 
 		if ! ${build}; then
 			if [ "${pkgarch[0]}" == 'any' ]; then
-				extra-x86_64-build || die 'extra-x86_64-build failed'
+				sudo extra-x86_64-build || die 'extra-x86_64-build failed'
 			else
 				for a in ${pkgarch[@]}; do
-					extra-${a}-build || die "extra-${a}-build failed"
+					sudo extra-${a}-build || die "extra-${a}-build failed"
 				done
 			fi
 			for a in ${pkgarch[@]}; do
@@ -95,6 +95,7 @@ setUp() {
 	TMPDIR="${TMP}/tmp"
 	CLEANUP_DRYRUN=false
 	SOURCE_CLEANUP_DRYRUN=false
+	REQUIRE_SIGNATURE=true
 eot
 	. "$(dirname ${BASH_SOURCE[0]})/../../config"
 }
@@ -112,36 +113,58 @@ releasePackage() {
 
 	pushd "${TMP}/svn-packages-copy"/${pkgbase}/trunk/ >/dev/null
 	archrelease ${repo}-${arch} >/dev/null 2&>1
-	pkgver=$(. PKGBUILD; echo "${pkgver}-${pkgrel}")
+	pkgver=$(. PKGBUILD; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
 	popd >/dev/null
-	cp "${pkgdir}/${pkgbase}"/*-${pkgver}-${arch}.pkg.tar.* "${STAGING}"/${repo}/
+	cp "${pkgdir}/${pkgbase}"/*-${pkgver}-${arch}${PKGEXT} "${STAGING}"/${repo}/
+
+	if ${REQUIRE_SIGNATURE}; then
+		# TODO: really sign the packages with a valid key
+		find "${STAGING}"/${repo}/ -type f \
+			-name "*-${pkgver}-${arch}${PKGEXT}" \
+			-exec touch {}.sig \;
+	fi
 }
 
 checkAnyPackage() {
 	local repo=$1
 	local pkg=$2
 	local arch
+	local db
 
 	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ] || fail "${PKGPOOL}/${pkg} not found"
+	if ${REQUIRE_SIGNATURE}; then
+		[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ] || fail "${PKGPOOL}/${pkg}.sig not found"
+	fi
 
 	for arch in i686 x86_64; do
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ] || fail "${repo}/os/${arch}/${pkg} not a symlink"
+		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ] || fail "${repo}/os/${arch}/${pkg} is not a symlink"
 		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "${FTP_BASE}/${PKGPOOL}/${pkg}" ] \
 			|| fail "${repo}/os/${arch}/${pkg} does not link to ${PKGPOOL}/${pkg}"
+
+		if ${REQUIRE_SIGNATURE}; then
+			[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ] || fail "${repo}/os/${arch}/${pkg}.sig is not a symlink"
+			[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ] \
+				|| fail "${repo}/os/${arch}/${pkg}.sig does not link to ${PKGPOOL}/${pkg}.sig"
+		fi
 	done
 	[ -r "${STAGING}"/${repo}/${pkg} ] && fail "${repo}/${pkg} found in staging dir"
+	[ -r "${STAGING}"/${repo}/${pkg}.sig ] && fail "${repo}/${pkg}.sig found in staging dir"
 
-	( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q ${pkg}) \
-		|| fail "${pkg} not in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
+	for db in ${DBEXT} ${FILESEXT}; do
+		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ] \
+			&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep -q ${pkg}) \
+			|| fail "${pkg} not in ${repo}/os/${arch}/${repo}${db%.tar.*}"
+	done
 
 	[ -r "${FTP_BASE}/${repo}/os/any/${pkg}" ] && fail "${repo}/os/any/${pkg} should not exist"
+	[ -r "${FTP_BASE}/${repo}/os/any/${pkg}.sig" ] && fail "${repo}/os/any/${pkg}.sig should not exist"
 }
 
 checkPackage() {
 	local repo=$1
 	local pkg=$2
 	local arch=$3
+	local db
 
 	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ] || fail "${PKGPOOL}/${pkg} not found"
 	[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ] || fail "${repo}/os/${arch}/${pkg} not a symlink"
@@ -150,9 +173,20 @@ checkPackage() {
 	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "${FTP_BASE}/${PKGPOOL}/${pkg}" ] \
 		|| fail "${repo}/os/${arch}/${pkg} does not link to ${PKGPOOL}/${pkg}"
 
-	( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q ${pkg}) \
-		|| fail "${pkg} not in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
+	if ${REQUIRE_SIGNATURE}; then
+		[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ] || fail "${PKGPOOL}/${pkg}.sig not found"
+		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ] || fail "${repo}/os/${arch}/${pkg}.sig is not a symlink"
+		[ -r "${STAGING}"/${repo}/${pkg}.sig ] && fail "${repo}/${pkg}.sig found in staging dir"
+
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ] \
+			|| fail "${repo}/os/${arch}/${pkg}.sig does not link to ${PKGPOOL}/${pkg}.sig"
+	fi
+
+	for db in ${DBEXT} ${FILESEXT}; do
+		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ] \
+			&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep -q ${pkg}) \
+			|| fail "${pkg} not in ${repo}/os/${arch}/${repo}${db%.tar.*}"
+	done
 
 	local pkgbase=$(getpkgbase "${FTP_BASE}/${PKGPOOL}/${pkg}")
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
@@ -164,10 +198,13 @@ checkRemovedPackage() {
 	local repo=$1
 	local pkgbase=$2
 	local arch=$3
+	local db
 
-	( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q ${pkgbase}) \
-		&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
+	for db in ${DBEXT} ${FILESEXT}; do
+		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ] \
+			&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep -q ${pkgbase}) \
+			&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${db%.tar.*}"
+	done
 
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
 	[ -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}" ] \
@@ -178,11 +215,14 @@ checkRemovedAnyPackage() {
 	local repo=$1
 	local pkgbase=$2
 	local arch
+	local db
 
-	for arch in i686 x86_64; do
-		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-			&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q ${pkgbase}) \
-			&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
+	for db in ${DBEXT} ${FILESEXT}; do
+		for arch in i686 x86_64; do
+			( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ] \
+				&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep -q ${pkgbase}) \
+				&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${db%.tar.*}"
+		done
 	done
 
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
