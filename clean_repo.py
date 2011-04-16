@@ -22,7 +22,8 @@ def mkpending(packages_iterable, pending_file, blacklisted_names,
         pkgs=[pkg for pkg in pkgs if pkg["name"] not in search
               and "custom" in pkg["license"]]
         fsock=open(pending_file, "w")
-        fsock.write("\n".join([pkg["name"] + ":" + pkg["license"]
+        fsock.write("\n".join([pkg["name"] + ":" + pkg["location"] + 
+                               ":" + pkg["license"]
                                for pkg in pkgs]) + "\n")
     except(IOError):
         raise NonValidFile("Can't read or write %s" % pending_file)

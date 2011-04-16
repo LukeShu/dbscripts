@@ -189,9 +189,10 @@ if __name__ == "__main__":
                         help="File containing blacklisted names",
                         required=True,)
     parser.add_argument("-c", "--rsync-command", type=str,
-                        help="This command will be run to get a pkg list")
+                        help="This command will be run to get a pkg list",
+                        required=True,)
     args=parser.parse_args()
-    rsout=check_output(args.rsync_command)
+    rsout=check_output(args.rsync_command.split())
     packages=pkginfo_from_rsync_output(rsout)
     rsyncBlaclist_from_blacklist(packages, listado(args.blacklist_file),
                                  args.rsync_exclude_file)

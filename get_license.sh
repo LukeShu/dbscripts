@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # -*- coding: utf-8 -*-
 
      #  get_license.sh
@@ -20,36 +20,26 @@
                                                                              
      # You should have received a copy of the GNU General Public License       
      # along with Parabola.  If not, see <http://www.gnu.org/licenses/>.       
-                                                                             
-docs="/home/parabolavnx/parabolagnulinux.org/docs"
-repo="/home/parabolavnx/parabolagnulinux.org/repo"
-dir="$docs/pending-licenses"
+source ./config
+source ./local_config
+source ./libremessages                                                   
 
-echo "Cleaning $dir"
-rm -rf $dir/*
+msg "Creating pending licenses list"
+pushd ${licenses_dir}
+rm -rf ${licenses_dir}/*
 
-tempdir=$(mktemp -d)
-cd $tempdir
-
-pending=($(cut -d: -f1 $docs/pending*.txt))
-echo ${pending[@]}
-
-for pkg in ${pending[@]}; do
-    pkg_in_repo=( $(ls ${repo}/*/os/*/${pkg}*) )
-    for y in ${pkg_in_repo[@]}; do
-	echo "chmod +r $y"
-	chmod +r $y
-	echo "tar -xf $y usr/share/licenses"
-	bsdtar -xf $y usr/share/licenses
-	echo "chmod -r $y"
-	chmod -r $y
+for repo in ${PKGREPOS[@]}; do
+    msg2 "Extracting licenses in ${repo}"
+    pending=($(cut -d: -f2 ${docs_dir}/pending-${repo}))
+    pushd ${repodir}/${repo}
+    for pkg in ${pending[@]}; do
+	plain "${pkg}"
+	bsdtar -xf ${pkg} usr/share/licenses || {
+	    error "${pkg} has no licenses"
+	}
+	chmod -r ${pkg}
     done
 done
 
-mv usr/share/licenses/* $dir
-
-cd
-
-rm -rf $tempdir
-
+popd
 exit 0

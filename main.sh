@@ -1,43 +1,35 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
 
-source config.sh
+source ./config
+source ./local_config
+source ./libremessages
 
-function mkrsexclude {
-    local error=1
-    while ${error}; do
-	run_python_cmd "filter.py"
-	error=$?
+for repo in ${PKGREPOS[@]}; do
+    for arch in ${ARCHES[@]} 'any'; do
+	msg "Syncing ${repo} ${arch}"
+	filter.py -r "${rsync_blacklist}" -k "${blacklist}" -c \
+	    \"${rsync_list_command}\ \
+	    ${mirror}${mirrorpath}/${repo}/os/${arch}\ \
+	    ${repodir}/${repo}/\"
+	find ${repodir}/${repo} -name *${PKGEXT} -print \
+	    > ${rsync_not_needed}
+	${rsync_update_command} \
+	    ${mirror}${mirrorpath}/${repo}/os/${arch} \
+	    ${repodir}/${repo} \
+	    --exclude-from=${rsync_blacklist} \
+	    --exclude-from=${rsync_not_needed}
     done
-}
-
-msg "Cleaning $tempdir"
-stdnull "rm -r $tempdir/* "
-
-msg "Generating exclude list for rsync"
-mkrsexclude
-
-msg "Syncing repos without delete"
-# rsync_update_command does not sync db or abs
-${rsync_update_command} --exclude-from=${rsync_blacklist} \
-    ${mirror}${mirropath}/{$(echo ${repo_list} | tr ':' ','),\
-    $(echo ${dir_list} | tr ':' ',')} ${repodir}
-
-msg "Syncing each repo and cleaning"
-msg2 "Remove pending files"
-stdnull "rm -rf ${pending}*"
-for repo in $(echo ${repo_list} | tr ':' ' '); do
-    for arch in $(echo ${arch_list} | tr ':' ' '); do
-	msg2 "Syncing ${repo} ${arch}"
-	cmd=$(echo ${rsync_post_command} --exclude-from=${rsync_blacklist} \
-	    ${mirror}${mirropath}/${repo} ${repodir}/${repo})
-	plain "${cmd}"
-	${cmd}
-	msg2 "Cleaning ${repo} ${arch}"
-	# This also generates pending lists
-	run_python_cmd "clean_repo.py -b ${repodir}/${repo}/os/${arch}/${repo}.db.tar.gz -d ${repodir}/${repo}/os/${arch}/"
-    done
+    for arch in ${ARCHES[@]}; do
+	if [ -r ${repodir}/${repo}/os/${arch}/${repo}${DBEXT} ]; then
+	    clean_repo.py -k ${blacklist} -w ${whitelist} \
+		-p ${docs_dir}/pending-${repo} \
+		-b ${repodir}/${repo}/${repo}${DBEXT}
+	fi
+	clean_repo.py -k ${blacklist} -d ${repodir}/${repo}
 done
 
-msg "Checking licenses"
+db-update
+ftpdir-cleanup
+
 get_license.sh

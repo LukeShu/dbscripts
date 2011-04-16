@@ -4,21 +4,21 @@ mirrorpath="::mirrors/archlinux"
 
 # Directories: they should end without /
 ## Optionals
-paraboladir=~/parabolagnulinux.org
-logtime=$(date -u +%Y%m%d-%H:%M)
+paraboladir=
 ## Must be defined
 tempdir=~/tmp
 archdb=${tempdir}/db
 docs_dir=${paraboladir}/docs
-repodir=${paraboladir}/repo
+repodir=${paraboladir}/repo/staging
+licenses_dir=${docs_dir}/pending_licenses
 # End Directories
 
 # Files
-logname=${paraboladir}/log/${logtime}-repo-maintainer.log
+logname=${paraboladir}/log/$(date -u +%Y%m%d-%H:%M)-repo-maintainer.log
 blacklist=${docs_dir}/blacklist.txt
 whitelist=${docs_dir}/whitelist.txt
-pending=${docs_dir}/pending
 rsync_blacklist=${docs_dir}/rsyncBlacklist
+rsync_not_needed=${tmp}/rsync_not_needed
 
 # Repos, arches, and dirs for repo
 repo_list="core:extra:community:testing:community-testing:multilib"
@@ -26,10 +26,6 @@ dir_list="pool"
 arch_list="i686:x86_64"
 other="any"
 
-# Output options
-output="True"
-debug="False"
-
 # Rsync commands
-rsync_update_command="rsync -nav --delay-updates --exclude='*.{abs|db}.tar.*' "
-rsync_post_command="rsync -nav --delete --exclude='*.abs.tar.*' "
+rsync_list_command="rsync\ -ptgoL\ --list-only\ "
+rsync_update_command="rsync -ptgoL --exclude='*.abs.tar.*'"
