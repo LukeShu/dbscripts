@@ -1,0 +1,32 @@
+#!/bin/bash
+
+dirname="$(dirname $0)"
+
+. "${dirname}/../db-functions"
+. "${dirname}/../config"
+
+script_lock
+
+if [ $# -ne 1 ]; then
+	die "usage: $(basename $0) <mailto>"
+fi
+mailto=$1
+
+check() {
+	${dirname}/check_archlinux/check_packages.py \
+		--repos="${repos}" \
+		--abs-tree="/srv/abs/rsync/${arch},/srv/abs/rsync/any" \
+		--repo-dir="${FTP_BASE}" \
+		--arch="${arch}" \
+	2>&1 | ${dirname}/devlist-mailer "Integrity Check ${arch}: ${repos}" "${mailto}"
+}
+
+repos='core,extra,community'
+arch='i686'
+check
+
+repos='core,extra,community,multilib'
+arch='x86_64'
+check
+
+script_unlock

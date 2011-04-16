@@ -1,0 +1,117 @@
+#!/bin/bash
+
+. "$(dirname $0)/db-functions"
+. "$(dirname $0)/config"
+
+if [ $# -lt 3 ]; then
+	msg "usage: $(basename $0) <repo-from> <repo-to> <pkgname|pkgbase> ..."
+	exit 1
+fi
+
+args=(${@})
+repo_from="${args[0]}"
+repo_to="${args[1]}"
+ftppath_from="${FTP_BASE}/${repo_from}/os/"
+ftppath_to="${FTP_BASE}/${repo_to}/os/"
+
+if ! check_repo_permission $repo_to || ! check_repo_permission $repo_from; then
+	die "You don't have permission to move packages from ${repo_from} to ${repo_to}"
+fi
+
+# TODO: this might lock too much (architectures)
+for pkgarch in ${ARCHES[@]}; do
+	repo_lock ${repo_to} ${pkgarch} || exit 1
+	repo_lock ${repo_from} ${pkgarch} || exit 1
+done
+
+# check if packages to be moved exist in svn and ftp dir
+/usr/bin/svn checkout -q -N "${SVNREPO}" "${WORKDIR}/svn" >/dev/null
+for pkgbase in ${args[@]:2}; do
+	/usr/bin/svn up -q "${WORKDIR}/svn/${pkgbase}" >/dev/null
+	for pkgarch in ${ARCHES[@]} 'any'; do
+		svnrepo_from="${WORKDIR}/svn/${pkgbase}/repos/${repo_from}-${pkgarch}"
+		if [ -r "${svnrepo_from}/PKGBUILD" ]; then
+			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
+			if [ ${#pkgnames[@]} -lt 1 ]; then
+				die "Could not read pkgname"
+			fi
+
+			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo "${pkgver}-${pkgrel}")
+			if [ -z "${pkgver}" ]; then
+				die "Could not read pkgver"
+			fi
+
+			if [ "${pkgarch}" == 'any' ]; then
+				tarches=(${ARCHES[@]})
+			else
+				tarches=("${pkgarch}")
+			fi
+
+			for pkgname in ${pkgnames[@]}; do
+				for tarch in ${tarches[@]}; do
+					getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT} >/dev/null
+				done
+			done
+			continue 2
+		fi
+	done
+	die "${pkgbase} not found in ${repo_from}"
+done
+
+msg "Moving packages from [${repo_from}] to [${repo_to}]..."
+
+declare -A add_pkgs
+declare -A remove_pkgs
+for pkgbase in ${args[@]:2}; do
+	for pkgarch in ${ARCHES[@]} 'any'; do
+		svnrepo_from="${WORKDIR}/svn/${pkgbase}/repos/${repo_from}-${pkgarch}"
+		svnrepo_to="${WORKDIR}/svn/${pkgbase}/repos/${repo_to}-${pkgarch}"
+
+		if [ -f "${svnrepo_from}/PKGBUILD" ]; then
+			if [ "${pkgarch}" == 'any' ]; then
+				tarches=(${ARCHES[@]})
+			else
+				tarches=("${pkgarch}")
+			fi
+			msg2 "${pkgbase} ($(echo ${tarches[@]}))"
+			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
+			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo "${pkgver}-${pkgrel}")
+
+			if [ -d "${svnrepo_to}" ]; then
+				/usr/bin/svn rm --force -q "${svnrepo_to}"
+				/usr/bin/svn commit -q "${WORKDIR}/svn/${pkgbase}" -m "$(basename $0): ${pkgbase} removed by $(id -un) for move to [${repo_to}] (${pkgarch})"
+			fi
+
+			/usr/bin/svn mv -q -r HEAD "${svnrepo_from}" "${svnrepo_to}"
+			/usr/bin/svn commit -q "${WORKDIR}/svn/${pkgbase}" -m "$(basename $0): moved ${pkgbase} from [${repo_from}] to [${repo_to}] (${pkgarch})"
+
+			for pkgname in ${pkgnames[@]}; do
+				for tarch in ${tarches[@]}; do
+					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT})
+					pkgfile=$(basename "${pkgpath}")
+
+					# copy package to pool if needed
+					# TODO: can be removed once every package has been moved to the package pool
+					if [ ! -f ${FTP_BASE}/${PKGPOOL}/${pkgfile} ]; then
+						cp ${pkgpath} ${FTP_BASE}/${PKGPOOL}
+					fi
+					ln -s "../../../${PKGPOOL}/${pkgfile}" ${ftppath_to}/${tarch}/
+					add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
+					remove_pkgs[${tarch}]+="${pkgname} "
+				done
+			done
+		fi
+	done
+done
+
+for tarch in ${ARCHES[@]}; do
+	if [ -n "${add_pkgs[${tarch}]}" ]; then
+		arch_repo_add "${repo_to}" "${tarch}" ${add_pkgs[${tarch}]}
+		arch_repo_remove "${repo_from}" "${tarch}" ${remove_pkgs[${tarch}]}
+	fi
+done
+
+for pkgarch in ${ARCHES[@]}; do
+	repo_unlock ${repo_from} ${pkgarch}
+	repo_unlock ${repo_to} ${pkgarch}
+done

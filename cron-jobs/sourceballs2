@@ -1,0 +1,87 @@
+#!/bin/bash
+
+dirname="$(dirname $(readlink -e $0))"
+. "${dirname}/../db-functions"
+. "${dirname}/../config"
+. "${MAKEPKGCONF}"
+
+pushd "${WORKDIR}" >/dev/null
+
+script_lock
+
+#adjust the nice level to run at a lower priority
+renice +10 -p $$ > /dev/null
+
+# Create a list of all available source package file names
+find "${ARCH_BASE}/${SRCPOOL}" -xtype f -name "*${SRCEXT}" -printf '%f\n' | sort -u > "${WORKDIR}/available-src-pkgs"
+
+# Steps
+# Traverse the ABSLibre
+# Makepkg --allsource every package
+# Remove the old packages
+pushd "${SVNREPO}" >/dev/null
+
+failedpkgs=()
+for repo in ${PKGREPOS[@]}; do
+    pushd $repo >/dev/null
+    find . -maxdepth 1 -type d | while read pkg; do
+        pushd "${SVNREPO}/$repo/$pkg" >/dev/null
+
+        [[ ! -e PKGBUILD ]] && {
+            warning "$repo/$pkg is not a package"
+            continue
+        }
+
+        unset pkgbase pkgname
+        source PKGBUILD
+        pkgbase=${pkgbase:-$pkgname}
+
+		echo "${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}" >> "${WORKDIR}/expected-src-pkgs"
+
+        # Skip already sourceballed
+        [[ -e "${SRCPKGDEST}/${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}" ]] && \
+            continue
+
+        makepkg --allsource --ignorearch -c >/dev/null 2>&1
+
+        [[ $? -ne 0 ]] && \
+            failedpkgs[${#failedpkgs[*]}]="${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}"
+
+    done
+    popd >/dev/null
+done
+
+# Cleanup old source packages
+cat "${WORKDIR}/expected-src-pkgs" | sort -u > "${WORKDIR}/expected-src-pkgs.sort"
+cat "${WORKDIR}/available-src-pkgs" | sort -u > "${WORKDIR}/available-src-pkgs.sort"
+old_pkgs=($(comm -23 "${WORKDIR}/available-src-pkgs.sort" "${WORKDIR}/expected-src-pkgs.sort"))
+
+if [ ${#old_pkgs[@]} -ge 1 ]; then
+	msg "Removing old source packages..."
+	${SOURCE_CLEANUP_DRYRUN} && warning 'dry run mode is active'
+	for old_pkg in ${old_pkgs[@]}; do
+		msg2 "${old_pkg}"
+		if ! ${SOURCE_CLEANUP_DRYRUN}; then
+			mv "$ARCH_BASE/${SRCPOOL}/${old_pkg}" "${SOURCE_CLEANUP_DESTDIR}"
+			touch "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
+		fi
+	done
+fi
+
+old_pkgs=($(find ${SOURCE_CLEANUP_DESTDIR} -type f -name "*${SRCEXT}" -mtime +${SOURCE_CLEANUP_KEEP} -printf '%f\n'))
+if [ ${#old_pkgs[@]} -ge 1 ]; then
+	msg "Removing old source packages from the cleanup directory..."
+	for old_pkg in ${old_pkgs[@]}; do
+		msg2 "${old_pkg}"
+		${SOURCE_CLEANUP_DRYRUN} || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
+	done
+fi
+
+msg "Failed"
+for _fail in ${failedpkgs[@]}; do
+    msg2 "$_fail"
+done
+       
+
+script_unlock
+
