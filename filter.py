@@ -4,9 +4,9 @@ from glob import glob
 from repm.config import *
 import tarfile
 
-def listado(filename,start=0,end=None):
+def listado(filename, start=0, end=None):
     """Obtiene una lista de paquetes de un archivo."""
-    fsock = open(filename,"r")
+    fsock = open(filename, "r")
     lista   = fsock.read().split("\n")
     fsock.close()
     if end is not None:
