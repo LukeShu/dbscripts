@@ -21,8 +21,9 @@ find "${ARCH_BASE}/${SRCPOOL}" -xtype f -name "*${SRCEXT}" -printf '%f\n' | sort
 
 pushd "${SVNREPO}" >/dev/null
 
-failedpkgs=()
 for repo in ${PKGREPOS[@]}; do
+    failedpkgs=()
+
     pushd $repo >/dev/null
     find . -maxdepth 1 -type d | while read pkg; do
         pushd "${SVNREPO}/$repo/$pkg" >/dev/null
@@ -42,13 +43,23 @@ for repo in ${PKGREPOS[@]}; do
         [[ -e "${SRCPKGDEST}/${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}" ]] && \
             continue
 
+        msg2 "$pkgbase-$pkgver-$pkgrel..."
         makepkg --allsource --ignorearch -c
 
-        [[ $? -ne 0 ]] && \
+        [[ $? -ne 0 ]] && {
+            warning "Failed."
             failedpkgs[${#failedpkgs[*]}]="${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}"
+        }
 
     done
     popd >/dev/null
+
+    if [ ${#failedpkgs[@]} -ge 1 ]; then
+        msg "Failed to create source packages for [${repo}]..."
+        for failed_pkg in ${failedpkgs[@]}; do
+            msg2 "${failed_pkg}"
+        done
+    fi
 done
 
 # Cleanup old source packages

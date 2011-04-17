@@ -353,6 +353,7 @@ check_splitpkgs() {
 	for pkgfile in ${pkgfiles[@]}; do
 		issplitpkg "${pkgfile}" || continue
 		local _pkgbase="$(getpkgbase ${pkgfile})"
+        msg2 "Checking $_pkgbase"
 		local _pkgname="$(getpkgname ${pkgfile})"
 		local _pkgarch="$(getpkgarch ${pkgfile})"
 		mkdir -p "${repo}/${_pkgarch}/${_pkgbase}"
