@@ -1,0 +1,23 @@
+# Mirror options
+mirror="mirrors.eu.kernel.org"
+mirrorpath="::mirrors/archlinux"
+
+# Directories: they should end without /
+paraboladir=~/parabolagnulinux.org
+tempdir=~/tmp
+archdb=${tempdir}/db
+docs_dir=${paraboladir}/docs
+repodir=${paraboladir}/repo/staging
+licenses_dir=${docs_dir}/pending_licenses
+# End Directories
+
+# Files
+logname=${paraboladir}/log/$(date -u +%Y%m%d-%H:%M)-repo-maintainer.log
+blacklist=${docs_dir}/blacklist.txt
+whitelist=${docs_dir}/whitelist.txt
+rsync_blacklist=${docs_dir}/rsyncBlacklist
+rsync_not_needed=${tmp}/rsync_not_needed
+
+# Rsync commands
+rsync_list_command="rsync\ -ptgoL\ --list-only\ "
+rsync_update_command="rsync -ptgoL --exclude='*.abs.tar.*'"

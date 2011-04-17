@@ -45,6 +45,7 @@ for repo in ${PKGREPOS[@]}; do
 
         msg2 "$pkgbase-$pkgver-$pkgrel..."
         makepkg --allsource --ignorearch -c
+        makepkg --allsource --ignorearch -c >/dev/null 2>&1
 
         [[ $? -ne 0 ]] && {
             warning "Failed."
@@ -87,6 +88,11 @@ if [ ${#old_pkgs[@]} -ge 1 ]; then
 		${SOURCE_CLEANUP_DRYRUN} || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
 	done
 fi
+
+msg "Failed"
+for _fail in ${failedpkgs[@]}; do
+    msg2 "$_fail"
+done
 
 script_unlock
 

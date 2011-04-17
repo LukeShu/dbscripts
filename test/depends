@@ -1,0 +1,4 @@
+%DEPENDS%
+glibc>=2.13
+zlib
+

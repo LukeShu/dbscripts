@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. config
-
 # Some PKGBUILDs need CARCH to be set
 CARCH="x86_64"
 
@@ -18,7 +16,7 @@ restore_umask () {
 }
 
 # set up general environment
-WORKDIR=$(mktemp -d ${TMPDIR}/$(basename $0).XXXXXXXXXX)
+WORKDIR=$(mktemp -d /tmp/$(basename $0).XXXXXXXXXX)
 LOCKS=()
 
 # check if messages are to be printed using color
