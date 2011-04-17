@@ -498,7 +498,6 @@ arch_repo_add() {
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
 	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} \
->>>>>>> 1ce0c6368d0908e25f9bd1bb8183b5f29053fac8
 		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
 	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
 		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[@]}"
