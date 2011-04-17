@@ -36,7 +36,7 @@ for pkgbase in ${args[@]:2}; do
 				die "Could not read pkgname"
 			fi
 
-			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo "${pkgver}-${pkgrel}")
+			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
 			if [ -z "${pkgver}" ]; then
 				die "Could not read pkgver"
 			fi
@@ -75,7 +75,7 @@ for pkgbase in ${args[@]:2}; do
 			fi
 			msg2 "${pkgbase} ($(echo ${tarches[@]}))"
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
-			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo "${pkgver}-${pkgrel}")
+			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
 
 			if [ -d "${svnrepo_to}" ]; then
 				/usr/bin/svn rm --force -q "${svnrepo_to}"
@@ -96,6 +96,9 @@ for pkgbase in ${args[@]:2}; do
 						cp ${pkgpath} ${FTP_BASE}/${PKGPOOL}
 					fi
 					ln -s "../../../${PKGPOOL}/${pkgfile}" ${ftppath_to}/${tarch}/
+					if [ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]; then
+						ln -s "../../../${PKGPOOL}/${pkgfile}.sig" ${ftppath_to}/${tarch}/
+					fi
 					add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
 					remove_pkgs[${tarch}]+="${pkgname} "
 				done
