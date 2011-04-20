@@ -6,28 +6,39 @@ source local_config
 source libremessages
 
 for repo in ${PKGREPOS[@]}; do
-    for arch in ${ARCHES[@]} 'any'; do
+    for arch in 'i686' 'x86_64' 'any'; do
 	msg "Syncing ${repo} ${arch}"
+	# makes a file containing rsync output for filter.py
 	${rsync_list_command} \
-	    ${mirror}::${mirrorpath}/${repo}/os/${arch}/ \
-	    ${repodir}/${repo}/ > ${rsout_file}
+	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
+	    ${repodir}/staging/${repo}/ > ${rsout_file}
+	# reads blacklist and rsout_file and makes an rsync exclude-from
+	# list
 	filter.py -r ${rsync_blacklist} -k ${blacklist} \
 	    -f ${rsout_file}
-	find ${repodir}/${repo} -name *${PKGEXT} \
-	    -fprint ${rsync_not_needed}
+	# list files in ${repodir}/${repo} and write their names on 
+	# rsync_not_needed for using as an rsync exclude-from
+	find ${repodir}/${repo} -name "*${PKGEXT}" \
+	    -fprintf ${rsync_not_needed} '%f\n'
+	# Actual rsync command
 	${rsync_update_command} \
 	    --exclude-from=${rsync_blacklist} \
-	    --exclude-from=${rsync_not_needed}
-	    ${mirror}::${mirrorpath}/${repo}/os/${arch}/ \
-	    ${repodir}/${repo}/
+	    --exclude-from=${rsync_not_needed} \
+	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
+	    ${repodir}/staging/${repo}/
     done
     for arch in ${ARCHES[@]}; do
+	msg2 "Cleaning"
+	# if there is a db in repo (db is created on rsync)
 	if [ -r ${repodir}/${repo}/os/${arch}/${repo}${DBEXT} ]; then
+	    # clean_repo makes pending list with files on db and remove
+	    # packages from db
 	    clean_repo.py -k ${blacklist} -w ${whitelist} \
 		-p ${docs_dir}/pending-${repo} \
-		-b ${repodir}/${repo}/${repo}${DBEXT}
+		-b ${repodir}/staging/${repo}/${repo}${DBEXT}
 	fi
-	python clean_repo.py -k ${blacklist} -d ${repodir}/${repo}
+	# if some nonfree files got pass the filter this command delete them
+	python clean_repo.py -k ${blacklist} -d ${repodir}/staging/${repo}
     done
 done
 
