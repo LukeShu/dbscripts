@@ -44,6 +44,6 @@ for repo in ${ARCHREPOS[@]}; do
 done
 
 db-update
-ftpdir-cleanup
+~/repm/cron-jobs/ftpdir-cleanup
 
 get_license.sh
