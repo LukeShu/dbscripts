@@ -48,10 +48,13 @@ def remove_from_blacklist(path_to_db, blacklisted_names):
 def cleanup_nonfree_in_dir(directory, blacklisted_names):
     if "~" in directory:
         directory=(os.path.expanduser(directory))
+    pkglist=list()
     pkgs=pkginfo_from_files_in_dir(directory)
     for package in pkgs:
         if package["name"] in blacklisted_names:
             os.remove(package["location"])
+            pkglist.append(package)
+    return pkglist
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -64,10 +67,10 @@ if __name__ == "__main__":
 
     group_dir=parser.add_argument_group("Clean non-free packages in dir")
     group_dir.add_argument("-d", "--directory", type=str,
-                        help="directory to clean",)
+                        help="directory to clean")
 
     group_db=parser.add_argument_group("Clean non-free packages in db",
-                                       "All arguments need to be specified")
+                                       "All arguments need to be specified for db cleaning")
     group_db.add_argument("-b", "--database", type=str,
                           help="dabatase to clean")
     group_db.add_argument("-p", "--pending-file", type=str,
@@ -82,8 +85,8 @@ if __name__ == "__main__":
     elif not args.pending_file or not args.whitelist_file \
             and args.database:
         parser.print_help()
-    else:
-        blacklisted=listado(args.blacklist_file)
+
+    blacklisted=listado(args.blacklist_file)
 
     if args.database:
         whitelisted=listado(args.whitelist_file)
@@ -94,3 +97,4 @@ if __name__ == "__main__":
 
     if args.directory:
         cleanup_nonfree_in_dir(args.directory, blacklisted)
+    

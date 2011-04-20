@@ -1,4 +1,4 @@
- #! /usr/bin/python
+#! /usr/bin/python
 #-*- encoding: utf-8 -*-
 from glob import glob
 from repm.config import *
@@ -188,11 +188,17 @@ if __name__ == "__main__":
     parser.add_argument("-k", "--blacklist-file", type=str,
                         help="File containing blacklisted names",
                         required=True,)
-    parser.add_argument("-c", "--rsync-command", type=str,
-                        help="This command will be run to get a pkg list",
+    parser.add_argument("-f", "--rsout-file", type=str,
+                        help="This file will be read to get a pkg list",
                         required=True,)
     args=parser.parse_args()
-    rsout=check_output(args.rsync_command.split())
+    try:
+        fsock=open(args.rsout_file, "r")
+        rsout=fsock.read()
+    except IOError:
+        print("%s is not readable" % args.rsout_file)
+    finally:
+        fsock.close()
     packages=pkginfo_from_rsync_output(rsout)
-    rsyncBlaclist_from_blacklist(packages, listado(args.blacklist_file),
+    rsyncBlacklist_from_blacklist(packages, listado(args.blacklist_file),
                                  args.rsync_exclude_file)
