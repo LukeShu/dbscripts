@@ -497,7 +497,7 @@ arch_repo_add() {
 
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
-	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} \
+	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
 		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
 	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
 		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[@]}"
@@ -516,7 +516,7 @@ arch_repo_remove() {
 		error "No database found at '${dbfile}'"
 		return 1
 	fi
-	repo-remove -q "${dbfile}" ${pkgs[@]} \
+	repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
 		|| error "repo-remove ${dbfile} ${pkgs[@]}"
 	/usr/bin/repo-remove -q "${filesfile}" ${pkgs[@]} \
 		|| error "repo-remove ${filesfile} ${pkgs[@]}"
