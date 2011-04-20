@@ -80,11 +80,9 @@ if __name__ == "__main__":
 
     args=parser.parse_args()
 
-    if not args.directory and not args.database:
+    if args.database and not (args.pending_file and args.whitelist_file):
         parser.print_help()
-    elif not args.pending_file or not args.whitelist_file \
-            and args.database:
-        parser.print_help()
+        exit(1)
 
     blacklisted=listado(args.blacklist_file)
 

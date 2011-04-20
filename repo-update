@@ -5,7 +5,7 @@ source config
 source local_config
 source libremessages
 
-for repo in ${PKGREPOS[@]}; do
+for repo in ${ARCHREPOS[@]}; do
     for arch in 'i686' 'x86_64' 'any'; do
 	msg "Syncing ${repo} ${arch}"
 	# makes a file containing rsync output for filter.py
