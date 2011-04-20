@@ -19,27 +19,37 @@
      # GNU General Public License for more details.                            
                                                                              
      # You should have received a copy of the GNU General Public License       
-     # along with Parabola.  If not, see <http://www.gnu.org/licenses/>.       
+     # along with Parabola.  If not, see <http://www.gnu.org/licenses/>.
+
 source ./config
 source ./local_config
 source ./libremessages                                                   
 
 msg "Creating pending licenses list"
-pushd ${licenses_dir}
+pushd ${licenses_dir} >/dev/null
 rm -rf ${licenses_dir}/*
+popd >/dev/null
 
-for repo in ${PKGREPOS[@]}; do
+dir=$(mktemp -d ${tempdir}/licenses.XXXX)
+pushd $dir > /dev/null
+
+for repo in ${ARCHREPOS[@]}; do
     msg2 "Extracting licenses in ${repo}"
-    pending=($(cut -d: -f2 ${docs_dir}/pending-${repo}))
-    pushd ${repodir}/${repo}
-    for pkg in ${pending[@]}; do
+    pending=($(cut -d: -f1 ${docs_dir}/pending-${repo}.txt))
+    for name in ${pending[@]}; do
 	plain "${pkg}"
-	bsdtar -xf ${pkg} usr/share/licenses || {
-	    error "${pkg} has no licenses"
-	}
-	chmod -r ${pkg}
+	for pkg in $(find ${repodir}/staging/${repo} -name "${name}-*${PKGEXT}" -printf '%f '); do
+	    chmod +r ${pkg}
+	    bsdtar -xf ${pkg} usr/share/licenses || {
+		error "${pkg} has no licenses"
+	    }
+	    chmod -r ${pkg}
+	done
     done
 done
 
-popd
+mv ${dir}/* ${licenses_dir}/
+rm -rf ${dir}
+
+
 exit 0

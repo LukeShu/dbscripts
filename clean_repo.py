@@ -25,10 +25,9 @@ def mkpending(packages_iterable, pending_file, blacklisted_names,
         fsock.write("\n".join([pkg["name"] + ":" + pkg["location"] + 
                                ":" + pkg["license"]
                                for pkg in pkgs]) + "\n")
-    except(IOError):
-        raise NonValidFile("Can't read or write %s" % pending_file)
-    finally:
         fsock.close()
+    except(IOError):
+        printf("Can't read or write %s" % pending_file)
     return pkgs
 
 def remove_from_blacklist(path_to_db, blacklisted_names):
@@ -70,7 +69,7 @@ if __name__ == "__main__":
                         help="directory to clean")
 
     group_db=parser.add_argument_group("Clean non-free packages in db",
-                                       "All arguments need to be specified for db cleaning")
+                                       "All these arguments need to be specified for db cleaning:")
     group_db.add_argument("-b", "--database", type=str,
                           help="dabatase to clean")
     group_db.add_argument("-p", "--pending-file", type=str,
@@ -89,7 +88,7 @@ if __name__ == "__main__":
     if args.database:
         whitelisted=listado(args.whitelist_file)
         pkgs=pkginfo_from_db(args.database)
-        remove_from_blacklist(args.database, blacklisted)
+        # remove_from_blacklist(args.database, blacklisted)
         mkpending(pkgs, args.pending_file,
                   blacklisted, whitelisted)
 

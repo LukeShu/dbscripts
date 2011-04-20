@@ -7,7 +7,7 @@ paraboladir=~/parabolagnulinux.org
 tempdir=~/tmp
 archdb=${tempdir}/db
 docs_dir=${paraboladir}/docs
-repodir=${paraboladir}/repo/staging
+repodir=${paraboladir}/repo
 licenses_dir=${docs_dir}/pending_licenses
 # End Directories
 
