@@ -211,7 +211,7 @@ repo_unlock () { #repo_unlock <repo-name> <arch>
 _grep_pkginfo() {
 	local _ret
 
-	_ret="$(bsdtar -xOqf "$1" .PKGINFO | /bin/grep -m 1 "^${2} = ")"
+	_ret="$(bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
 	echo "${_ret#${2} = }"
 }
 
@@ -499,7 +499,7 @@ arch_repo_add() {
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
 	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
 		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
-	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
+	repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
 		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[@]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
@@ -518,7 +518,7 @@ arch_repo_remove() {
 	fi
 	repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
 		|| error "repo-remove ${dbfile} ${pkgs[@]}"
-	/usr/bin/repo-remove -q "${filesfile}" ${pkgs[@]} \
+	repo-remove -q "${filesfile}" ${pkgs[@]} \
 		|| error "repo-remove ${filesfile} ${pkgs[@]}"
 	set_repo_permission "${repo}" "${arch}"
 }

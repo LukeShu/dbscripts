@@ -1,6 +1,8 @@
-FTP_BASE="/home/parabolavnx/parabolagnulinux.org/free"
+#!/bin/bash
+FTP_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
 ARCH_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
 SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
+
 ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
 PKGREPOS=(${ARCHREPOS[@]} 'libre' 'libre-testing' 'social' 'sugar')
 PKGPOOL='pool/packages'
@@ -23,7 +25,8 @@ LOCK_TIMEOUT=300
 
 STAGING="$FTP_BASE/staging"
 TMPDIR="$HOME/tmp"
-ARCHES=(i686 x86_64 mips64el)
+ARCHARCHES=(i686 x86_64)
+ARCHES=(${ARCHARCHES[@]} mips64el)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.?z"
