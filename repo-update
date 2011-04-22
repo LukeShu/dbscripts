@@ -6,8 +6,9 @@ source $(dirname $0)/local_config
 source $(dirname $0)/libremessages
 
 for repo in ${ARCHREPOS[@]}; do
+    msg "Syncing ${repo}"
     for arch in ${ARCHARCHES[@]} 'any'; do
-	msg "Syncing ${repo} ${arch}"
+	msg2 "${repo} ${arch}"
 	# makes a file containing rsync output for filter.py
 	${rsync_list_command} \
 	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
@@ -28,18 +29,19 @@ for repo in ${ARCHREPOS[@]}; do
 	    ${repodir}/staging/${repo}/
     done
     for arch in ${ARCHARCHES[@]}; do
-	msg "Cleaning $repo $arch"
+	msg2 "Making pending list for $repo $arch"
 	# if there is a db in repo (db is created on rsync)
 	if [ -r ${repodir}/staging/${repo}/os/${arch}/${repo}${DBEXT} ]; then
 	    # clean_repo makes pending list with files on db and remove
 	    # packages from db
 	    clean_repo.py -k ${blacklist} -w ${whitelist} \
 		-p ${docs_dir}/pending-${repo}.txt \
-		-b ${repodir}/staging/${repo}/${repo}${DBEXT}
+		-b ${repodir}/staging/${repo}/${repo}${DBEXT} \
+		-d ${repodir}/stagging/${repo}
 	fi
     done
     # if some nonfree files got pass the filter this command delete them
-    msg "Fallback cleaning repo"
+    msg2 "Fallback cleaning repo"
     python clean_repo.py -k ${blacklist} -d ${repodir}/staging/${repo}
 done
 

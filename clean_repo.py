@@ -88,10 +88,12 @@ if __name__ == "__main__":
     if args.database:
         whitelisted=listado(args.whitelist_file)
         pkgs=pkginfo_from_db(args.database)
-        # remove_from_blacklist(args.database, blacklisted)
-        mkpending(pkgs, args.pending_file,
-                  blacklisted, whitelisted)
+        pending_names=[pkg["name"] for pkg in
+            mkpending(pkgs, args.pending_file,
+                      blacklisted, whitelisted)]
 
-    if args.directory:
+    if args.directory and args.database:
+        cleanup_nonfree_in_dir(args.directory, (blacklisted + pending_names))
+    elif args.directory:
         cleanup_nonfree_in_dir(args.directory, blacklisted)
     
