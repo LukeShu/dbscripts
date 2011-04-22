@@ -51,5 +51,4 @@ done
 mv ${dir}/* ${licenses_dir}/
 rm -rf ${dir}
 
-
 exit 0
