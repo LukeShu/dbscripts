@@ -1,6 +1,6 @@
 #!/bin/bash
 # -*- coding: utf-8 -*-
-
+source ~/.bashrc
 source $(dirname $0)/config
 source $(dirname $0)/local_config
 source $(dirname $0)/libremessages
@@ -46,7 +46,7 @@ for repo in ${ARCHREPOS[@]}; do
 done
 
 msg "Removing leftover files..."
-find ${repodir}/staging/ \! -name "*${PKGEXT}*" -delete
+find ${repodir}/staging/ -type f \! -name "*${PKGEXT}" -delete
 
 db-update
 $(dirname $0)/cron-jobs/ftpdir-cleanup
