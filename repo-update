@@ -34,7 +34,7 @@ for repo in ${ARCHREPOS[@]}; do
 	if [ -r ${repodir}/staging/${repo}/os/${arch}/${repo}${DBEXT} ]; then
 	    # clean_repo makes pending list with files on db and remove
 	    # packages from db
-	    clean_repo.py -k ${blacklist} -w ${whitelist} \
+	    $(dirname $0)/clean_repo.py -k ${blacklist} -w ${whitelist} \
 		-p ${docs_dir}/pending-${repo}.txt \
 		-b ${repodir}/staging/${repo}/${repo}${DBEXT} \
 		-d ${repodir}/stagging/${repo}
@@ -42,11 +42,13 @@ for repo in ${ARCHREPOS[@]}; do
     done
     # if some nonfree files got pass the filter this command delete them
     msg2 "Fallback cleaning repo"
-    python clean_repo.py -k ${blacklist} -d ${repodir}/staging/${repo}
+    $(dirname $0)/clean_repo.py -k ${blacklist} -d ${repodir}/staging/${repo}
 done
 
 msg "Removing leftover files..."
 find ${repodir}/staging/ -type f \! -name "*${PKGEXT}" -delete
+# Staging should not have symbolic links
+find ${repodir}/staging/ -type l -delete
 
-db-update
-$(dirname $0)/cron-jobs/ftpdir-cleanup
+$(dirname $0)/db-update
+#$(dirname $0)/cron-jobs/ftpdir-cleanup
