@@ -33,3 +33,4 @@ PKGEXT=".pkg.tar.?z"
 SRCEXT=".src.tar.gz"
 
 MAKEPKGCONF="$HOME/etc/makepkg.conf"
+BLACKLIST_FILE="$HOME/parabolagnulinux.org/docs/blacklist.txt"
