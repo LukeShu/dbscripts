@@ -69,12 +69,27 @@ for repo in ${repos[@]}; do
 			if [ -f "$FTP_BASE/${PKGPOOL}/${pkgfile}.sig" ]; then
 				ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "$FTP_BASE/$repo/os/${pkgarch}"
 			fi
-			add_pkgs[${#add_pkgs[*]}]=${pkgfile}
+			add_pkgs[${#add_pkgs[*]}]=${pkgfile} 
 		done
 		if [ ${#add_pkgs[@]} -ge 1 ]; then
 			arch_repo_add "${repo}" "${pkgarch}" ${add_pkgs[@]}
 		fi
 	done
+done
+
+# Repo check nonfree
+nonfree=($(cut -d: -f1 ${BLACKLIST_FILE}))
+for repo in ${ARCHREPOS[@]}; do
+    for pkgarch in ${ARCHARCHES[@]}; do
+	cleanpkgs=()
+	dbpkgs=($(bsdtar -xOf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}" | awk '/^%NAME%/{getline;print}' | sort ))
+	for pkgname in ${dbpkgs[@]}; do
+	    if in_array ${pkgname} ${nonfree[@]}; then
+		cleanpkgs[${#cleanpkgs[*]}]=${pkgname}
+	    fi
+	done
+	arch_repo_remove "${repo}" "${pkgarch}" ${cleanpkgs[@]}
+    done
 done
 
 for repo in ${repos[@]}; do
