@@ -78,17 +78,24 @@ for repo in ${repos[@]}; do
 done
 
 # Repo check nonfree
-nonfree=($(cut -d: -f1 ${BLACKLIST_FILE}))
+nonfree=($(cut -d: -f1 ${BLACKLIST_FILE} | sort -u))
 for repo in ${ARCHREPOS[@]}; do
-    for pkgarch in ${ARCHARCHES[@]}; do
+    for pkgarch in ${ARCHES[@]}; do
+	if [ ! -f "${FTP_BASE}/${repo}/os/${pkgarch}/${repo}${DBEXT}" ]; then
+	    continue
+	fi
+	unset dbpkgs
+	unset cleanpkgs
 	cleanpkgs=()
-	dbpkgs=($(bsdtar -xOf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}" | awk '/^%NAME%/{getline;print}' | sort ))
+	dbpkgs=($(bsdtar -xOf "${FTP_BASE}/${repo}/os/${pkgarch}/${repo}${DBEXT}" | awk '/^%NAME%/{getline;print}' | sort -u ))
 	for pkgname in ${dbpkgs[@]}; do
 	    if in_array ${pkgname} ${nonfree[@]}; then
 		cleanpkgs[${#cleanpkgs[*]}]=${pkgname}
 	    fi
 	done
-	arch_repo_remove "${repo}" "${pkgarch}" ${cleanpkgs[@]}
+	if [ ${#cleanpkgs[@]} -ge 1 ]; then
+	    arch_repo_remove "${repo}" "${pkgarch}" ${cleanpkgs[@]}
+	fi
     done
 done
 
@@ -97,3 +104,5 @@ for repo in ${repos[@]}; do
 		repo_unlock ${repo} ${pkgarch}
 	done
 done
+
+
