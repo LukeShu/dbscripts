@@ -78,9 +78,11 @@ for repo in ${repos[@]}; do
 done
 
 # Repo check nonfree
+msg "Check nonfree in repo:"
 nonfree=($(cut -d: -f1 ${BLACKLIST_FILE} | sort -u))
 for repo in ${ARCHREPOS[@]}; do
     for pkgarch in ${ARCHES[@]}; do
+	msg2 "$repo $pkgarch"
 	if [ ! -f "${FTP_BASE}/${repo}/os/${pkgarch}/${repo}${DBEXT}" ]; then
 	    continue
 	fi
