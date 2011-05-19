@@ -51,4 +51,5 @@ find ${repodir}/staging/ -type f \! -name "*${PKGEXT}" -delete
 find ${repodir}/staging/ -type l -delete
 
 $(dirname $0)/db-update
-#$(dirname $0)/cron-jobs/ftpdir-cleanup
+$(dirname $0)/db-check-nonfree
+
