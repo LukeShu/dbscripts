@@ -313,18 +313,21 @@ db_write_entry()
 
 	# Extracts licenses to a common license dir
 	msg "Extracting license"
-	if [  -d ${LICENSESDIR}/${pkgname} ]; then
-	 rm -r ${LICENSESDIR}/${pkgname}
-  fi
+        if bsdtar -xOf ${pkgfile} .PKGINFO | grep "license" | grep "custom" ; then
+	    if [  -d ${LICENSESDIR}/${pkgname} ]; then
+	        rm -r ${LICENSESDIR}/${pkgname}
+            fi
 
 	# Change dir to licenses, and extract them stripping the first part of the path
-	bsdtar -C ${LICENSESDIR}/ --include="usr/share/licenses/" --strip-components 3 -xf ${pkgfile} >/dev/null 2>&1
+	    bsdtar -C ${LICENSESDIR}/ --include="usr/share/licenses/" \
+                --strip-components 3 -xf ${pkgfile} >/dev/null 2>&1
 
-	if [ $? -ne 0 ]; then
+	    if [ $? -ne 0 ]; then
 		warning "This package doesn't contain a license dir"
-  fi
-
-	return 0
+            fi
+        fi
+	
+        return 0
 } # end db_write_entry
 
 # remove existing entries from the DB
@@ -346,8 +349,8 @@ db_remove_entry() {
 
 	msg "Removing license"
 	if [ -d ${LICENSESDIR}/${pkgname} ]; then
-  	rm -r ${LICENSESDIR}/${pkgname}
-  fi
+  	    rm -r ${LICENSESDIR}/${pkgname}
+        fi
 
 	return $notfound
 } # end db_remove_entry
