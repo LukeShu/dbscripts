@@ -1,0 +1,24 @@
+#!/bin/bash
+# Author: Nicolás Reynolds <fauno@kiwwwi.com.ar>
+# License: GPLv3+
+# Description: A script to quickly create new [repos]
+
+source $(dirname $0)/config
+source $(dirname $0)/local_config
+
+# TODO it would be simpler to expand arrays to {element1,element2,etc}
+for repo in $@; do
+
+   echo ":: Creating [$repo]"
+   mkdir -pv ${repodir}/{staging/,}${repo}
+
+   for arch in ${ARCHES[@]}; do
+       mkdir -pv ${repodir}/${repo}/os/${arch}
+   done
+
+done
+
+echo ":: All done. Add the repo to the parabolaweb admin page"
+echo "   and the get_repos script on the same server."
+
+exit $?
