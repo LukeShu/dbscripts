@@ -1,0 +1,17 @@
+#!/bin/bash
+source $(dirname $0)/local_config
+source $(dirname $0)/config
+
+blacklist_mtime=$(printf "%.0f" $(find ${blacklist} -printf "%T@"))
+last_bl_mtime=$(cat $(dirname $0)/yftime)
+
+if [ $blacklist_mtime -gt $last_bl_mtime ]; then
+    pushd $(dirname $0)/yf
+    makepkg
+    rsync -L ./*.${PKGEXT} ${STAGING}/libre
+    popd
+    echo ${blacklist_mtime} > $(dirname $0)/yftime
+fi
+    
+
+

@@ -3,5 +3,6 @@
 local_config
 /config.local
 test/packages/*/*.pkg.tar.?z
-#*#
+\#*#
 .#*
+yftime
