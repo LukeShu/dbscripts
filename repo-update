@@ -5,6 +5,14 @@ source $(dirname $0)/config
 source $(dirname $0)/local_config
 source $(dirname $0)/libremessages
 
+msg "Updating your-freedom"
+$(dirname $0)/yf-update
+
+msg "Global exclude-list"
+# To not downgrade repos by accident
+find ${repodir}/old/packages -name "*${PKGEXT}" \
+    -fprintf ${rsync_not_needed}2 '%f\n'
+
 for repo in ${ARCHREPOS[@]}; do
     msg "Syncing ${repo}"
     for arch in ${ARCHARCHES[@]} 'any'; do
@@ -24,8 +32,6 @@ for repo in ${ARCHREPOS[@]}; do
         plain "Excluding our packages"
 	find ${repodir}/${repo} -name "*${PKGEXT}" \
 	    -fprintf ${rsync_not_needed} '%f\n'
-        find ${repodir}/old/packages -name "*${PKGEXT}" \
-	    -fprintf ${rsync_not_needed}2 '%f\n'
 	# Actual rsync command
         plain "Syncing..."
 	${rsync_update_command} \

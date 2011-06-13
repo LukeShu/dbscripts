@@ -1,17 +1,18 @@
 #!/bin/bash
 source $(dirname $0)/local_config
 source $(dirname $0)/config
+source $(dirname $0)/libremessages
 
 blacklist_mtime=$(printf "%.0f" $(find ${blacklist} -printf "%T@"))
 last_bl_mtime=$(cat $(dirname $0)/yftime)
 
 if [ $blacklist_mtime -gt $last_bl_mtime ]; then
     pushd $(dirname $0)/yf
-    makepkg
-    rsync -L ./*.${PKGEXT} ${STAGING}/libre
+    makepkg -f
+    find . -name "*${PKGEXT}" -exec mv {} ${STAGING}/libre \;
     popd
     echo ${blacklist_mtime} > $(dirname $0)/yftime
+    msg2 "built and staged"
+else
+    msg2 "nothing to do"
 fi
-    
-
-

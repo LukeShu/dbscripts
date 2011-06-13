@@ -6,3 +6,5 @@ test/packages/*/*.pkg.tar.?z
 \#*#
 .#*
 yftime
+src*
+pkg*
