@@ -24,11 +24,14 @@ for repo in ${ARCHREPOS[@]}; do
         plain "Excluding our packages"
 	find ${repodir}/${repo} -name "*${PKGEXT}" \
 	    -fprintf ${rsync_not_needed} '%f\n'
+        find ${repodir}/old/packages -name "*${PKGEXT}" \
+	    -fprintf ${rsync_not_needed}2 '%f\n'
 	# Actual rsync command
         plain "Syncing..."
 	${rsync_update_command} \
 	    --exclude-from=${rsync_blacklist} \
 	    --exclude-from=${rsync_not_needed} \
+	    --exclude-from=${rsync_not_needed}2 \
 	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
 	    ${repodir}/staging/${repo}/ 2&>/dev/null
     done
