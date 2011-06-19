@@ -4,7 +4,7 @@ ARCH_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
 SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
 
 ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
-PKGREPOS=(${ARCHREPOS[@]} 'libre' 'libre-testing' 'social' 'sugar')
+PKGREPOS=(${ARCHREPOS[@]} 'libre' 'libre-testing' 'social' 'sugar' 'elementary' '~fauno' '~xihh')
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
 

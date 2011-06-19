@@ -5,41 +5,28 @@ source $(dirname $0)/config
 source $(dirname $0)/local_config
 source $(dirname $0)/libremessages
 
-msg "Updating your-freedom"
-$(dirname $0)/yf-update
-
-msg "Global exclude-list"
-# To not downgrade repos by accident
-find ${repodir}/old/packages -name "*${PKGEXT}" \
-    -fprintf ${rsync_not_needed}2 '%f\n'
-
 for repo in ${ARCHREPOS[@]}; do
     msg "Syncing ${repo}"
     for arch in ${ARCHARCHES[@]} 'any'; do
 	msg2 "${repo} ${arch}"
 	# makes a file containing rsync output for filter.py
-        plain "Checking packages..."
 	${rsync_list_command} \
 	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
-	    ${repodir}/staging/${repo}/ > ${rsout_file} 2&>/dev/null
+	    ${repodir}/staging/${repo}/ > ${rsout_file}
 	# reads blacklist and rsout_file and makes an rsync exclude-from
 	# list
-        plain "Excluding nonfree..."
 	filter.py -r ${rsync_blacklist} -k ${blacklist} \
 	    -f ${rsout_file}
 	# list files in ${repodir}/${repo} and write their names on 
 	# rsync_not_needed for using as an rsync exclude-from
-        plain "Excluding our packages"
 	find ${repodir}/${repo} -name "*${PKGEXT}" \
 	    -fprintf ${rsync_not_needed} '%f\n'
 	# Actual rsync command
-        plain "Syncing..."
 	${rsync_update_command} \
 	    --exclude-from=${rsync_blacklist} \
 	    --exclude-from=${rsync_not_needed} \
-	    --exclude-from=${rsync_not_needed}2 \
 	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
-	    ${repodir}/staging/${repo}/ 2&>/dev/null
+	    ${repodir}/staging/${repo}/
     done
     for arch in ${ARCHARCHES[@]}; do
 	msg2 "Making pending list for $repo $arch"
