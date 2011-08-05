@@ -3,8 +3,15 @@ FTP_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
 ARCH_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
 SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
 
+# Repos from Arch
 ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
-PKGREPOS=(${ARCHREPOS[@]} 'libre-testing' 'libre' 'security' 'social' 'sugar' 'elementary' '~fauno' '~xihh' '~smv')
+# Official Parabola repos
+OURREPOS=('libre' 'libre-testing')
+# User repos
+USERREPOS=('~fauno' '~smv' '~xihh')
+# Community project repos
+PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'social')
+PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
 
