@@ -2,6 +2,6 @@
 
 . "$(dirname $0)/../config"
 
-rsync -av parabolagnulinux.org::abstar/ ${FTP_BASE}/
+rsync -av --exclude=staging/ parabolagnulinux.org::abstar/ ${FTP_BASE}/
 
 exit $?
