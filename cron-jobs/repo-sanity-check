@@ -5,7 +5,7 @@
 . "$(dirname $0)/../config"
 
 # Traverse all repos
-for _repo in ${REPOS[@]}; do
+for _repo in ${PKGREPOS[@]}; do
 
 # Find all pkgnames on this repo's abs
     on_abs=($(
@@ -26,6 +26,12 @@ for _repo in ${REPOS[@]}; do
             echo ${pkgname[@]}
         done
     ))
+
+# quit if abs is empty
+    if [ ${#on_abs[*]} -eq 0 ]; then
+        warning "[${_repo}]'s ABS tree is empty, skipping"
+        break
+    fi
 
 # Find all pkgnames on repos
     on_repo=($(
