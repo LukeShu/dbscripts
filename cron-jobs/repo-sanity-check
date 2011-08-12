@@ -34,8 +34,8 @@ for _repo in ${REPOS[@]}; do
     ))
 
 # Compares them, whatever is on repos but not on abs should be removed
-    remove=($(comm -13 <(echo ${on_abs[@]} | tr ' ' "\n" | sort) \
-             <(echo ${on_repo[@]} | tr ' ' "\n" | sort)))
+    remove=($(comm -13 <(echo ${on_abs[@]} | tr ' ' "\n" | sort -u) \
+             <(echo ${on_repo[@]} | tr ' ' "\n" | sort -u)))
 
 # Remove them from databases, ftpdir-cleanup will take care of the rest
     find ${FTP_BASE}/${_repo} -name "*.db.tar.?z" -exec \
