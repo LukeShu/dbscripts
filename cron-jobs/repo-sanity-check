@@ -6,6 +6,7 @@
 
 # Traverse all repos
 for _repo in ${PKGREPOS[@]}; do
+    msg "Cleaning up [${_repo}]"
 
 # Find all pkgnames on this repo's abs
     on_abs=($(
@@ -45,7 +46,10 @@ for _repo in ${PKGREPOS[@]}; do
 
 # Remove them from databases, ftpdir-cleanup will take care of the rest
     find ${FTP_BASE}/${_repo} -name "*.db.tar.?z" -exec \
-        repo-remove {} ${remove[@]} \;
+        repo-remove {} ${remove[@]} >/dev/null 2>&1 \;
+
+    msg2 "Removed the following packages:"
+    plain "$(echo ${remove[@]} | tr ' ' "\n")"
 
 done
 
