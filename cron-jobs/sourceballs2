@@ -33,24 +33,28 @@ for repo in ${PKGREPOS[@]}; do
             continue
         }
 
-        unset pkgbase pkgname
+# Unset the previous data
+        unset pkgbase pkgname pkgver pkgrel
         source PKGBUILD
-        pkgbase=${pkgbase:-$pkgname}
 
-		echo "${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}" >> "${WORKDIR}/expected-src-pkgs"
+        unset build package url pkgdesc source md5sums depends makedepends \
+              optdepends license arch options check mksource
+
+        for _pkg in ${pkgname[@]}; do
+            unset package_${_pkg} >/dev/null 2>&1
+        done
+
+        pkgbase=${pkgbase:-$pkgname}
+        srcfile="${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}"
+
+		echo "${srcfile}" >> "${WORKDIR}/expected-src-pkgs"
 
         # Skip already sourceballed
-        [[ -e "${SRCPKGDEST}/${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}" ]] && \
-            continue
+        [ -e "${SRCPKGDEST}/${srcfile}" ] && continue
 
-        msg2 "$pkgbase-$pkgver-$pkgrel..."
-        makepkg --allsource --ignorearch -c
         makepkg --allsource --ignorearch -c >/dev/null 2>&1
 
-        [[ $? -ne 0 ]] && {
-            warning "Failed."
-            failedpkgs[${#failedpkgs[*]}]="${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}"
-        }
+        [ $? -ne 0 ] && failedpkgs+=("${srcfile}")
 
     done
     popd >/dev/null
@@ -88,11 +92,6 @@ if [ ${#old_pkgs[@]} -ge 1 ]; then
 		${SOURCE_CLEANUP_DRYRUN} || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
 	done
 fi
-
-msg "Failed"
-for _fail in ${failedpkgs[@]}; do
-    msg2 "$_fail"
-done
 
 script_unlock
 
