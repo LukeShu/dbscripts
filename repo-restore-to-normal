@@ -1,0 +1,54 @@
+#!/bin/bash
+# Solves issue165
+
+. "$(dirname $0)/db-functions"
+. "$(dirname $0)/config"
+
+# Find all pkgnames on old with pkgvers
+    on_repo=($(find ${CLEANUP_DESTDIR} -name "*.pkg.tar.?z" -printf "%f\n" | \
+        sed "s/^\(.\+-[^-]\+\)-[^-]\+-[^-]\+$/\1/"))
+
+# Traverse all repos
+for _repo in ${PKGREPOS[@]}; do
+    msg "Restoring [${_repo}]"
+
+# Find all pkgnames on this repo's abs
+    on_abs=($(
+        find ${SVNREPO}/${_repo} -name PKGBUILD | \
+        while read pkgbuild; do
+            source ${pkgbuild} >/dev/null 2>&1
+# cleanup to save memory
+            unset build package source md5sums pkgdesc pkgrel epoch \
+                  url license arch depends makedepends optdepends options \
+                  >/dev/null 2>&1
+
+# also cleanup package functions
+            for _pkg in ${pkgname[@]}; do
+                unset package_${pkg} >/dev/null 2>&1
+            done
+            
+# this fills the on_abs array
+            echo ${pkgname[@]}-${pkgver}
+        done
+    ))
+
+# quit if abs is empty
+    if [ ${#on_abs[*]} -eq 0 ]; then
+        warning "[${_repo}]'s ABS tree is empty, skipping"
+        break
+    fi
+
+# Compares them, whatever is on abs should be restored
+    restore=($(comm -12 <(echo ${on_abs[@]} | tr ' ' "\n" | sort -u) \
+             <(echo ${on_repo[@]} | tr ' ' "\n" | sort -u)))
+
+    msg2 "Restoring the following packages:"
+    plain "$(echo ${restore[@]} | tr ' ' "\n")"
+
+    for _pkg in ${restore[@]}; do
+        find ${CLEANUP_DESTDIR} -name "${_pkg}*" -exec mv -v '{}' ${STAGING}/${_repo}
+    done
+
+done
+
+exit $?
