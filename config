@@ -8,7 +8,7 @@ ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
-USERREPOS=('~fauno' '~smv' '~xihh')
+USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm')
 # Community project repos
 PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'social')
 PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
@@ -40,4 +40,4 @@ PKGEXT=".pkg.tar.?z"
 SRCEXT=".src.tar.gz"
 
 MAKEPKGCONF="$HOME/etc/makepkg.conf"
-BLACKLIST_FILE="$HOME/parabolagnulinux.org/docs/blacklist.txt"
+BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"
