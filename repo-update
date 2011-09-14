@@ -6,28 +6,31 @@ source $(dirname $0)/local_config
 source $(dirname $0)/libremessages
 
 for repo in ${ARCHREPOS[@]}; do
+
     msg "Syncing ${repo}"
-    for arch in ${ARCHARCHES[@]} 'any'; do
-	msg2 "${repo} ${arch}"
-	# makes a file containing rsync output for filter.py
-	${rsync_list_command} \
-	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
-	    ${repodir}/staging/${repo}/ > ${rsout_file}
-	# reads blacklist and rsout_file and makes an rsync exclude-from
-	# list
-	filter.py -r ${rsync_blacklist} -k ${blacklist} \
-	    -f ${rsout_file}
-	# list files in ${repodir}/${repo} and write their names on 
-	# rsync_not_needed for using as an rsync exclude-from
-	find ${repodir}/${repo} -name "*${PKGEXT}" \
-	    -fprintf ${rsync_not_needed} '%f\n'
-	# Actual rsync command
-	${rsync_update_command} \
-	    --exclude-from=${rsync_blacklist} \
-	    --exclude-from=${rsync_not_needed} \
-	    rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
-	    ${repodir}/staging/${repo}/
-    done
+    for arch in ${ARCHARCHES[@]}; do
+        msg2 "${repo} ${arch}"
+        # makes a file containing rsync output for filter.py
+        ${rsync_list_command} \
+            rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
+            ${repodir}/staging/${repo}/os/${arch}/ > ${rsout_file}-${repo}-${arch} || exit 1
+        # reads blacklist and rsout_file and makes an rsync exclude-from
+        # list
+        filter.py -r ${rsync_blacklist} -k ${blacklist} \
+            -f ${rsout_file}-${repo}-${arch} || exit 1
+        # list files in ${repodir}/${repo} and write their names on 
+        # rsync_not_needed for using as an rsync exclude-from
+        #find ${repodir}/${repo}/os/${arch}/ -name "*${PKGEXT}" \
+        #    -fprintf ${rsync_not_needed}-${repo}-${arch} '%f\n' || exit 1
+        find ${repodir}/${PKGPOOL}/ -name "*${PKGEXT}" \
+            -fprintf ${rsync_not_needed}-${repo}-${arch} '%f\n' || exit 1
+        # Actual rsync command
+        ${rsync_update_command} \
+            --exclude-from=${rsync_blacklist} \
+            --exclude-from=${rsync_not_needed}-${repo}-${arch} \
+            rsync://${mirror}/${mirrorpath}/${repo}/os/${arch}/ \
+            ${repodir}/staging/${repo}/ || exit 1
+        done
     for arch in ${ARCHARCHES[@]}; do
 	msg2 "Making pending list for $repo $arch"
 	# if there is a db in repo (db is created on rsync)
@@ -42,7 +45,7 @@ for repo in ${ARCHREPOS[@]}; do
     done
     # if some nonfree files got pass the filter this command delete them
     msg2 "Fallback cleaning repo"
-    $(dirname $0)/clean_repo.py -k ${blacklist} -d ${repodir}/staging/${repo}
+    $(dirname $0)/clean_repo.py -k ${blacklist} -d ${repodir}/staging/${repo} || exit 1
 done
 
 msg "Removing leftover files..."
