@@ -1,7 +1,7 @@
-#! /usr/bin/python
+#! /usr/bin/python2
 #-*- encoding: utf-8 -*-
 from glob import glob
-from repm.config import *
+from config import *
 import tarfile
 
 def listado(filename, start=0, end=None):

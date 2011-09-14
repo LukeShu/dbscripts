@@ -1,6 +1,6 @@
-#! /usr/bin/python
+#! /usr/bin/python2
 #-*- encoding: utf-8 -*-
-from repm.filter import *
+from filter import *
 import argparse
 
 def mkpending(packages_iterable, pending_file, blacklisted_names,

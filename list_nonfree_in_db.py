@@ -1,6 +1,6 @@
-#! /usr/bin/python
+#! /usr/bin/python2
 #-*- encoding: utf-8 -*-
-from repm.filter import *
+from filter import *
 import argparse
 
 if __name__ == "__main__":
