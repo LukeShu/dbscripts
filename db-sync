@@ -1,0 +1,108 @@
+#!/bin/bash
+# Syncs Arch repos based on info contained in repo.db files
+# License: GPLv3
+
+# Principles
+# * Get repo.db from an Arch-like repo
+# * Generate a list of available packages
+# * Create sync whitelist (based on package blacklist)
+# * Get packages
+# * Check package signatures
+# * Check database signatures
+# * Sync repo => repo
+
+
+# eval this
+BASEURL="ftp://ftp.archlinux.org/\$repo/os/\$arch/\$file"
+
+# Generates an URL from BASE_URL
+# _Params_
+# * repo
+# * arch
+# * file
+eval_url() {
+  repo="$1"
+  arch="$2"
+  file="$3"
+
+  eval "${BASE_URL}"
+}
+
+# Returns contents of a repo
+get_repos() {
+  rsync -av --include="*.db*" --exclude="*" rsync://${mirror}/${mirror_path}/ cache/
+}
+
+get_repo_content() {
+# Return all contents
+  bsdtar tf cache/$1/os/$2/$1.db.tar.* | \
+    cut -d "/" -f 1 | \
+    sort -u
+}
+
+# Get the database compression as an extension
+get_repo_ext() {
+  file "$1" | tr A-Z a-z | sed -e "s/^[^:]\+: *\(.z\).*$/.tar.\1/" -e "s/bz/&2"
+}
+
+# Prints blacklisted packages
+get_blacklist() {
+  cut -d ':' -f 1 "${BLACKLIST_FILE}"
+}
+
+# repo
+# arch
+get_repo_file() {
+  [ ! -f "cache/${1}/os/${2}/${1}.db.tar.*" ] && return 1
+
+  echo cache/${1}/os/${2}/${1}.db.tar.*
+}
+
+# Process the databases and get the libre packages
+init() {
+# Fail on every error
+  set -E 
+
+  source $(dirname $0)/config
+  source $(dirname $0)/local_config
+  source $(dirname $0)/libremessages
+
+# Get the blacklisted packages
+  blacklist=($(get_blacklist))
+
+# Sync the repos databases
+  get_repos
+
+# Traverse all repo-arch pairs
+  for _arch in ${ARCHARCHES[@]}; do
+    for _repo in ${ARCHREPOS[@]}; do
+      msg "Processing ${_repo}-${_arch}"
+
+      repo_file=$(get_repo_file ${_repo} ${_arch})
+
+# Remove blacklisted packages and count them
+      msg2 "Removing blacklisted packages: $(
+      LC_ALL=C repo-remove ${repo_file} ${blacklist[@]} 2>&1 | \
+        grep "\-> Removing" 2>/dev/null| wc -l)"
+
+# Get db contents
+      db=($(get_repo ${_repo} ${_arch}))
+
+      msg2 "Process clean db for syncing..."
+
+# Create a whitelist
+      echo ${db[@]} | tr ' ' "\n" | sed "s|$|*|g" > /tmp/${_repo}-${_arch}.whitelist
+
+# Sync excluding everything but blacklist
+      rsync -av --include-from=/tmp/${_repo}-${_arch}.whitelist --exclude="*"
+
+
+# Cleanup
+      unset db 
+    done
+  done
+
+# Cleanup
+  unset blacklist _arch _repo repo_file
+}
+
