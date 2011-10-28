@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. "$(dirname $0)/../config"
+
+rsync -av --exclude=staging/ parabolagnulinux.org::abstar/ ${FTP_BASE}/
+
+exit $?

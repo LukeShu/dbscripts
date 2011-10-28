@@ -1,0 +1,24 @@
+#!/bin/bash
+# Creates repository structure
+
+. "$(dirname $0)/db-functions"
+. "$(dirname $0)/config"
+
+if [ $# -eq 0 ]; then
+    msg "Usage: $0 repo1 [repo2 ... repoX]"
+    exit 1
+fi
+
+msg "Creating repos..."
+for _repo in $@; do
+    msg2 "Creating [${_repo}]"
+    mkdir -p "${FTP_BASE}/staging/${_repo}" || \
+        error "Failed creating staging dir"
+
+    for _arch in ${ARCHES[@]}; do
+        mkdir -p "${FTP_BASE}/${_repo}/os/${_arch}" || \
+            error "Failed creating ${_arch} dir"
+    done
+done
+
+msg "Don't forget to add them to the PKGREPOS array on $(dirname $0)/config"

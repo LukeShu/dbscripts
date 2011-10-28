@@ -3,8 +3,15 @@ FTP_BASE="/home/repo/public"
 ARCH_BASE="/home/repo/public"
 SVNREPO="/home/repo/abslibre"
 
+# Repos from Arch
 ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
-PKGREPOS=(${ARCHREPOS[@]} 'libre' 'libre-testing' 'social' 'sugar')
+# Official Parabola repos
+OURREPOS=('libre' 'libre-testing')
+# User repos
+USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm')
+# Community project repos
+PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'social')
+PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
 
