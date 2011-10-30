@@ -11,8 +11,13 @@
 # * Check database signatures
 # * Sync repo => repo
 
+# TODO
+# * verbose mode
+# * make a tarball of files used for forensics
+# * get files db
 
 # eval this
+# *not needed*
 BASEURL="ftp://ftp.archlinux.org/\$repo/os/\$arch/\$file"
 
 # Generates an URL from BASE_URL
@@ -30,12 +35,18 @@ eval_url() {
 
 # Returns contents of a repo
 get_repos() {
-  rsync -av --include="*.db*" --exclude="*" rsync://${mirror}/${mirror_path}/ cache/
+# Exclude everything but db files
+  rsync -avm --include="*/" \
+        --include="*.db" \
+        --include="*${DBEXT}" \
+        --exclude="*" \
+        --delete-after \
+        rsync://${mirror}/${mirrorpath}/ cache/
 }
 
 get_repo_content() {
 # Return all contents
-  bsdtar tf cache/$1/os/$2/$1.db.tar.* | \
+  bsdtar tf ${1} | \
     cut -d "/" -f 1 | \
     sort -u
 }
@@ -53,22 +64,20 @@ get_blacklist() {
 # repo
 # arch
 get_repo_file() {
-  [ ! -f "cache/${1}/os/${2}/${1}.db.tar.*" ] && return 1
+  [ ! -r "cache/${1}/os/${2}/${1}${DBEXT}" ] && return 1
 
-  echo cache/${1}/os/${2}/${1}.db.tar.*
+  echo "cache/${1}/os/${2}/${1}${DBEXT}"
 }
 
 # Process the databases and get the libre packages
 init() {
-# Fail on every error
-  set -E 
-
-  source $(dirname $0)/config
-  source $(dirname $0)/local_config
-  source $(dirname $0)/libremessages
 
 # Get the blacklisted packages
   blacklist=($(get_blacklist))
+# Store all the whitelist files
+  whitelists=()
+
+  msg "${#blacklist[@]} packages in blacklist"
 
 # Sync the repos databases
   get_repos
@@ -81,28 +90,104 @@ init() {
       repo_file=$(get_repo_file ${_repo} ${_arch})
 
 # Remove blacklisted packages and count them
+# TODO capture all removed packages for printing on debug mode
       msg2 "Removing blacklisted packages: $(
       LC_ALL=C repo-remove ${repo_file} ${blacklist[@]} 2>&1 | \
         grep "\-> Removing" 2>/dev/null| wc -l)"
 
 # Get db contents
-      db=($(get_repo ${_repo} ${_arch}))
+      db=($(get_repo_content ${repo_file}))
 
       msg2 "Process clean db for syncing..."
 
-# Create a whitelist
+# Create a whitelist, add * wildcard to end
+# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
+# we aren't syncing them
       echo ${db[@]} | tr ' ' "\n" | sed "s|$|*|g" > /tmp/${_repo}-${_arch}.whitelist
 
-# Sync excluding everything but blacklist
-      rsync -av --include-from=/tmp/${_repo}-${_arch}.whitelist --exclude="*"
+      msg2 "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1) packages in whitelist"
 
+# Sync excluding everything but whitelist
+# We delete here for cleanup
+      rsync -vrtlH \
+            --delete-after \
+            --safe-links \
+            --delay-updates \
+            --max-delete=1000 \
+            --include-from=/tmp/${_repo}-${_arch}.whitelist \
+            --exclude="*" \
+            rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/ \
+            ${FTP_BASE}/${_repo}/os/${_arch}/
+
+# Add a new whitelist
+      whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
 
 # Cleanup
       unset db 
     done
   done
 
+  msg "Putting databases back in place"
+  rsync -vrtlH \
+        --delay-updates \
+        --safe-links \
+        cache/ \
+        ${FTP_BASE}/
+
+  msg "Syncing package pool"
+# Concatenate all whitelists
+  cat ${whitelists[@]} | sort -u > /tmp/any.whitelist
+
+  msg2 "Retrieving $(wc -l /tmp/any.whitelist | cut -d' ' -f1) packages from pool"
+
+# Sync
+# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
+# packages too
+  rsync -vrtlH \
+        --delay-updates \
+        --safe-links \
+        --include-from=/tmp/any.whitelist \
+        --exclude="*" \
+        rsync://${mirror}/${mirrorpath}/${PKGPOOL}/ \
+        ${FTP_BASE}/${PKGPOOL}/
+
+# Sync sources
+  msg "Syncing source pool"
+  #sed "s|\.pkg\.tar\.|.src.tar.|" /tmp/any.whitelist > /tmp/any-src.whitelist
+
+  #msg2 "Retrieving $(wc -l /tmp/any-src.whitelist | cut -d' ' -f1) sources from pool"
+# Sync
+# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
+# packages too
+  rsync -vrtlH \
+        --delay-updates \
+        --safe-links \
+        --include-from=/tmp/any.whitelist \
+        --exclude="*" \
+        rsync://${mirror}/${mirrorpath}/${SRCPOOL}/ \
+        ${FTP_BASE}/${SRCPOOL}/
+        
+
 # Cleanup
-  unset blacklist _arch _repo repo_file
+  unset blacklist whitelists _arch _repo repo_file
 }
 
+trap_exit() {
+    echo
+    error "$@"
+	exit 1
+}
+
+
+source $(dirname $0)/config
+source $(dirname $0)/local_config
+source $(dirname $0)/libremessages
+
+# From makepkg
+set -E
+
+trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
+trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
+trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
+
+init
