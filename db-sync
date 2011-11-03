@@ -16,23 +16,6 @@
 # * make a tarball of files used for forensics
 # * get files db
 
-# eval this
-# *not needed*
-BASEURL="ftp://ftp.archlinux.org/\$repo/os/\$arch/\$file"
-
-# Generates an URL from BASE_URL
-# _Params_
-# * repo
-# * arch
-# * file
-eval_url() {
-  repo="$1"
-  arch="$2"
-  file="$3"
-
-  eval "${BASE_URL}"
-}
-
 # Returns contents of a repo
 get_repos() {
 # Exclude everything but db files
@@ -49,11 +32,6 @@ get_repo_content() {
   bsdtar tf ${1} | \
     cut -d "/" -f 1 | \
     sort -u
-}
-
-# Get the database compression as an extension
-get_repo_ext() {
-  file "$1" | tr A-Z a-z | sed -e "s/^[^:]\+: *\(.z\).*$/.tar.\1/" -e "s/bz/&2"
 }
 
 # Prints blacklisted packages
