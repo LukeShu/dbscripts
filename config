@@ -1,10 +1,10 @@
 #!/bin/bash
-FTP_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
-ARCH_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
-SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
+FTP_BASE="/tmp/repo"
+ARCH_BASE="/tmp/repo"
+SVNREPO="/var/abs"
 
 # Repos from Arch
-ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
+ARCHREPOS=('core') #'extra' 'community'  'testing' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
@@ -31,13 +31,13 @@ LOCK_DELAY=10
 LOCK_TIMEOUT=300
 
 STAGING="$FTP_BASE/staging"
-TMPDIR="$HOME/tmp"
-ARCHARCHES=(i686 x86_64)
+TMPDIR="/tmp"
+ARCHARCHES=(i686) # x86_64)
 ARCHES=(${ARCHARCHES[@]} mips64el)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.?z"
 SRCEXT=".src.tar.gz"
 
-MAKEPKGCONF="$HOME/etc/makepkg.conf"
-BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"
+MAKEPKGCONF="/etc/makepkg.conf"
+BLACKLIST_FILE="$FTP_BASE/blacklist.txt"
