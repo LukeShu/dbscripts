@@ -89,7 +89,7 @@ init() {
 # We delete here for cleanup
       rsync -vrtlH \
             --delete-after \
-            --safe-links \
+            --delete-excluded \
             --delay-updates \
             --max-delete=1000 \
             --include-from=/tmp/${_repo}-${_arch}.whitelist \
