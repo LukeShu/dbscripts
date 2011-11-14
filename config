@@ -1,10 +1,10 @@
 #!/bin/bash
 FTP_BASE="/srv/http/repo/public"
 ARCH_BASE="/srv/http/repo/public"
-SVNREPO="/srv/http/repo/abslibre"
+SVNREPO="/var/abs"
 
 # Repos from Arch
-ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
+ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
@@ -25,7 +25,7 @@ SOURCE_CLEANUP_DRYRUN=true
 # Time in days to keep moved sourcepackages
 SOURCE_CLEANUP_KEEP=30
 
-REQUIRE_SIGNATURE=false
+REQUIRE_SIGNATURE=true
 
 LOCK_DELAY=10
 LOCK_TIMEOUT=300
