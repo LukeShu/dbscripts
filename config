@@ -1,27 +1,27 @@
 #!/bin/bash
-FTP_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
-ARCH_BASE="/home/parabolavnx/parabolagnulinux.org/repo"
-SVNREPO="/home/parabolavnx/parabolagnulinux.org/abslibre"
+FTP_BASE="/srv/http/repo/public"
+ARCH_BASE="/srv/http/repo/public"
+SVNREPO="/srv/http/repo/abslibre"
 
 # Repos from Arch
 ARCHREPOS=('core' 'extra' 'community'  'testing' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
-USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm')
+USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan')
 # Community project repos
-PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'social')
+PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'sugar')
 PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
 
 CLEANUP_DESTDIR="$FTP_BASE/old/packages"
-CLEANUP_DRYRUN=false
+CLEANUP_DRYRUN=true
 # Time in days to keep moved packages
 CLEANUP_KEEP=30
 
 SOURCE_CLEANUP_DESTDIR="$FTP_BASE/old/sources"
-SOURCE_CLEANUP_DRYRUN=false
+SOURCE_CLEANUP_DRYRUN=true
 # Time in days to keep moved sourcepackages
 SOURCE_CLEANUP_KEEP=30
 
@@ -31,13 +31,14 @@ LOCK_DELAY=10
 LOCK_TIMEOUT=300
 
 STAGING="$FTP_BASE/staging"
-TMPDIR="$HOME/tmp"
+TMPDIR="/tmp"
 ARCHARCHES=(i686 x86_64)
-ARCHES=(${ARCHARCHES[@]} mips64el)
+OURARCHES=(mips64el)
+ARCHES=(${ARCHARCHES[@]} ${OURARCHES[@]})
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.?z"
 SRCEXT=".src.tar.gz"
 
-MAKEPKGCONF="$HOME/etc/makepkg.conf"
+MAKEPKGCONF="~/.makepkg.conf"
 BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"

@@ -22,7 +22,8 @@ for repo in ${ARCHREPOS[@]}; do
         # rsync_not_needed for using as an rsync exclude-from
         #find ${repodir}/${repo}/os/${arch}/ -name "*${PKGEXT}" \
         #    -fprintf ${rsync_not_needed}-${repo}-${arch} '%f\n' || exit 1
-        find ${repodir}/${PKGPOOL}/ -name "*${PKGEXT}" \
+        #find ${repodir}/${PKGPOOL}/ -name "*${PKGEXT}" \
+        find ${repodir}/${repo}/os/${arch}/ -name "*${PKGEXT}" \
             -fprintf ${rsync_not_needed}-${repo}-${arch} '%f\n' || exit 1
         # Actual rsync command
         ${rsync_update_command} \

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+source $(dirname $0)/config
+
+#dryrun="--dry-run"
+
+# Sync our repos
+#for parabola_repo in ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]}; do
+for parabola_repo in ${USERREPOS[@]} ${PROJREPOS[@]}; do
+        echo ":: Syncing ${parabola_repo}/ => ${FTP_BASE}/${parabola_repo}/"
+        rsync -avL ${dryrun} --progress -e ssh parabolavnx@69.163.153.218:repo/${parabola_repo}/ ${FTP_BASE}/${parabola_repo}/
+done
+
+# Sync our arches
+#for parabola_arch in ${OURARCHES[@]}; do
+#for arch_repo in ${ARCHREPOS[@]}; do
+        #echo ":: Syncing ${arch_repo}/os/${parabola_arch}/ => ${FTP_BASE}/${arch_repo}/os/${parabola_arch}/"
+#        rsync -avL ${dryrun} --progress -e ssh parabolavnx@69.163.153.218:repo/${arch_repo}/os/${parabola_arch}/ ${FTP_BASE}/${arch_repo}/os/${parabola_arch}/
+#done
+#done
+#
+# Sync other dirs last 
+#for other in screenshots isos; do
+for other in other; do
+        echo ":: Syncing ${other}/ => ${FTP_BASE}/${other}/"
+        rsync -avL ${dryrun} --progress -e ssh parabolavnx@69.163.153.218:repo/${other}/ ${FTP_BASE}/${other}
+done
+
+exit $?
