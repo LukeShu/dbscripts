@@ -15,6 +15,12 @@ PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
 
+# Directories where packages are shared between repos
+# *relative to FTP_BASE*
+PKGPOOLS=('pool/packages' 'pool/community' 'extra/os/any' 'community/os/any')
+# Directories where sources are stored
+SRCPOOLS=('sources/packages' 'sources/community')
+
 CLEANUP_DESTDIR="$FTP_BASE/old/packages"
 CLEANUP_DRYRUN=true
 # Time in days to keep moved packages

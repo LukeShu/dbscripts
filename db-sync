@@ -122,7 +122,7 @@ init() {
 # Sync
 # *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 # packages too
-  for PKGPOOL in pool/packages pool/community extra/os/any community/os/any; do
+  for PKGPOOL in ${PKGPOOLS[@]}; do
     rsync -vrtlH \
           --delay-updates \
           --safe-links \
@@ -140,7 +140,7 @@ init() {
 # Sync
 # *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 # packages too
-  for SRCPOOL in sources/packages sources/community ; do
+  for SRCPOOL in ${SRCPOOLS[@]}; do
 		 rsync -vrtlH \
 		       --delay-updates \
 		       --safe-links \
