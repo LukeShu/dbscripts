@@ -28,8 +28,8 @@ trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
 ${CLEANUP_DRYRUN} && EXTRAFLAGS+=" --dry-run"
 
-for _repo in ${ARCHREPOS[@]}; do
-    for _arch in ${ARCHARCHES[@]}; do
+for _repo in ${PKGREPOS[@]}; do
+    for _arch in ${ARCHES[@]}; do
         msg "Getting ${_repo}-${_arch} database"
 
         dbfile="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
@@ -43,7 +43,7 @@ for _repo in ${ARCHREPOS[@]}; do
         bsdtar tf "${dbfile}" | \
             cut -d'/' -f1 | \
             sort -u | \
-            sed "s|$|*|" >> /tmp/$0.$PID.filter
+            sed "s|$|*|" >> /tmp/$0.$$.filter
 
     done
 done
@@ -54,7 +54,7 @@ for POOL in ${PKGPOOLS[@]} ${SRCPOOLS[@]}; do
     msg2 "${POOL}"
 
     rsync ${EXTRAFLAGS} -va --delete-excluded \
-          --include-from="${dbfile}" \
+          --include-from="/tmp/$0.$$.filter" \
           --exclude="*" \
           ${FTP_BASE}/${POOL}/ \
           ${FTP_BASE}/${POOL}/
