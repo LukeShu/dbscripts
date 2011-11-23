@@ -26,7 +26,7 @@ trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
 trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
 trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
-(( CLEANUP_DRYRUN )) && EXTRAFLAGS+=" --dry-run"
+${CLEANUP_DRYRUN} && EXTRAFLAGS+=" --dry-run"
 
 for _repo in ${ARCHREPOS[@]}; do
     for _arch in ${ARCHARCHES[@]}; do
