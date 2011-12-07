@@ -54,7 +54,7 @@ for _repo in ${ARCHREPOS[@]}; do
             continue
         fi
 
-        msg2 "Synced ${#SYNCED[@]} packages"
+        msg2 "Synced ${#SYNCED[@]} packages: ${SYNCED[@]}"
 
         msg2 "Adding to db..."
 
