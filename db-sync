@@ -68,6 +68,11 @@ init() {
 
       repo_file=$(get_repo_file ${_repo} ${_arch})
 
+      if [ ! -f "${repo_file}" ]; then
+         warning "${repo_file} doesn't exist, skipping this repo-arch"
+         continue
+      fi
+
 # Remove blacklisted packages and count them
 # TODO capture all removed packages for printing on debug mode
       msg2 "Removing blacklisted packages: $(
