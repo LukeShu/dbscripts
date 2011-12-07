@@ -1,0 +1,67 @@
+#!/bin/bash
+# Releases 'any' packages from Arch arches to ours
+
+trap_exit() {
+    echo
+    error "$@"
+    exit 1
+}
+
+source $(dirname $0)/config
+source $(dirname $0)/local_config
+source $(dirname $0)/libremessages
+
+# From makepkg
+set -E
+
+trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
+trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
+trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
+
+# The architecture to compare with
+BASEARCH='x86_64'
+
+# Traverse all Arch repos
+for _repo in ${ARCHREPOS[@]}; do
+    msg "Processing ${_repo}..."
+
+# Find 'any' packages
+# This is hardcoded but it could release other arches...
+    PKGS=($(find "${FTP_BASE}/${_repo}/os/${BASEARCH}/" \
+                 -iname '*-any.pkg.tar.?z' \
+                 -printf "%f "))
+
+    if [ ${#PKGS[@]} -eq 0 ]; then
+        msg2 "No 'any' packages here"
+        continue
+    fi
+
+    for _arch in ${OURARCHES[@]}; do
+        msg2 "Syncing ${_arch}..."
+
+# Sync 'any' only and extract the synced packages
+        SYNCED=($(
+        rsync -av \
+              --include='*-any.pkg.tar.?z' \
+              --exclude='*' \
+              ${FTP_BASE}/${_repo}/os/${BASEARCH}/ \
+              ${FTP_BASE}/${_repo}/os/${_arch}/ 2>&1 | \
+            grep '-any.pkg.tar' | \
+            cut -d ' ' -f 1 ))
+
+        msg2 "Synced ${#SYNCED[@]} packages"
+
+        msg2 "Adding to db..."
+
+        pushd ${FTP_BASE}/${_repo}/os/${_arch}/ >/dev/null 
+
+# Add the packages to the db
+        $(dirname $0)/repo-add ${_repo}${DBEXT} \
+                               ${SYNCED[@]}
+
+        popd >/dev/null 
+
+# Avoid mixups
+        unset SYNCED PKGS
+    done
+done
