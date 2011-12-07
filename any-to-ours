@@ -46,7 +46,7 @@ for _repo in ${ARCHREPOS[@]}; do
               --exclude='*' \
               ${FTP_BASE}/${_repo}/os/${BASEARCH}/ \
               ${FTP_BASE}/${_repo}/os/${_arch}/ 2>&1 | \
-            grep '-any.pkg.tar' | \
+            grep 'any.pkg.tar' | \
             cut -d ' ' -f 1 ))
 
         msg2 "Synced ${#SYNCED[@]} packages"
