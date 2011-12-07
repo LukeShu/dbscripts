@@ -4,11 +4,11 @@ ARCH_BASE="/srv/http/repo/public"
 SVNREPO="/var/abs"
 
 # Repos from Arch
-ARCHREPOS=('core' 'testing' 'extra' 'community') # 'multilib')
+ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
-USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan')
+USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan' '~lukeshu')
 # Community project repos
 PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'sugar')
 PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
@@ -22,7 +22,7 @@ PKGPOOLS=('pool/packages' 'pool/community' 'extra/os/any' 'community/os/any')
 SRCPOOLS=('sources/packages' 'sources/community')
 
 CLEANUP_DESTDIR="$FTP_BASE/old/packages"
-CLEANUP_DRYRUN=true
+CLEANUP_DRYRUN=false
 # Time in days to keep moved packages
 CLEANUP_KEEP=30
 
