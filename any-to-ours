@@ -49,6 +49,11 @@ for _repo in ${ARCHREPOS[@]}; do
             grep 'any.pkg.tar' | \
             cut -d ' ' -f 1 ))
 
+        if [ ${#SYNCED[@]} -eq 0 ]; then
+            msg2 "Already synced (or error happened)"
+            continue
+        fi
+
         msg2 "Synced ${#SYNCED[@]} packages"
 
         msg2 "Adding to db..."
