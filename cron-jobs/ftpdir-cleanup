@@ -22,13 +22,6 @@ clean_pkg() {
 	fi
 }
 
-script_lock
-
-for repo in ${PKGREPOS[@]}; do
-	for arch in ${ARCHES[@]}; do
-		repo_lock ${repo} ${arch} || exit 1
-	done
-done
 
 ${CLEANUP_DRYRUN} && warning 'dry run mode is active'
 
