@@ -1,0 +1,33 @@
+#!/bin/bash
+# TODO needs refactoring
+
+PDIR="/srv/http/web"
+DIR="/srv/http/web/repos"
+
+for arch in i686 x86_64 mips64el; do
+    for repo in community extra core testing libre libre-testing social; do
+        [[ ! -d $DIR/$arch ]] && mkdir -p $DIR/$arch
+
+        cd $DIR/$arch
+
+        rm -f *.db.tar.gz
+
+        wget http://repo.parabolagnulinux.org/$repo/os/$arch/$repo.db.tar.gz && \
+        $PDIR/manage.py reporead $arch $DIR/$arch/$repo.db.tar.gz
+    done
+done
+
+for repo in connos connos-extra; do
+    arch=i586
+    [[ ! -d $DIR/$arch ]] && mkdir -p $DIR/$arch
+
+    cd $DIR/$arch
+
+    rm -f *.db.tar.gz
+
+    wget http://www.connochaetos.org/os/$arch/$repo/$repo.db.tar.gz && \
+    $PDIR/manage.py reporead $arch $DIR/$arch/$repo.db.tar.gz
+done
+
+
+exit 0
