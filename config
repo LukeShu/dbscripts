@@ -11,6 +11,8 @@ OURREPOS=('libre' 'libre-testing')
 USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan' '~lukeshu')
 # Community project repos
 PROJREPOS=('social' 'elementary' 'kernels' 'radio' 'security' 'sugar' 'gnu')
+# Remote repos
+RMTREPOS=('connos' 'connos-extra')
 PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
@@ -48,3 +50,6 @@ SRCEXT=".src.tar.gz"
 
 MAKEPKGCONF="~/.makepkg.conf"
 BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"
+
+# parabolaweb root
+WEB_DIR=/srv/http/web

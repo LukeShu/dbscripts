@@ -1,33 +1,66 @@
 #!/bin/bash
-# TODO needs refactoring
+# Gets repo databases and updates parabolaweb
+# Note: It works remotely because our parabolaweb server and repo server are
+# two different hosts
 
-PDIR="/srv/http/web"
-DIR="/srv/http/web/repos"
+trap_exit() {
+    echo
+    error "$@"
+    exit 1
+}
 
-for arch in i686 x86_64 mips64el; do
-    for repo in community extra core testing libre libre-testing social; do
-        [[ ! -d $DIR/$arch ]] && mkdir -p $DIR/$arch
+source $(dirname $0)/config
+source $(dirname $0)/local_config
+source $(dirname $0)/libremessages
 
-        cd $DIR/$arch
+# From makepkg
+set -E
 
-        rm -f *.db.tar.gz
+trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
+trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
+trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
-        wget http://repo.parabolagnulinux.org/$repo/os/$arch/$repo.db.tar.gz && \
-        $PDIR/manage.py reporead $arch $DIR/$arch/$repo.db.tar.gz
+TMPDIR="$(mktemp -d /tmp/$0.XXXX)"
+DBLIST=()
+
+# Repos
+for _repo in ${PKGREPOS[@]}; do
+    for _arch in ${ARCHES[@]}; do
+        DBLIST+=("http://repo.parabolagnulinux.org/${_repo}/os/${_arch}/${_repo}${DBEXT}")
     done
 done
 
-for repo in connos connos-extra; do
-    arch=i586
-    [[ ! -d $DIR/$arch ]] && mkdir -p $DIR/$arch
-
-    cd $DIR/$arch
-
-    rm -f *.db.tar.gz
-
-    wget http://www.connochaetos.org/os/$arch/$repo/$repo.db.tar.gz && \
-    $PDIR/manage.py reporead $arch $DIR/$arch/$repo.db.tar.gz
+# Remote repos
+# TODO don't hardcode the remote architecture
+# TODO don't hardcode the remote url
+# MAYBE run scripts on get-repos.d/ which should return db urls
+for _repo in ${RMTREPOS}; do
+    _arch=i586
+    DBLIST+=("http://www.connochaetos.org/os/${_arch}/${_repo}/${_repo}${DBEXT}")
 done
 
+# Get them all
+msg "Retrieving ${#DBLIST[@]} databases"
+wget --directory-prefix=${TMPDIR} \
+     --no-verbose \
+     --force-directories \
+     --no-host-directories \
+     ${DBLIST[@]} || true 
+# Always return true, some databases are expect to be missing
 
-exit 0
+# Create the arches regexp arch1|arch2
+arch_re="$(echo "(${ARCHES[@]} i586)" | tr ' ' '|')"
+
+msg "Adding to parabolaweb"
+find "${TMPDIR}" -iname "*${DBEXT}" | while read _db; do
+    _arch=$(echo "${_db}" | egrep -o "${arch_re}")
+
+    if [ -z "${_arch}" ]; then
+        error "Can't find database architecture: ${_db}"
+        continue
+    fi
+
+    "${WEB_DIR}"/manage.py reporead "${_arch}" "${_db}"
+done
+
+exit $?
