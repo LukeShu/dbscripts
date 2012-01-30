@@ -1,0 +1,93 @@
+#!/bin/bash
+
+ABSLIBRE=/var/abslibre
+ABSGIT=/srv/git/repositories/abslibre.git
+# Remote
+# ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
+BLACKLIST='http://repo.parabolagnulinux.org/docs/blacklist.txt'
+SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g'
+BLFILE=/tmp/blacklist.txt
+
+. /etc/abs.conf
+
+# Steps
+# * Sync abs
+# * Download blacklist.txt
+# * Sync abslibre from abs excluding from blacklist
+# * Create repo.abs.tar.gz tarballs
+
+function sync_abs() {
+    for ARCH in any i686 x86_64; do
+        rsync ${SYNCARGS} ${SYNCSERVER}::abs/${ARCH}/ ${ABSROOT}/${ARCH} || return $?
+    done
+}
+
+function get_blacklist() {
+	printf ":: Updating blacklist...\t"
+	wget -q -O - "${BLACKLIST}" | cut -d':' -f1 | sort -u | \
+    sed "s/^/**\//" > ${BLFILE} || {
+		printf "[FAILED]\n"
+		return 1
+	}
+
+	printf "[OK]\n"
+}
+
+function sync_abs_libre() {
+
+# Clone ABSLibre git repo
+    if [ -d /tmp/abslibre/.git ]; then
+        pushd /tmp/abslibre >/dev/null 2>&1
+        git pull
+        popd  >/dev/null 2>&1
+    else 
+        git clone /srv/git/repositories/abslibre.git /tmp/abslibre
+    fi
+
+# Sync from ABS and then sync from ABSLibre
+	printf ":: Syncing ABSLibre...\t"
+	(rsync ${SYNCARGS} --delete-excluded \
+        --exclude-from=${BLFILE} \
+        ${ABSROOT} \
+        ${ABSLIBRE} \
+    &&
+    for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --exclude=.git/ /tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
+		printf "[FAILED]\n"
+		return 1
+	}
+
+	printf "[OK]\n"
+}
+
+sync_pre_mips64el() {
+    pushd /home/parabola/abslibre-pre-mips64el >/dev/null
+
+    rsync ${SYNCARGS} --exclude=.git* ${ABSLIBRE}/x86_64/ /home/parabola/abslibre-pre-mips64el/ && git add * && git commit -m "$(date)"
+}
+
+# Create .abs.tar.gz tarballs
+create_tarballs() {
+    for repo in ${ABSLIBRE}/{i686,x86_64}/*; do
+        baserepo=$(basename $repo)
+        arch=$(basename $(dirname $repo))
+
+# Remove the old one
+        mkdir -p /srv/http/web/media/abs/$baserepo/os/$arch/
+        rm /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz
+# Create a new one joining arch and any
+# Remove the first part of the path (it could be $repo but any isn't hit)
+        bsdtar -czvf /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz \
+               -s ":${ABSLIBRE}/[a-z0-9_]\+/[a-z]\+::" \
+               $repo/* ${ABSLIBRE}/any/${baserepo}/*
+
+    done
+}
+
+sync_abs || exit 1
+get_blacklist || exit 1
+sync_abs_libre || exit 1
+# This is being done at repo server now
+sync_pre_mips64el || exit 1
+create_tarballs || exit 1
+
+exit 0
