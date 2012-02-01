@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+# Copyright (C) 2012  Michał Masłowski  <mtjm@mtjm.eu>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+"""
+Check which libraries are provided or required by a package, store
+this in a database, update and list broken packages.
+
+Dependencies:
+
+- Python 3.2 or later with SQLite 3 support
+
+- ``bsdtar``
+
+- ``readelf``
+"""
+
+
+import os.path
+import re
+import sqlite3
+import subprocess
+import tempfile
+
+
+#: Regexp matching an interesting dynamic entry.
+_DYNAMIC = re.compile(r"^\s*[0-9a-fx]+"
+                      "\s*\((NEEDED|SONAME)\)[^:]*:\s*\[(.+)\]$")
+
+
+def make_db(path):
+    """Make a new, empty, library database at *path*."""
+    con = sqlite3.connect(path)
+    con.executescript("""
+create table provided(
+  library varchar not null,
+  package varchar not null
+);
+create table used(
+  library varchar not null,
+  package varchar not null
+);
+""")
+    con.close()
+
+
+def begin(database):
+    """Connect to *database* and start a transaction."""
+    con = sqlite3.connect(database)
+    con.execute("begin exclusive")
+    return con
+
+
+def add_provided(con, package, libraries):
+    """Write that *package* provides *libraries*."""
+    for library in libraries:
+        con.execute("insert into provided (package, library) values (?,?)",
+                    (package, library))
+
+
+def add_used(con, package, libraries):
+    """Write that *package* uses *libraries*."""
+    for library in libraries:
+        con.execute("insert into used (package, library) values (?,?)",
+                    (package, library))
+
+
+def remove_package(con, package):
+    """Remove all entries for a package."""
+    con.execute("delete from provided where package=?", (package,))
+    con.execute("delete from used where package=?", (package,))
+
+
+def add_package(con, package):
+    """Add entries from a named *package*."""
+    # Extract to a temporary directory.  This could be done more
+    # efficiently, since there is no need to store more than one file
+    # at once.
+    with tempfile.TemporaryDirectory() as temp:
+        tar = subprocess.Popen(("bsdtar", "xf", package, "-C", temp))
+        tar.communicate()
+        with open(os.path.join(temp, ".PKGINFO")) as pkginfo:
+            for line in pkginfo:
+                if line.startswith("pkgname ="):
+                    pkgname = line[len("pkgname ="):].strip()
+                    break
+        # Don't list previously removed libraries.
+        remove_package(con, pkgname)
+        provided = set()
+        used = set()
+        # Search for ELFs.
+        for dirname, dirnames, filenames in os.walk(temp):
+            assert dirnames is not None  # unused, avoid pylint warning
+            for file_name in filenames:
+                path = os.path.join(dirname, file_name)
+                with open(path, "rb") as file_object:
+                    if file_object.read(4) != b"\177ELF":
+                        continue
+                readelf = subprocess.Popen(("readelf", "-d", path),
+                                           stdout=subprocess.PIPE)
+                for line in readelf.communicate()[0].split(b"\n"):
+                    match = _DYNAMIC.match(line.decode("ascii"))
+                    if match:
+                        if match.group(1) == "SONAME":
+                            provided.add(match.group(2))
+                        elif match.group(1) == "NEEDED":
+                            used.add(match.group(2))
+                        else:
+                            raise AssertionError("unknown entry type "
+                                                 + match.group(1))
+        add_provided(con, pkgname, provided)
+        add_used(con, pkgname, used)
+
+
+def init(arguments):
+    """Initialize."""
+    make_db(arguments.database)
+
+
+def add(arguments):
+    """Add packages."""
+    con = begin(arguments.database)
+    for package in arguments.packages:
+        add_package(con, package)
+    con.commit()
+    con.close()
+
+
+def remove(arguments):
+    """Remove packages."""
+    con = begin(arguments.database)
+    for package in arguments.packages:
+        remove_package(con, package)
+    con.commit()
+    con.close()
+
+
+def check(arguments):
+    """List broken packages."""
+    con = begin(arguments.database)
+    available = set(row[0] for row
+                    in con.execute("select library from provided"))
+    for package, library in con.execute("select package, library from used"):
+        if library not in available:
+            print(package, "needs", library)
+    con.close()
+
+
+def main():
+    """Get arguments and run the command."""
+    from argparse import ArgumentParser
+    parser = ArgumentParser(prog="check-package-libraries.py",
+                            description="Check packages for "
+                            "provided/needed libraries")
+    parser.add_argument("-d", "--database", type=str,
+                        help="Database file to use",
+                        default="package-libraries.sqlite")
+    subparsers = parser.add_subparsers()
+    subparser = subparsers.add_parser(name="init",
+                                      help="initialize the database")
+    subparser.set_defaults(command=init)
+    subparser = subparsers.add_parser(name="add",
+                                      help="add packages to database")
+    subparser.add_argument("packages", nargs="+", type=str,
+                           help="package files to add")
+    subparser.set_defaults(command=add)
+    subparser = subparsers.add_parser(name="remove",
+                                      help="remove packages from database")
+    subparser.add_argument("packages", nargs="+", type=str,
+                           help="package names to remove")
+    subparser.set_defaults(command=remove)
+    subparser = subparsers.add_parser(name="check",
+                                      help="list broken packages")
+    subparser.set_defaults(command=check)
+    arguments = parser.parse_args()
+    arguments.command(arguments)
+
+
+if __name__ == "__main__":
+    main()
