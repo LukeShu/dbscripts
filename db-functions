@@ -293,6 +293,9 @@ getpkgfile() {
 }
 
 getpkgfiles() {
+# Ignore anything that doesn't glob to PKGEXT
+    shopt -s nullglob
+
 	local f
 	if [ ! -z "$(echo ${@%\.*} | sed "s/ /\n/g" | sort | uniq -D)" ]; then
 		error 'Duplicate packages found!'
@@ -310,6 +313,8 @@ getpkgfiles() {
 	done
 
 	echo ${@}
+
+    shopt -u nullglob
 }
 
 check_pkgfile() {
