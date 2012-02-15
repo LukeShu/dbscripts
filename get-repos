@@ -20,7 +20,7 @@ trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
 trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
 trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
-TMPDIR="$(mktemp -d /tmp/$0.XXXX)"
+TMPDIR="$(mktemp -d /tmp/$(basename $0).XXXX)"
 DBLIST=()
 
 # Repos
