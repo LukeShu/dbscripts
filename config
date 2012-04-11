@@ -19,7 +19,7 @@ SRCPOOL='sources/packages'
 
 # Directories where packages are shared between repos
 # *relative to FTP_BASE*
-PKGPOOLS=('pool/packages' 'pool/community' 'community/os/any')
+PKGPOOLS=('pool/packages' 'pool/community')
 # Directories where sources are stored
 SRCPOOLS=('sources/packages' 'sources/community')
 
