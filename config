@@ -8,7 +8,7 @@ ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
-USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho')
+USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde')
 # Community project repos
 PROJREPOS=('social' 'gis' 'artistic' 'elementary' 'kernels' 'radio' 'security' 'sugar' 'gnu' 'cross')
 # Remote repos
