@@ -63,4 +63,6 @@ find "${TMPDIR}" -iname "*${DBEXT}" | while read _db; do
     "${WEB_DIR}"/manage.py reporead "${_arch}" "${_db}"
 done
 
+rm -r ${TMPDIR}
+
 exit $?
