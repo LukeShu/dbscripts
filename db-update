@@ -35,9 +35,9 @@ for repo in ${repos[@]}; do
 			if ! check_pkgfile "${pkg}"; then
 				die "Package ${repo}/$(basename ${pkg}) is not consistent with its meta data"
 			fi
-			#if ! check_pkgrepos "${pkg}"; then
-			#	die "Package ${repo}/$(basename ${pkg}) already exists in another repository"
-			#fi
+			if ! check_pkgrepos "${pkg}"; then
+				die "Package ${repo}/$(basename ${pkg}) already exists in another repository"
+			fi
 		done
         # This is fucking obnoxious
 #		if ! check_splitpkgs ${repo} ${pkgs[@]}; then
@@ -61,7 +61,7 @@ for repo in ${repos[@]}; do
 			if [ -f "${pkg}" ]; then
 				mv "${pkg}" "$FTP_BASE/${PKGPOOL}"
 			fi
-			ln -s "../../../${PKGPOOL}/${pkgfile}" "$FTP_BASE/$repo/os/${pkgarch}"
+			ln -s "../../../${PKGPOOL}/${pkgfile}" "$FTP_BASE/$repo/os/${pkgarch}" 2>/dev/null || { error "Package already in repo, skipping" ; continue }
 			# also move signatures
 			if [ -f "${pkg}.sig" ]; then
 				mv "${pkg}.sig" "$FTP_BASE/${PKGPOOL}"
