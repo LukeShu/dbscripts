@@ -43,10 +43,11 @@ for _repo in ${ARCHREPOS[@]}; do
         SYNCED=($(
         rsync -av \
               --include='*-any.pkg.tar.?z' \
+              --include='*-any.pkg.tar.?z.sig' \
               --exclude='*' \
               ${FTP_BASE}/${_repo}/os/${BASEARCH}/ \
               ${FTP_BASE}/${_repo}/os/${_arch}/ 2>&1 | \
-            grep 'any.pkg.tar' | \
+            grep 'any\.pkg\.tar\..z$' | \
             cut -d ' ' -f 1 ))
 
         if [ ${#SYNCED[@]} -eq 0 ]; then
