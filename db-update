@@ -61,7 +61,7 @@ for repo in ${repos[@]}; do
 			if [ -f "${pkg}" ]; then
 				mv "${pkg}" "$FTP_BASE/${PKGPOOL}"
 			fi
-			ln -s "../../../${PKGPOOL}/${pkgfile}" "$FTP_BASE/$repo/os/${pkgarch}" 2>/dev/null || { error "Package already in repo, skipping" ; continue }
+			ln -s "../../../${PKGPOOL}/${pkgfile}" "$FTP_BASE/$repo/os/${pkgarch}" 2>/dev/null || { error "Package already in repo, removing and skipping" ; continue 2; }
 			# also move signatures
 			if [ -f "${pkg}.sig" ]; then
 				mv "${pkg}.sig" "$FTP_BASE/${PKGPOOL}"
