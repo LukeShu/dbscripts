@@ -62,8 +62,8 @@ for _repo in ${ARCHREPOS[@]}; do
         pushd ${FTP_BASE}/${_repo}/os/${_arch}/ >/dev/null 
 
 # Add the packages to the db
-        $(dirname $0)/repo-add ${_repo}${DBEXT} \
-                               ${SYNCED[@]}
+        repo-add ${_repo}${DBEXT} \
+                 ${SYNCED[@]}
 
         popd >/dev/null 
 
