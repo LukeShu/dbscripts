@@ -50,7 +50,6 @@ def main():
                     if line == b"%ARCH%\n":
                         is_arch = True
                 if skip:
-                    print("skip " + repo + "/" + entry.name[:-5])
                     continue
                 print(repo + "/" + entry.name[:-5])
 
