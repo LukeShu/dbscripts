@@ -29,19 +29,10 @@ if [ $# -lt 1 ]; then
 fi
 
 arch=$1
-pkgarch=$2
+shift
 
 for repo in ${PKGREPOS[@]}
 do
     db="${FTP_BASE}/${repo}/os/${arch}/${repo}.db"
-    for f in $(tar tf $db | egrep /desc$)
-    do
-        if ! tar xOf $db $f | fgrep %PGPSIG% > /dev/null
-        then
-            if [ -z $2 ] || tar xOf $db $f | fgrep -A1 %ARCH% | fgrep $pkgarch > /dev/null
-            then
-                echo $repo/${f%/desc}
-            fi
-        fi
-    done
+    "$(dirname $0)/db-list-unsigned-packages.py" "$@" < "$db"
 done
