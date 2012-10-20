@@ -60,4 +60,8 @@ for POOL in ${PKGPOOLS[@]} ${SRCPOOLS[@]}; do
           ${FTP_BASE}/${POOL}/
 done
 
+msg "Removing symlinks:"
+find -L ${FTP_BASE}/ -type l 
+${CLEANUP_DRYRUN} || find -L ${FTP_BASE}/ -type l -delete
+
 exit $?
