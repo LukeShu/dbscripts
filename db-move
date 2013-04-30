@@ -24,12 +24,10 @@ for pkgarch in ${ARCHES[@]}; do
 	repo_lock ${repo_from} ${pkgarch} || exit 1
 done
 
-# check if packages to be moved exist in svn and ftp dir
-/usr/bin/svn checkout -q -N "${SVNREPO}" "${WORKDIR}/svn" >/dev/null
+# No idea why we loop twice... -- fauno
 for pkgbase in ${args[@]:2}; do
-	/usr/bin/svn up -q "${WORKDIR}/svn/${pkgbase}" >/dev/null
 	for pkgarch in ${ARCHES[@]} 'any'; do
-		svnrepo_from="${WORKDIR}/svn/${pkgbase}/repos/${repo_from}-${pkgarch}"
+		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
 		if [ -r "${svnrepo_from}/PKGBUILD" ]; then
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
 			if [ ${#pkgnames[@]} -lt 1 ]; then
@@ -64,8 +62,7 @@ declare -A add_pkgs
 declare -A remove_pkgs
 for pkgbase in ${args[@]:2}; do
 	for pkgarch in ${ARCHES[@]} 'any'; do
-		svnrepo_from="${WORKDIR}/svn/${pkgbase}/repos/${repo_from}-${pkgarch}"
-		svnrepo_to="${WORKDIR}/svn/${pkgbase}/repos/${repo_to}-${pkgarch}"
+		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
 
 		if [ -f "${svnrepo_from}/PKGBUILD" ]; then
 			if [ "${pkgarch}" == 'any' ]; then
@@ -76,21 +73,6 @@ for pkgbase in ${args[@]:2}; do
 			msg2 "${pkgbase} ($(echo ${tarches[@]}))"
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
 			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
-
-			if [ -d "${svnrepo_to}" ]; then
-				for file in $(/usr/bin/svn ls "${svnrepo_to}"); do
-					/usr/bin/svn rm -q "${svnrepo_to}/$file"
-				done
-			else
-				mkdir "${svnrepo_to}"
-				/usr/bin/svn add -q "${svnrepo_to}"
-			fi
-
-			for file in $(svn ls "${svnrepo_from}"); do
-				/usr/bin/svn mv -q -r HEAD "${svnrepo_from}/$file" "${svnrepo_to}/"
-			done
-			/usr/bin/svn rm --force -q "${svnrepo_from}"
-			/usr/bin/svn commit -q "${WORKDIR}/svn/${pkgbase}" -m "$(basename $0): moved ${pkgbase} from [${repo_from}] to [${repo_to}] (${pkgarch})"
 
 			for pkgname in ${pkgnames[@]}; do
 				for tarch in ${tarches[@]}; do
