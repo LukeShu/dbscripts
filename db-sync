@@ -12,15 +12,18 @@
 # * Sync repo => repo
 
 # TODO
-# * verbose mode
 # * make a tarball of files used for forensics
 # * get files db
+
+# Run as `V=true db-sync` to get verbose output
+VERBOSE=${V}
+${VERBOSE} && extra="-v"
 
 # Returns contents of a repo
 get_repos() {
         mkdir -p ${TMPDIR}/$0.$$.cache
 # Exclude everything but db files
-  rsync -vmrtlH --no-p --include="*/" \
+  rsync ${extra} -mrtlH --no-p --include="*/" \
         --include="*.db" \
         --include="*${DBEXT}" \
         --exclude="*" \
@@ -93,7 +96,7 @@ init() {
 
 # Sync excluding everything but whitelist
 # We delete here for cleanup
-      rsync -vrtlH \
+      rsync ${extra} -rtlH \
             --delete-after \
             --delete-excluded \
             --delay-updates \
@@ -106,7 +109,7 @@ init() {
       whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
 
       msg "Putting databases back in place"
-      rsync -vrtlH \
+      rsync ${extra} -rtlH \
             --delay-updates \
             --safe-links \
             ${TMPDIR}/$0.$$.cache/${_repo}/os/${_arch}/ \
@@ -128,7 +131,7 @@ init() {
 # *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 # packages too
   for PKGPOOL in ${PKGPOOLS[@]}; do
-    rsync -vrtlH \
+    rsync ${extra} -rtlH \
           --delay-updates \
           --safe-links \
           --include-from=/tmp/any.whitelist \
@@ -146,7 +149,7 @@ init() {
 # *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 # packages too
   for SRCPOOL in ${SRCPOOLS[@]}; do
-		 rsync -vrtlH \
+		 rsync ${extra} -rtlH \
 		       --delay-updates \
 		       --safe-links \
 		       --include-from=/tmp/any.whitelist \
