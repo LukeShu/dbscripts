@@ -26,7 +26,7 @@ DBLIST=()
 # Repos
 for _repo in ${PKGREPOS[@]}; do
     for _arch in ${ARCHES[@]}; do
-        DBLIST+=("http://repo.parabolagnulinux.org/${_repo}/os/${_arch}/${_repo}${DBEXT}")
+        DBLIST+=("http://repo.parabolagnulinux.org/${_repo}/os/${_arch}/${_repo}${FILESEXT}")
     done
 done
 
@@ -36,7 +36,7 @@ done
 # MAYBE run scripts on get-repos.d/ which should return db urls
 for _repo in ${RMTREPOS}; do
     _arch=i586
-    DBLIST+=("http://www.connochaetos.org/os/${_arch}/${_repo}/${_repo}${DBEXT}")
+    DBLIST+=("http://www.connochaetos.org/os/${_arch}/${_repo}/${_repo}${FILESEXT}")
 done
 
 # Get them all
@@ -52,7 +52,7 @@ wget --directory-prefix=${TMPDIR} \
 arch_re="$(echo "(${ARCHES[@]} i586)" | tr ' ' '|')"
 
 msg "Adding to parabolaweb"
-find "${TMPDIR}" -iname "*${DBEXT}" | while read _db; do
+find "${TMPDIR}" -iname "*${FILESEXT}" | while read _db; do
     _arch=$(echo "${_db}" | egrep -o "${arch_re}")
 
     if [ -z "${_arch}" ]; then
