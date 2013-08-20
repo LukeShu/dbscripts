@@ -47,7 +47,9 @@ for pkgbase in ${args[@]:2}; do
 
 			for pkgname in ${pkgnames[@]}; do
 				for tarch in ${tarches[@]}; do
-					getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT} >/dev/null
+					getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT} >/dev/null \
+					|| \
+					getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-any${PKGEXT} >/dev/null
 				done
 			done
 			continue 2
