@@ -10,7 +10,7 @@ OURREPOS=('libre' 'libre-testing')
 # User repos
 USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde')
 # Community project repos
-PROJREPOS=('pcr' 'social' 'gis' 'artistic' 'elementary' 'kernels' 'radio' 'security' 'sugar' 'gnu' 'cross' 'java' 'java-ugly' 'coherence' 'nonprism')
+PROJREPOS=('pcr' 'social' 'gis' 'artistic' 'elementary' 'kernels' 'radio' 'security' 'sugar' 'gnu' 'cross' 'java' 'java-ugly' 'nonprism')
 # Remote repos
 RMTREPOS=('connos' 'connos-extra')
 PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
