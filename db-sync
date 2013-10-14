@@ -26,6 +26,8 @@ get_repos() {
   rsync ${extra} -mrtlH --no-p --include="*/" \
         --include="*.db" \
         --include="*${DBEXT}" \
+        --include="*.db" \
+        --include="*${FILESEXT}" \
         --exclude="*" \
         --delete-after \
         rsync://${mirror}/${mirrorpath}/ ${TMPDIR}/$0.$$.cache
@@ -46,9 +48,7 @@ get_blacklist() {
 # repo
 # arch
 get_repo_file() {
-#  shopt -s nullglob
-
-  echo "${TMPDIR}/$0.$$.cache/${1}/os/${2}/${1}${DBEXT}"
+  echo "${TMPDIR}/$0.$$.cache/${1}/os/${2}/${1}"
 }
 
 # Process the databases and get the libre packages
@@ -69,21 +69,27 @@ init() {
     for _arch in ${ARCHARCHES[@]}; do
       msg "Processing ${_repo}-${_arch}"
 
-      repo_file=$(get_repo_file ${_repo} ${_arch})
+      db_file=$(get_repo_file ${_repo} ${_arch})${DBEXT}
+      files_file=$(get_repo_file ${_repo} ${_arch})${FILESEXT}
 
-      if [ ! -f "${repo_file}" ]; then
-         warning "${repo_file} doesn't exist, skipping this repo-arch"
+      if [ ! -f "${db_file}" ]; then
+         warning "%s doesn't exist, skipping this repo-arch" "${db_file}"
+         continue
+      fi
+      if [ ! -f "${files_file}" ]; then
+         warning "%s doesn't exist, skipping this repo-arch" "${files_file}"
          continue
       fi
 
 # Remove blacklisted packages and count them
 # TODO capture all removed packages for printing on debug mode
-      msg2 "Removing blacklisted packages: $(
-      LC_ALL=C repo-remove ${repo_file} ${blacklist[@]} 2>&1 | \
-        grep "\-> Removing" 2>/dev/null| wc -l)"
+      msg2 "Removing blacklisted packages from .db database..."
+      LC_ALL=C repo-remove "${db_file}" "${blacklist[@]}"
+      msg2 "Removing blacklisted packages from .files database..."
+      LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}"
 
 # Get db contents
-      db=($(get_repo_content ${repo_file}))
+      db=($(get_repo_content ${db_file}))
 
       msg2 "Process clean db for syncing..."
 
