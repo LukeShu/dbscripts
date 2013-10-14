@@ -33,7 +33,7 @@ for repo in ${ARCHREPOS[@]}; do
 	    fi
 	done
 	if [ ${#cleanpkgs[@]} -ge 1 ]; then
-        msg2 "Unfree: ${cleanpkgs[@]}"
+        msg2 "Nonfree: ${cleanpkgs[@]}"
 	    arch_repo_remove "${repo}" "${pkgarch}" ${cleanpkgs[@]}
 	fi
     done

@@ -8,9 +8,9 @@ ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing')
 # User repos
-USERREPOS=('~fauno' '~smv' '~xihh' '~mtjm' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde')
+USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde')
 # Community project repos
-PROJREPOS=('pcr' 'social' 'gis' 'artistic' 'elementary' 'kernels' 'radio' 'security' 'sugar' 'gnu' 'cross' 'java' 'java-ugly' 'coherence')
+PROJREPOS=('pcr' 'kernels' 'cross' 'java' 'java-ugly' 'nonprism')
 # Remote repos
 RMTREPOS=('connos' 'connos-extra')
 PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
@@ -45,7 +45,7 @@ OURARCHES=(mips64el)
 ARCHES=(${ARCHARCHES[@]} ${OURARCHES[@]})
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
-PKGEXT=".pkg.tar.?z"
+PKGEXT=".pkg.tar.xz"
 SRCEXT=".src.tar.gz"
 
 MAKEPKGCONF="~/.makepkg.conf"

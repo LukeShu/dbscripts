@@ -3,18 +3,18 @@ pre_install() {
   cat <<EOM
   == IMPORTANT NOTICE ==
 
-  This package will help you identify unfree packages that are installed
+  This package will help you identify nonfree packages that are installed
   on your system at the time of it's installation, as well as protecting
   you from (accidentally) installing them.
 
-  Also, if any other unfree package is identified, later updates will ask
+  Also, if any other nonfree package is identified, later updates will ask
   you for it's removal.
 
-  Have in mind that, if you want to retain certain unfree packages
+  Have in mind that, if you want to retain certain nonfree packages
   installed on your system, you'll have to remove your-freedom :)
 
   If you find out any of the following:
-  * Cascade package removal due to unfree dependencies,
+  * Cascade package removal due to nonfree dependencies,
   * Your-freedom conflicting with a *-libre package,
   * Etc.
 

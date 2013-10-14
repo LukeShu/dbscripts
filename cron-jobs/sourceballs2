@@ -60,32 +60,3 @@ for repo in ${PKGREPOS[@]}; do
     popd >/dev/null
 
 done # end repos
-
-# Cleanup old source packages
-cat "${WORKDIR}/expected-src-pkgs" | sort -u > "${WORKDIR}/expected-src-pkgs.sort"
-cat "${WORKDIR}/available-src-pkgs" | sort -u > "${WORKDIR}/available-src-pkgs.sort"
-old_pkgs=($(comm -23 "${WORKDIR}/available-src-pkgs.sort" "${WORKDIR}/expected-src-pkgs.sort"))
-
-if [ ${#old_pkgs[@]} -ge 1 ]; then
-	msg "Removing old source packages..."
-	${SOURCE_CLEANUP_DRYRUN} && warning 'dry run mode is active'
-	for old_pkg in ${old_pkgs[@]}; do
-		msg2 "${old_pkg}"
-		if ! ${SOURCE_CLEANUP_DRYRUN}; then
-			mv "$ARCH_BASE/${SRCPOOL}/${old_pkg}" "${SOURCE_CLEANUP_DESTDIR}"
-			touch "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
-		fi
-	done
-fi
-
-old_pkgs=($(find ${SOURCE_CLEANUP_DESTDIR} -type f -name "*${SRCEXT}" -mtime +${SOURCE_CLEANUP_KEEP} -printf '%f\n'))
-if [ ${#old_pkgs[@]} -ge 1 ]; then
-	msg "Removing old source packages from the cleanup directory..."
-	for old_pkg in ${old_pkgs[@]}; do
-		msg2 "${old_pkg}"
-		${SOURCE_CLEANUP_DRYRUN} || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
-	done
-fi
-
-script_unlock
-

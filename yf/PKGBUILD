@@ -2,7 +2,7 @@
 pkgname=your-freedom
 pkgver=$(LC_ALL=C date -u +%Y%m%d)
 pkgrel=1
-pkgdesc="This package conflicts with every unfree package known to date."
+pkgdesc="This package conflicts with every nonfree package known to date."
 arch=('any')
 url="https://parabolagnulinux.org"
 license=('GPL')
