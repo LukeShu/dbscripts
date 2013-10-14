@@ -26,7 +26,7 @@ get_repos() {
   rsync ${extra} -mrtlH --no-p --include="*/" \
         --include="*.db" \
         --include="*${DBEXT}" \
-        --include="*.db" \
+        --include="*.files" \
         --include="*${FILESEXT}" \
         --exclude="*" \
         --delete-after \
