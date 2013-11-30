@@ -52,4 +52,4 @@ MAKEPKGCONF="~/.makepkg.conf"
 BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"
 
 # parabolaweb root
-WEB_DIR=/srv/http/web
+WEB_DIR=/srv/http/parabolagnulinux.org/web
