@@ -30,15 +30,6 @@ for _repo in ${PKGREPOS[@]}; do
     done
 done
 
-# Remote repos
-# TODO don't hardcode the remote architecture
-# TODO don't hardcode the remote url
-# MAYBE run scripts on get-repos.d/ which should return db urls
-for _repo in ${RMTREPOS}; do
-    _arch=i586
-    DBLIST+=("http://www.connochaetos.org/os/${_arch}/${_repo}/${_repo}${FILESEXT}")
-done
-
 # Get them all
 msg "Retrieving ${#DBLIST[@]} databases"
 wget --directory-prefix=${TMPDIR} \
