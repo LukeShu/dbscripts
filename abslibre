@@ -68,8 +68,11 @@ function sync_abs_libre() {
 	printf "[OK]\n"
 }
 
+# This part is very hacky and particular to the current setup :P
 sync_pre_mips64el() {
-    pushd /home/parabola/abslibre-pre-mips64el >/dev/null
+    pushd /home/fauno/Repos/abslibre-pre-mips64el >/dev/null
+
+    sudo -u fauno sh -c "
 
     rsync ${SYNCARGS} \
           --exclude=.git* \
@@ -83,9 +86,11 @@ sync_pre_mips64el() {
           --exclude=staging \
           --exclude=testing \
           ${ABSLIBRE}/x86_64/ \
-          /home/parabola/abslibre-pre-mips64el/ && \
+          /home/fauno/Repos/abslibre-pre-mips64el/ && \
           git add . && \
-          git commit -m "$(date)" -a
+          git commit -m \"$(date)\" -a
+          git push origin master
+    "
 }
 
 # Create .abs.tar.gz tarballs
