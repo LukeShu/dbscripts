@@ -4,7 +4,7 @@ ABSLIBRE=/var/abslibre
 ABSGIT=/srv/git/repositories/abslibre.git
 # Remote
 # ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
-BLACKLIST='http://repo.parabolagnulinux.org/docs/blacklist.txt'
+BLACKLIST='https://projects.parabolagnulinux.org/blacklist.git/plain/blacklist.txt'
 SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g'
 BLFILE=/tmp/blacklist.txt
 
