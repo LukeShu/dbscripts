@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ABSLIBRE=/var/abslibre
+ABSLIBRE=/srv/abslibre
 ABSGIT=/srv/git/repositories/abslibre.git
 # Remote
 # ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
@@ -9,7 +9,7 @@ SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g'
 BLFILE=/tmp/blacklist.txt
 
 # Variables from abs.conf
-ABSROOT="/var/abs/"
+ABSROOT="/srv/abs/"
 # DON'T CHANGE. WE NEED IT FOR ABSLIBRE
 SYNCSERVER="rsync.archlinux.org"
 ARCH="i686"
