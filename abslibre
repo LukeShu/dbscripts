@@ -8,7 +8,13 @@ BLACKLIST='http://repo.parabolagnulinux.org/docs/blacklist.txt'
 SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g'
 BLFILE=/tmp/blacklist.txt
 
-. /etc/abs.conf
+# Variables from abs.conf
+ABSROOT="/var/abs/"
+# DON'T CHANGE. WE NEED IT FOR ABSLIBRE
+SYNCSERVER="rsync.archlinux.org"
+ARCH="i686"
+MIRRORLIST="/etc/pacman.d/mirrorlist"
+REPOS=(core extra community testing community-testing !staging !community-staging)
 
 # Steps
 # * Sync abs
