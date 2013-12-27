@@ -30,18 +30,21 @@ function get_blacklist() {
 		return 1
 	}
 
+# Prevent using an empty blacklist
+    [ $(wc -l ${BLFILE} | cut -d " " -f1) -eq 0 ] && return 1
+
 	printf "[OK]\n"
 }
 
 function sync_abs_libre() {
 
 # Clone ABSLibre git repo
-    if [ -d /tmp/abslibre/.git ]; then
-        pushd /tmp/abslibre >/dev/null 2>&1
+    if [ -d /var/tmp/abslibre/.git ]; then
+        pushd /var/tmp/abslibre >/dev/null 2>&1
         git pull
         popd  >/dev/null 2>&1
     else 
-        git clone /srv/git/repositories/abslibre.git /tmp/abslibre
+        git clone /srv/git/abslibre.git /var/tmp/abslibre
     fi
 
 # Sync from ABS and then sync from ABSLibre
@@ -51,7 +54,7 @@ function sync_abs_libre() {
         ${ABSROOT} \
         ${ABSLIBRE} \
     &&
-    for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --exclude=.git/ /tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
+    for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --exclude=.git/ /var/tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
 		printf "[FAILED]\n"
 		return 1
 	}
@@ -62,7 +65,21 @@ function sync_abs_libre() {
 sync_pre_mips64el() {
     pushd /home/parabola/abslibre-pre-mips64el >/dev/null
 
-    rsync ${SYNCARGS} --exclude=.git* ${ABSLIBRE}/x86_64/ /home/parabola/abslibre-pre-mips64el/ && git add * && git commit -m "$(date)"
+    rsync ${SYNCARGS} \
+          --exclude=.git* \
+          --exclude=community-staging \
+          --exclude=community-testing \
+          --exclude=gnome-unstable \
+          --exclude=kde-unstable \
+          --exclude=multilib \
+          --exclude=multilib-testing \
+          --exclude=multilib-staging \
+          --exclude=staging \
+          --exclude=testing \
+          ${ABSLIBRE}/x86_64/ \
+          /home/parabola/abslibre-pre-mips64el/ && \
+          git add . && \
+          git commit -m "$(date)" -a
 }
 
 # Create .abs.tar.gz tarballs
@@ -88,6 +105,9 @@ get_blacklist || exit 1
 sync_abs_libre || exit 1
 # This is being done at repo server now
 sync_pre_mips64el || exit 1
-create_tarballs || exit 1
+#create_tarballs || exit 1
+
+echo "Exclusion list used"
+cat ${BLFILE}
 
 exit 0
