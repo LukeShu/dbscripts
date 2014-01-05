@@ -83,4 +83,4 @@ for repo in ${repos[@]}; do
 	done
 done
 
-
+cp -rviT "${STAGING}/other/" "${FTP_BASE}/other/"

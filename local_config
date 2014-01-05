@@ -1,13 +1,18 @@
 # Mirror options
-mirror="mirrors.eu.kernel.org"
-mirrorpath="mirrors/archlinux"
+#mirror="mirrors.uk2.net"
+mirror="mirrors.kernel.org"
+#mirror="mirror.umd.edu"
+#mirror="archlinux.c3sl.ufpr.br"
+#mirror="mirror.us.leaseweb.net"
+#mirror="mirror.de.leaseweb.net"
+mirrorpath="archlinux"
 
 # Directories: they should end without /
-paraboladir=~/parabolagnulinux.org
-tempdir=~/tmp
+paraboladir=/srv/http/repo/public
+tempdir=/tmp
 archdb=${tempdir}/db
 docs_dir=${paraboladir}/docs
-repodir=${paraboladir}/repo
+repodir=${paraboladir}
 licenses_dir=${docs_dir}/pending_licenses
 # End Directories
 
@@ -23,4 +28,4 @@ whitelist=${docs_dir}/whitelist.txt
 
 # Rsync commands
 rsync_list_command="rsync -rptgoL --exclude='*.abs.tar.*' --list-only --no-motd "
-rsync_update_command="rsync -rptgoL --exclude='*.abs.tar.*' --no-motd "
+rsync_update_command="rsync -vrptgoL --exclude='*.abs.tar.*' --no-motd "

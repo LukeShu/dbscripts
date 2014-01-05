@@ -43,7 +43,7 @@ for _repo in ${PKGREPOS[@]}; do
         bsdtar tf "${dbfile}" | \
             cut -d'/' -f1 | \
             sort -u | \
-            sed "s|$|*|" >> /tmp/$0.$$.filter
+            sed "s|$|*|" >> /tmp/${0##*/}.$$.filter
 
     done
 done
@@ -54,7 +54,7 @@ for POOL in ${PKGPOOLS[@]} ${SRCPOOLS[@]}; do
     msg2 "${POOL}"
 
     rsync ${EXTRAFLAGS} -va --delete-excluded \
-          --include-from="/tmp/$0.$$.filter" \
+          --include-from="/tmp/${0##*/}.$$.filter" \
           --exclude="*" \
           ${FTP_BASE}/${POOL}/ \
           ${FTP_BASE}/${POOL}/
