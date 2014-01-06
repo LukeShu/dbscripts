@@ -9,7 +9,7 @@ if [ $# -ge 1 ]; then
 fi
 
 # Find repos with packages to release
-repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 1 -type d ! -empty -printf '%f ' 2>/dev/null))
+repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 1 -type d ! -empty ! -name other -printf '%f ' 2>/dev/null))
 if [ $? -ge 1 ]; then
 	die "Could not read ${STAGING}"
 fi
@@ -39,10 +39,10 @@ for repo in ${repos[@]}; do
 				die "Package ${repo}/$(basename ${pkg}) already exists in another repository"
 			fi
 		done
-        # This is fucking obnoxious
-#		if ! check_splitpkgs ${repo} ${pkgs[@]}; then
-#			die "Missing split packages for ${repo}"
-#		fi
+		# This is fucking obnoxious
+		#if ! check_splitpkgs ${repo} ${pkgs[@]}; then
+		#	die "Missing split packages for ${repo}"
+		#fi
 	else
 		die "Could not read ${STAGING}"
 	fi
@@ -83,4 +83,13 @@ for repo in ${repos[@]}; do
 	done
 done
 
-cp -rviT "${STAGING}/other/" "${FTP_BASE}/other/"
+cd "${STAGING}"
+while read -r file; do
+	pub="${FTP_BASE}/${file}"
+	if [[ -f $pub ]]; then
+		warning "file already exists: %s" "${file}"
+	else
+		mkdir -p -- "${pub%/*}"
+		mv -vn "$file" "$pub"
+	fi
+done < <(find other -type f)

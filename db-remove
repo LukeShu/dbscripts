@@ -33,7 +33,7 @@ for pkgbase in ${pkgbases[@]}; do
     if [ -d "${SVNREPO}/$repo/$pkgbase" ]; then
         remove_pkgs=($(. "${SVNREPO}/$repo/$pkgbase/PKGBUILD"; echo ${pkgname[@]}))
 	else
-		warning "$pkgbase not found in $svnrepo"
+		warning "$pkgbase not found in ABS(libre)"
 		warning "Removing only $pkgbase from the repo"
 		warning "If it was a split package you have to remove the others yourself!"
 		remove_pkgs[${#remove_pkgs[*]}]=$pkgbase
