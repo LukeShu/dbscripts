@@ -23,11 +23,11 @@ done
 
 # check if packages are valid
 for repo in ${repos[@]}; do
-	if ! check_repo_permission "${repo}"; then
-		die "You don't have permission to update packages in ${repo}"
-	fi
 	pkgs=($(getpkgfiles "${STAGING}/${repo}/"*${PKGEXT}))
 	if [ $? -eq 0 ]; then
+		if [ ${#pkgs[@]} -gt 0 ] && ! check_repo_permission "${repo}"; then
+			die "You don't have permission to update packages in ${repo}"
+		fi
 		for pkg in ${pkgs[@]}; do
 			if [ -h "${pkg}" ]; then
 				die "Package ${repo}/$(basename ${pkg}) is a symbolic link"
@@ -92,4 +92,4 @@ while read -r file; do
 		mkdir -p -- "${pub%/*}"
 		mv -vn "$file" "$pub"
 	fi
-done < <(find other -type f)
+done < <(find other sources -type f)
