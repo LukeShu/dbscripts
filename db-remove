@@ -10,24 +10,24 @@ fi
 
 repo="$1"
 arch="$2"
-pkgbases=(${@:3})
+pkgbases=("${@:3}")
 
 if ! check_repo_permission $repo; then
 	die "You don't have permission to remove packages from ${repo}"
 fi
 
 if [ "$arch" == "any" ]; then
-	tarches=(${ARCHES[@]})
+	tarches=("${ARCHES[@]}")
 else
 	tarches=("$arch")
 fi
 
-for tarch in ${tarches[@]}; do
+for tarch in "${tarches[@]}"; do
 	repo_lock $repo $tarch || exit 1
 done
 
 remove_pkgs=()
-for pkgbase in ${pkgbases[@]}; do
+for pkgbase in "${pkgbases[@]}"; do
 	msg "Removing $pkgbase from [$repo]..."
 
     if [ -d "${SVNREPO}/$repo/$pkgbase" ]; then
@@ -36,11 +36,11 @@ for pkgbase in ${pkgbases[@]}; do
 		warning "$pkgbase not found in ABS(libre)"
 		warning "Removing only $pkgbase from the repo"
 		warning "If it was a split package you have to remove the others yourself!"
-		remove_pkgs[${#remove_pkgs[*]}]=$pkgbase
+		remove_pkgs+=("$pkgbase")
 	fi
 done
 
-for tarch in ${tarches[@]}; do
-	arch_repo_remove "${repo}" "${tarch}" ${remove_pkgs[@]}
+for tarch in "${tarches[@]}"; do
+	arch_repo_remove "${repo}" "${tarch}" "${remove_pkgs[@]}"
 	repo_unlock $repo $tarch
 done

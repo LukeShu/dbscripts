@@ -12,7 +12,7 @@ USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jor
 # Community project repos
 PROJREPOS=('pcr' 'kernels' 'cross' 'java' 'java-ugly' 'nonprism')
 # Remote repos
-PKGREPOS=(${ARCHREPOS[@]} ${OURREPOS[@]} ${USERREPOS[@]} ${PROJREPOS[@]})
+PKGREPOS=("${ARCHREPOS[@]}" "${OURREPOS[@]}" "${USERREPOS[@]}" "${PROJREPOS[@]}")
 PKGPOOL='pool/packages'
 SRCPOOL='sources/packages'
 

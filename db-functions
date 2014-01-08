@@ -445,8 +445,8 @@ check_pkgrepos() {
 #usage: chk_license ${license[@]}"
 chk_license() {
 	local l
-	for l in ${@}; do
-		in_array ${l} ${ALLOWED_LICENSES[@]} && return 0
+	for l in "${@}"; do
+		in_array "${l}" "${ALLOWED_LICENSES[@]}" && return 0
 	done
 
 	return 1
@@ -458,7 +458,7 @@ check_repo_permission() {
 	[ ${#PKGREPOS[@]} -eq 0 ] && return 1
 	[ -z "${PKGPOOL}" ] && return 1
 
-	in_array "${repo}" ${PKGREPOS[@]} || return 1
+	in_array "${repo}" "${PKGREPOS[@]}" || return 1
 
 	[ -w "$FTP_BASE/${PKGPOOL}" ] || return 1
 
@@ -497,10 +497,10 @@ arch_repo_add() {
 
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
-	/usr/bin/repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
-		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
-	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
-		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[@]}"
+	/usr/bin/repo-add -q "${repo}${DBEXT}" "${pkgs[@]}" >/dev/null \
+		|| error "repo-add ${repo}${DBEXT} ${pkgs[*]}"
+	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" "${pkgs[@]}" \
+		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[*]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
 }
@@ -516,9 +516,9 @@ arch_repo_remove() {
 		error "No database found at '${dbfile}'"
 		return 1
 	fi
-	/usr/bin/repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
-		|| error "repo-remove ${dbfile} ${pkgs[@]}"
-	/usr/bin/repo-remove -q "${filesfile}" ${pkgs[@]} \
-		|| error "repo-remove ${filesfile} ${pkgs[@]}"
+	/usr/bin/repo-remove -q "${dbfile}" "${pkgs[@]}" >/dev/null \
+		|| error "repo-remove ${dbfile} ${pkgs[*]}"
+	/usr/bin/repo-remove -q "${filesfile}" "${pkgs[@]}" \
+		|| error "repo-remove ${filesfile} ${pkgs[*]}"
 	set_repo_permission "${repo}" "${arch}"
 }
