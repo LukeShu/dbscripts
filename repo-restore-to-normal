@@ -1,8 +1,8 @@
 #!/bin/bash
 # Solves issue165
 
-. "$(dirname "$(readlink -e "$0")")/db-functions"
 . "$(dirname "$(readlink -e "$0")")/config"
+. "$(dirname "$(readlink -e "$0")")/db-functions"
 
 CLEANUP_DESTDIR=/home/parabolavnx/repo/pool/restore
 PKGREPOS=(community)

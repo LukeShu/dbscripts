@@ -1,8 +1,8 @@
 #!/bin/bash
 # Creates repository structure
 
-. "$(dirname "$(readlink -e "$0")")/db-functions"
 . "$(dirname "$(readlink -e "$0")")/config"
+. "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -eq 0 ]; then
     msg "Usage: ${0##*/} repo1 [repo2 ... repoX]"

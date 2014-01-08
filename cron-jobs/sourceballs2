@@ -5,8 +5,8 @@
 # Remove the old sourceballs
 
 dirname="$(dirname "$(readlink -e "$0")")"
-. "${dirname}/../db-functions"
 . "${dirname}/../config"
+. "${dirname}/../db-functions"
 . "${MAKEPKGCONF}"
 
 pushd "${WORKDIR}" >/dev/null

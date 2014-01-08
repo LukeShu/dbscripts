@@ -1,8 +1,8 @@
 #!/bin/bash
 # Solves issue165
 
-. "$(dirname "$(readlink -e "$0")")/../db-functions"
 . "$(dirname "$(readlink -e "$0")")/../config"
+. "$(dirname "$(readlink -e "$0")")/../db-functions"
 
 # Traverse all repos
 for _repo in ${PKGREPOS[@]}; do

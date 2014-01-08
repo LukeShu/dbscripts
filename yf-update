@@ -1,6 +1,6 @@
 #!/bin/bash
-source "$(dirname "$(readlink -e "$0")")/local_config"
 source "$(dirname "$(readlink -e "$0")")/config"
+source "$(dirname "$(readlink -e "$0")")/local_config"
 source "$(dirname "$(readlink -e "$0")")/libremessages"
 
 blacklist_mtime=$(printf "%.0f" $(find ${blacklist} -printf "%T@"))
