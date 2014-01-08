@@ -30,8 +30,8 @@ remove_pkgs=()
 for pkgbase in "${pkgbases[@]}"; do
 	msg "Removing $pkgbase from [$repo]..."
 
-    if [ -d "${SVNREPO}/$repo/$pkgbase" ]; then
-        remove_pkgs=($(. "${SVNREPO}/$repo/$pkgbase/PKGBUILD"; echo ${pkgname[@]}))
+	if [ -d "${SVNREPO}/$repo/$pkgbase" ]; then
+		remove_pkgs=($(. "${SVNREPO}/$repo/$pkgbase/PKGBUILD"; echo ${pkgname[@]}))
 	else
 		warning "$pkgbase not found in ABS(libre)"
 		warning "Removing only $pkgbase from the repo"

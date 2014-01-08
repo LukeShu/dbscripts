@@ -24,7 +24,7 @@ for pkgarch in ${ARCHES[@]}; do
 	repo_lock ${repo_from} ${pkgarch} || exit 1
 done
 
-# No idea why we loop twice... -- fauno
+# First loop is to check that all necessary files exist
 for pkgbase in ${args[@]:2}; do
 	for pkgarch in ${ARCHES[@]} 'any'; do
 		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"

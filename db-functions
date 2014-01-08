@@ -375,7 +375,7 @@ check_splitpkgs() {
 	for pkgfile in ${pkgfiles[@]}; do
 		issplitpkg "${pkgfile}" || continue
 		local _pkgbase="$(getpkgbase ${pkgfile})"
-        msg2 "Checking $_pkgbase"
+		msg2 "Checking $_pkgbase"
 		local _pkgname="$(getpkgname ${pkgfile})"
 		local _pkgarch="$(getpkgarch ${pkgfile})"
 		mkdir -p "${repo}/${_pkgarch}/${_pkgbase}"
@@ -384,14 +384,14 @@ check_splitpkgs() {
 		if [ ! -f "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" ]; then
 			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
 
-            cp -r ${SVNREPO}/$repo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
-            cp -r ${SVNREPO}/libre/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
-            cp -r ${SVNREPO}/libre-testing/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
+			cp -r ${SVNREPO}/$repo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
+				cp -r ${SVNREPO}/libre/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
+				cp -r ${SVNREPO}/libre-testing/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
 
 			[[ $? -ge 1 ]] && {
-                echo "Failed $_pkgbase-$_pkgver-$_pkgarch"
-                return 1
-            }
+				echo "Failed $_pkgbase-$_pkgver-$_pkgarch"
+				return 1
+			}
 		fi
 
 		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
