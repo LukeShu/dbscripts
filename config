@@ -1,6 +1,5 @@
 #!/bin/bash # as a hint to text editors
 FTP_BASE="/srv/http/repo/public"
-ARCH_BASE="/srv/http/repo/public"
 SVNREPO="/var/abs"
 
 # Repos from Arch
