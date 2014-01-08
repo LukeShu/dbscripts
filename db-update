@@ -9,7 +9,7 @@ if [ $# -ge 1 ]; then
 fi
 
 # Find repos with packages to release
-repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 1 -type d ! -empty ! -name other -printf '%f ' 2>/dev/null))
+repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 1 -type d ! -empty -printf '%f ' 2>/dev/null))
 if [ $? -ge 1 ]; then
 	die "Could not read ${STAGING}"
 fi
