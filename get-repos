@@ -10,7 +10,6 @@ trap_exit() {
 }
 
 source $(dirname $0)/config
-source $(dirname $0)/local_config
 source $(dirname $0)/libremessages
 
 # From makepkg
