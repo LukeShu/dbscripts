@@ -77,7 +77,7 @@ for pkgbase in "${args[@]:2}"; do
 			for pkgname in "${pkgnames[@]}"; do
 				for tarch in "${tarches[@]}"; do
 					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT})
-					pkgfile=$(basename "${pkgpath}")
+					pkgfile="${pkgpath##*/}"
 
 					# copy package to pool if needed
 					# TODO: can be removed once every package has been moved to the package pool

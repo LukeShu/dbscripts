@@ -324,7 +324,7 @@ check_pkgfile() {
 
 	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
 
-	if echo "$(basename ${pkgfile})" | grep -q "${pkgname}-${pkgver}-${pkgarch}"; then
+	if echo "${pkgfile##*/}" | grep -q "${pkgname}-${pkgver}-${pkgarch}"; then
 		return 0
 	else
 		return 1
@@ -425,8 +425,8 @@ check_pkgrepos() {
 
 	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
 	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT}.sig ] && return 1
-	[ -f "${FTP_BASE}/${PKGPOOL}/$(basename ${pkgfile})" ] && return 1
-	[ -f "${FTP_BASE}/${PKGPOOL}/$(basename ${pkgfile}).sig" ] && return 1
+	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgfile##*/}" ] && return 1
+	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgfile##*/}.sig" ] && return 1
 
 	local repo
 	local arch
@@ -434,8 +434,8 @@ check_pkgrepos() {
 		for arch in "${ARCHES[@]}"; do
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT}.sig ] && return 1
-			[ -f "${FTP_BASE}/${repo}/os/${arch}/$(basename ${pkgfile})" ] && return 1
-			[ -f "${FTP_BASE}/${repo}/os/${arch}/$(basename ${pkgfile}).sig" ] && return 1
+			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgfile##*/}" ] && return 1
+			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgfile##*/}.sig" ] && return 1
 		done
 	done
 

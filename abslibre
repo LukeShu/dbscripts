@@ -96,7 +96,7 @@ sync_pre_mips64el() {
 # Create .abs.tar.gz tarballs
 create_tarballs() {
     for repo in ${ABSLIBRE}/{i686,x86_64}/*; do
-        baserepo=$(basename $repo)
+        baserepo=${repo##*/}
         arch=$(basename $(dirname $repo))
 
 # Remove the old one
