@@ -28,7 +28,7 @@ for repo in "${repos[@]}"; do
 		if [ ${#pkgs[@]} -gt 0 ] && ! check_repo_permission "${repo}"; then
 			die "You don't have permission to update packages in ${repo}"
 		fi
-		for pkg in ${pkgs[@]}; do
+		for pkg in "${pkgs[@]}"; do
 			if [ -h "${pkg}" ]; then
 				die "Package ${repo}/$(basename ${pkg}) is a symbolic link"
 			fi
@@ -40,7 +40,7 @@ for repo in "${repos[@]}"; do
 			fi
 		done
 		# This is fucking obnoxious
-		#if ! check_splitpkgs ${repo} ${pkgs[@]}; then
+		#if ! check_splitpkgs ${repo} "${pkgs[@]}"; then
 		#	die "Missing split packages for ${repo}"
 		#fi
 	else
@@ -51,10 +51,10 @@ done
 for repo in "${repos[@]}"; do
 	msg "Updating [${repo}]..."
 	any_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-any${PKGEXT} 2>/dev/null))
-	for pkgarch in ${ARCHES[@]}; do
+	for pkgarch in "${ARCHES[@]}"; do
 		add_pkgs=()
 		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-${pkgarch}${PKGEXT} 2>/dev/null))
-		for pkg in ${arch_pkgs[@]} ${any_pkgs[@]}; do
+		for pkg in "${arch_pkgs[@]}" "${any_pkgs[@]}"; do
 			pkgfile="$(basename ${pkg})"
 			msg2 "${pkgfile} (${pkgarch})"
 			# any packages might have been moved by the previous run

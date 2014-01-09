@@ -21,7 +21,7 @@ find "${FTP_BASE}/${SRCPOOL}" -xtype f -name "*${SRCEXT}" -printf '%f\n' | sort 
 
 pushd "${SVNREPO}" >/dev/null
 
-for repo in ${PKGREPOS[@]}; do
+for repo in "${PKGREPOS[@]}"; do
     msg "Sourceballing [${repo}]"
 
     pushd $repo >/dev/null
@@ -40,7 +40,7 @@ for repo in ${PKGREPOS[@]}; do
         unset build package url pkgdesc source md5sums depends makedepends \
               optdepends license arch options check mksource
 
-        for _pkg in ${pkgname[@]}; do
+        for _pkg in "${pkgname[@]}"; do
             unset package_${_pkg} >/dev/null 2>&1
         done
 

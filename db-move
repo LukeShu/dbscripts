@@ -8,7 +8,7 @@ if [ $# -lt 3 ]; then
 	exit 1
 fi
 
-args=(${@})
+args=("${@}")
 repo_from="${args[0]}"
 repo_to="${args[1]}"
 ftppath_from="${FTP_BASE}/${repo_from}/os/"
@@ -19,14 +19,14 @@ if ! check_repo_permission $repo_to || ! check_repo_permission $repo_from; then
 fi
 
 # TODO: this might lock too much (architectures)
-for pkgarch in ${ARCHES[@]}; do
+for pkgarch in "${ARCHES[@]}"; do
 	repo_lock ${repo_to} ${pkgarch} || exit 1
 	repo_lock ${repo_from} ${pkgarch} || exit 1
 done
 
 # First loop is to check that all necessary files exist
-for pkgbase in ${args[@]:2}; do
-	for pkgarch in ${ARCHES[@]} 'any'; do
+for pkgbase in "${args[@]:2}"; do
+	for pkgarch in "${ARCHES[@]}" 'any'; do
 		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
 		if [ -r "${svnrepo_from}/PKGBUILD" ]; then
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
@@ -40,13 +40,13 @@ for pkgbase in ${args[@]:2}; do
 			fi
 
 			if [ "${pkgarch}" == 'any' ]; then
-				tarches=(${ARCHES[@]})
+				tarches=("${ARCHES[@]}")
 			else
 				tarches=("${pkgarch}")
 			fi
 
-			for pkgname in ${pkgnames[@]}; do
-				for tarch in ${tarches[@]}; do
+			for pkgname in "${pkgnames[@]}"; do
+				for tarch in "${tarches[@]}"; do
 					getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT} >/dev/null
 				done
 			done
@@ -60,8 +60,8 @@ msg "Moving packages from [${repo_from}] to [${repo_to}]..."
 
 declare -A add_pkgs
 declare -A remove_pkgs
-for pkgbase in ${args[@]:2}; do
-	for pkgarch in ${ARCHES[@]} 'any'; do
+for pkgbase in "${args[@]:2}"; do
+	for pkgarch in "${ARCHES[@]}" 'any'; do
 		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
 
 		if [ -f "${svnrepo_from}/PKGBUILD" ]; then
@@ -70,12 +70,12 @@ for pkgbase in ${args[@]:2}; do
 			else
 				tarches=("${pkgarch}")
 			fi
-			msg2 "${pkgbase} ($(echo ${tarches[@]}))"
+			msg2 "${pkgbase} (${tarches[*]})"
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
 			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
 
-			for pkgname in ${pkgnames[@]}; do
-				for tarch in ${tarches[@]}; do
+			for pkgname in "${pkgnames[@]}"; do
+				for tarch in "${tarches[@]}"; do
 					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT})
 					pkgfile=$(basename "${pkgpath}")
 
@@ -96,14 +96,14 @@ for pkgbase in ${args[@]:2}; do
 	done
 done
 
-for tarch in ${ARCHES[@]}; do
+for tarch in "${ARCHES[@]}"; do
 	if [ -n "${add_pkgs[${tarch}]}" ]; then
 		arch_repo_add "${repo_to}" "${tarch}" ${add_pkgs[${tarch}]}
 		arch_repo_remove "${repo_from}" "${tarch}" ${remove_pkgs[${tarch}]}
 	fi
 done
 
-for pkgarch in ${ARCHES[@]}; do
+for pkgarch in "${ARCHES[@]}"; do
 	repo_unlock ${repo_from} ${pkgarch}
 	repo_unlock ${repo_to} ${pkgarch}
 done

@@ -23,8 +23,8 @@ TMPDIR="$(mktemp -dt "${0##*/}.XXXX")"
 DBLIST=()
 
 # Repos
-for _repo in ${PKGREPOS[@]}; do
-    for _arch in ${ARCHES[@]}; do
+for _repo in "${PKGREPOS[@]}"; do
+    for _arch in "${ARCHES[@]}"; do
         DBLIST+=("http://repo.parabolagnulinux.org/${_repo}/os/${_arch}/${_repo}${FILESEXT}")
     done
 done
@@ -35,7 +35,7 @@ wget --directory-prefix=${TMPDIR} \
      --no-verbose \
      --force-directories \
      --no-host-directories \
-     ${DBLIST[@]} || true 
+     "${DBLIST[@]}" || true
 # Always return true, some databases are expect to be missing
 
 # Create the arches regexp arch1|arch2

@@ -5,7 +5,7 @@
 . "$(dirname "$(readlink -e "$0")")/../db-functions"
 
 # Traverse all repos
-for _repo in ${PKGREPOS[@]}; do
+for _repo in "${PKGREPOS[@]}"; do
     msg "Cleaning up [${_repo}]"
 
 # Find all pkgnames on this repo's abs
@@ -19,7 +19,7 @@ for _repo in ${PKGREPOS[@]}; do
                   >/dev/null 2>&1
 
 # also cleanup package functions
-            for _pkg in ${pkgname[@]}; do
+            for _pkg in "${pkgname[@]}"; do
                 unset package_${pkg} >/dev/null 2>&1
             done
             

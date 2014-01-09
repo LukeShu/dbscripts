@@ -115,7 +115,7 @@ cleanup() {
 	local arch
 
 	trap - EXIT INT QUIT TERM
-	for l in ${LOCKS[@]}; do
+	for l in "${LOCKS[@]}"; do
 		repo=${l%.*}
 		arch=${l#*.}
 		if [ -d "$TMPDIR/.repolock.$repo.$arch" ]; then
@@ -299,7 +299,7 @@ getpkgfiles() {
 		exit 1
 	fi
 
-	for f in ${@}; do
+	for f in "${@}"; do
 		if  [ ! -f "${f}" ]; then
 			error "Package ${f} not found!"
 			exit 1
@@ -309,7 +309,7 @@ getpkgfiles() {
 		fi
 	done
 
-	echo ${@}
+	echo "${@}"
 }
 
 check_pkgfile() {
@@ -322,7 +322,7 @@ check_pkgfile() {
 	local pkgarch="$(getpkgarch ${pkgfile})"
 	[ $? -ge 1 ] && return 1
 
-	in_array "${pkgarch}" ${ARCHES[@]} 'any' || return 1
+	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
 
 	if echo "$(basename ${pkgfile})" | grep -q "${pkgname}-${pkgver}-${pkgarch}"; then
 		return 0
@@ -343,7 +343,7 @@ check_pkgsvn() {
 	[ $? -ge 1 ] && return 1
 	local repo="${2}"
 
-	in_array "${repo}" ${PKGREPOS[@]} || return 1
+	in_array "${repo}" "${PKGREPOS[@]}" || return 1
 
 	if [ ! -f "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" ]; then
 		mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
@@ -356,7 +356,7 @@ check_pkgsvn() {
 	[ "${svnver}" == "${_pkgver}" ] || return 1
 
 	local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
-	in_array "${_pkgname}" ${svnnames[@]} || return 1
+	in_array "${_pkgname}" "${svnnames[@]}" || return 1
 
 	return 0
 }
@@ -364,7 +364,7 @@ check_pkgsvn() {
 check_splitpkgs() {
 	local repo="${1}"
 	shift
-	local pkgfiles=(${@})
+	local pkgfiles=("${@}")
 	local pkgfile
 	local pkgdir
 	local svnname
@@ -372,7 +372,7 @@ check_splitpkgs() {
 	mkdir -p "${WORKDIR}/check_splitpkgs/"
 	pushd "${WORKDIR}/check_splitpkgs" >/dev/null
 
-	for pkgfile in ${pkgfiles[@]}; do
+	for pkgfile in "${pkgfiles[@]}"; do
 		issplitpkg "${pkgfile}" || continue
 		local _pkgbase="$(getpkgbase ${pkgfile})"
 		msg2 "Checking $_pkgbase"
@@ -395,7 +395,7 @@ check_splitpkgs() {
 		fi
 
 		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
-		for svnname in ${svnnames[@]}; do
+		for svnname in "${svnnames[@]}"; do
 			echo "${svnname}" >> "${repo}/${_pkgarch}/${_pkgbase}/svn"
 		done
 	done
@@ -430,8 +430,8 @@ check_pkgrepos() {
 
 	local repo
 	local arch
-	for repo in ${PKGREPOS[@]}; do
-		for arch in ${ARCHES[@]}; do
+	for repo in "${PKGREPOS[@]}"; do
+		for arch in "${ARCHES[@]}"; do
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT}.sig ] && return 1
 			[ -f "${FTP_BASE}/${repo}/os/${arch}/$(basename ${pkgfile})" ] && return 1
@@ -493,7 +493,7 @@ set_repo_permission() {
 arch_repo_add() {
 	local repo=$1
 	local arch=$2
-	local pkgs=(${@:3})
+	local pkgs=("${@:3}")
 
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
@@ -508,7 +508,7 @@ arch_repo_add() {
 arch_repo_remove() {
 	local repo=$1
 	local arch=$2
-	local pkgs=(${@:3})
+	local pkgs=("${@:3}")
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
 	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
