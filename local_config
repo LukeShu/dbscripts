@@ -1,4 +1,7 @@
-# Mirror options
+#/bin/bash # as a hint to text editors
+_paraboladir=/srv/http/repo/public
+
+# db-sync
 #mirror="mirrors.uk2.net"
 mirror="mirrors.kernel.org"
 #mirror="mirror.umd.edu"
@@ -7,25 +10,11 @@ mirror="mirrors.kernel.org"
 #mirror="mirror.de.leaseweb.net"
 mirrorpath="archlinux"
 
-# Directories: they should end without /
-paraboladir=/srv/http/repo/public
-tempdir=/tmp
-archdb=${tempdir}/db
-docs_dir=${paraboladir}/docs
-repodir=${paraboladir}
-licenses_dir=${docs_dir}/pending_licenses
-# End Directories
+# mkrepo
+repodir=${_paraboladir}
 
-# Files
-logname=${paraboladir}/log/$(date -u +%Y%m%d-%H:%M)-repo-maintainer.log
-rsout_file=${tempdir}/rsout
-rsync_not_needed=${tempdir}/rsync_not_needed
+# yf-update
+blacklist=${_paraboladir}/docs/blacklist.txt
+whitelist=${_paraboladir}/docs/whitelist.txt
 
-rsync_blacklist=${docs_dir}/rsyncBlacklist
-
-blacklist=${docs_dir}/blacklist.txt
-whitelist=${docs_dir}/whitelist.txt
-
-# Rsync commands
-rsync_list_command="rsync -rptgoL --exclude='*.abs.tar.*' --list-only --no-motd "
-rsync_update_command="rsync -vrptgoL --exclude='*.abs.tar.*' --no-motd "
+unset _paraboladir
