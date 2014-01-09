@@ -21,158 +21,157 @@ ${VERBOSE} && extra="-v"
 
 # Returns contents of a repo
 get_repos() {
-        mkdir -p ${TMPDIR}/${0##*/}.$$.cache
-# Exclude everything but db files
-  rsync ${extra} -mrtlH --no-p --include="*/" \
-        --include="*.db" \
-        --include="*${DBEXT}" \
-        --include="*.files" \
-        --include="*${FILESEXT}" \
-        --exclude="*" \
-        --delete-after \
-        rsync://${mirror}/${mirrorpath}/ ${TMPDIR}/${0##*/}.$$.cache
+	mkdir -p ${TMPDIR}/${0##*/}.$$.cache
+	# Exclude everything but db files
+	rsync ${extra} -mrtlH --no-p --include="*/" \
+		--include="*.db" \
+		--include="*${DBEXT}" \
+		--include="*.files" \
+		--include="*${FILESEXT}" \
+		--exclude="*" \
+		--delete-after \
+		rsync://${mirror}/${mirrorpath}/ ${TMPDIR}/${0##*/}.$$.cache
 }
 
 get_repo_content() {
-# Return all contents
-  bsdtar tf ${1} | \
-    cut -d "/" -f 1 | \
-    sort -u
+	# Return all contents
+	bsdtar tf ${1} | \
+		cut -d "/" -f 1 | \
+		sort -u
 }
 
 # Prints blacklisted packages
 get_blacklist() {
-  cut -d ':' -f 1 "${BLACKLIST_FILE}"
+	cut -d ':' -f 1 "${BLACKLIST_FILE}"
 }
 
 # repo
 # arch
 get_repo_file() {
-  echo "${TMPDIR}/${0##*/}.$$.cache/${1}/os/${2}/${1}"
+	echo "${TMPDIR}/${0##*/}.$$.cache/${1}/os/${2}/${1}"
 }
 
 # Process the databases and get the libre packages
 init() {
 
-# Get the blacklisted packages
-  blacklist=($(get_blacklist))
-# Store all the whitelist files
-  whitelists=()
+	# Get the blacklisted packages
+	blacklist=($(get_blacklist))
+	# Store all the whitelist files
+	whitelists=()
 
-  msg "${#blacklist[@]} packages in blacklist"
+	msg "${#blacklist[@]} packages in blacklist"
 
-# Sync the repos databases
-  get_repos
+	# Sync the repos databases
+	get_repos
 
-# Traverse all repo-arch pairs
-  for _repo in ${ARCHREPOS[@]}; do
-    for _arch in ${ARCHARCHES[@]}; do
-      msg "Processing ${_repo}-${_arch}"
+	# Traverse all repo-arch pairs
+	for _repo in ${ARCHREPOS[@]}; do
+		for _arch in ${ARCHARCHES[@]}; do
+			msg "Processing ${_repo}-${_arch}"
 
-      db_file=$(get_repo_file ${_repo} ${_arch})${DBEXT}
-      files_file=$(get_repo_file ${_repo} ${_arch})${FILESEXT}
+			db_file=$(get_repo_file ${_repo} ${_arch})${DBEXT}
+			files_file=$(get_repo_file ${_repo} ${_arch})${FILESEXT}
 
-      if [ ! -f "${db_file}" ]; then
-         warning "%s doesn't exist, skipping this repo-arch" "${db_file}"
-         continue
-      fi
-      if [ ! -f "${files_file}" ]; then
-         warning "%s doesn't exist, skipping this repo-arch" "${files_file}"
-         continue
-      fi
+			if [ ! -f "${db_file}" ]; then
+				warning "%s doesn't exist, skipping this repo-arch" "${db_file}"
+				continue
+			fi
+			if [ ! -f "${files_file}" ]; then
+				warning "%s doesn't exist, skipping this repo-arch" "${files_file}"
+				continue
+			fi
 
-# Remove blacklisted packages and count them
-# TODO capture all removed packages for printing on debug mode
-      msg2 "Removing blacklisted packages from .db database..."
-      LC_ALL=C repo-remove "${db_file}" "${blacklist[@]}"
-      msg2 "Removing blacklisted packages from .files database..."
-      LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}"
+			# Remove blacklisted packages and count them
+			# TODO capture all removed packages for printing on debug mode
+			msg2 "Removing blacklisted packages from .db database..."
+			LC_ALL=C repo-remove "${db_file}" "${blacklist[@]}"
+			msg2 "Removing blacklisted packages from .files database..."
+			LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}"
 
-# Get db contents
-      db=($(get_repo_content ${db_file}))
+			# Get db contents
+			db=($(get_repo_content ${db_file}))
 
-      msg2 "Process clean db for syncing..."
+			msg2 "Process clean db for syncing..."
 
-# Create a whitelist, add * wildcard to end
-# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
-# we aren't syncing them
-      echo ${db[@]} | tr ' ' "\n" | sed "s|$|*|g" > /tmp/${_repo}-${_arch}.whitelist
+			# Create a whitelist, add * wildcard to end
+			# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
+			# we aren't syncing them
+			echo ${db[@]} | tr ' ' "\n" | sed "s|$|*|g" > /tmp/${_repo}-${_arch}.whitelist
 
-      msg2 "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1) packages in whitelist"
+			msg2 "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1) packages in whitelist"
 
-# Sync excluding everything but whitelist
-# We delete here for cleanup
-      rsync ${extra} -rtlH \
-            --delete-after \
-            --delete-excluded \
-            --delay-updates \
-            --include-from=/tmp/${_repo}-${_arch}.whitelist \
-            --exclude="*" \
-            rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/ \
-            ${FTP_BASE}/${_repo}/os/${_arch}/
+			# Sync excluding everything but whitelist
+			# We delete here for cleanup
+			rsync ${extra} -rtlH \
+				--delete-after \
+				--delete-excluded \
+				--delay-updates \
+				--include-from=/tmp/${_repo}-${_arch}.whitelist \
+				--exclude="*" \
+				rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/ \
+				${FTP_BASE}/${_repo}/os/${_arch}/
 
-# Add a new whitelist
-      whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
+			# Add a new whitelist
+			whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
 
-      msg "Putting databases back in place"
-      rsync ${extra} -rtlH \
-            --delay-updates \
-            --safe-links \
-            ${TMPDIR}/${0##*/}.$$.cache/${_repo}/os/${_arch}/ \
-            ${FTP_BASE}/${_repo}/os/${_arch}/
+			msg "Putting databases back in place"
+			rsync ${extra} -rtlH \
+				--delay-updates \
+				--safe-links \
+				${TMPDIR}/${0##*/}.$$.cache/${_repo}/os/${_arch}/ \
+				${FTP_BASE}/${_repo}/os/${_arch}/
 
-# Cleanup
-      unset db 
-    done
-  done
+			# Cleanup
+			unset db 
+		done
+	done
 
 
-  msg "Syncing package pool"
-# Concatenate all whitelists
-  cat ${whitelists[@]} | sort -u > /tmp/any.whitelist
+	msg "Syncing package pool"
+	# Concatenate all whitelists
+	cat ${whitelists[@]} | sort -u > /tmp/any.whitelist
 
-  msg2 "Retrieving $(wc -l /tmp/any.whitelist | cut -d' ' -f1) packages from pool"
+	msg2 "Retrieving $(wc -l /tmp/any.whitelist | cut -d' ' -f1) packages from pool"
 
-# Sync
-# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
-# packages too
-  for PKGPOOL in ${PKGPOOLS[@]}; do
-    rsync ${extra} -rtlH \
-          --delay-updates \
-          --safe-links \
-          --include-from=/tmp/any.whitelist \
-          --exclude="*" \
-          rsync://${mirror}/${mirrorpath}/${PKGPOOL}/ \
-          ${FTP_BASE}/${PKGPOOL}/
-  done
+	# Sync
+	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
+	# packages too
+	for PKGPOOL in ${PKGPOOLS[@]}; do
+		rsync ${extra} -rtlH \
+			--delay-updates \
+			--safe-links \
+			--include-from=/tmp/any.whitelist \
+			--exclude="*" \
+			rsync://${mirror}/${mirrorpath}/${PKGPOOL}/ \
+			${FTP_BASE}/${PKGPOOL}/
+	done
 
-# Sync sources
-  msg "Syncing source pool"
-  #sed "s|\.pkg\.tar\.|.src.tar.|" /tmp/any.whitelist > /tmp/any-src.whitelist
+	# Sync sources
+	msg "Syncing source pool"
+	#sed "s|\.pkg\.tar\.|.src.tar.|" /tmp/any.whitelist > /tmp/any-src.whitelist
 
-  #msg2 "Retrieving $(wc -l /tmp/any-src.whitelist | cut -d' ' -f1) sources from pool"
-# Sync
-# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
-# packages too
-  for SRCPOOL in ${SRCPOOLS[@]}; do
-		 rsync ${extra} -rtlH \
-		       --delay-updates \
-		       --safe-links \
-		       --include-from=/tmp/any.whitelist \
-		       --exclude="*" \
-		       rsync://${mirror}/${mirrorpath}/${SRCPOOL}/ \
-		       ${FTP_BASE}/${SRCPOOL}/
-  done
-        
+	#msg2 "Retrieving $(wc -l /tmp/any-src.whitelist | cut -d' ' -f1) sources from pool"
+	# Sync
+	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
+	# packages too
+	for SRCPOOL in ${SRCPOOLS[@]}; do
+		rsync ${extra} -rtlH \
+			--delay-updates \
+			--safe-links \
+			--include-from=/tmp/any.whitelist \
+			--exclude="*" \
+			rsync://${mirror}/${mirrorpath}/${SRCPOOL}/ \
+			${FTP_BASE}/${SRCPOOL}/
+	done
 
-# Cleanup
-  unset blacklist whitelists _arch _repo repo_file
+	# Cleanup
+	unset blacklist whitelists _arch _repo repo_file
 }
 
 trap_exit() {
-    echo
-    error "$@"
-    exit 1
+	echo
+	error "$@"
+	exit 1
 }
 
 
