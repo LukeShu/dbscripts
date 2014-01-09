@@ -20,11 +20,11 @@ set -e
 # unsigned packages available for architecture $1 and specified for
 # architecture $2 (usually $1 or any, default is to list all).
 
-. "$(dirname $0)/db-functions"
-. "$(dirname $0)/config"
+. "$(dirname "$(readlink -e "$0")")/db-functions"
+. "$(dirname "$(readlink -e "$0")")/config"
 
 if [ $# -lt 1 ]; then
-	msg "usage: $(basename $0) <architecture>"
+	msg "usage: ${0##*/} <architecture>"
 	exit 1
 fi
 
@@ -34,5 +34,5 @@ shift
 for repo in ${PKGREPOS[@]}
 do
     db="${FTP_BASE}/${repo}/os/${arch}/${repo}.db"
-    [ -f "$db" ] && "$(dirname $0)/db-list-unsigned-packages.py" "$repo" "$@" < "$db"
+    [ -f "$db" ] && "$(dirname "$(readlink -e "$0")")/db-list-unsigned-packages.py" "$repo" "$@" < "$db"
 done

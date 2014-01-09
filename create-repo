@@ -1,11 +1,11 @@
 #!/bin/bash
 # Creates repository structure
 
-. "$(dirname $0)/db-functions"
-. "$(dirname $0)/config"
+. "$(dirname "$(readlink -e "$0")")/db-functions"
+. "$(dirname "$(readlink -e "$0")")/config"
 
 if [ $# -eq 0 ]; then
-    msg "Usage: $0 repo1 [repo2 ... repoX]"
+    msg "Usage: ${0##*/} repo1 [repo2 ... repoX]"
     exit 1
 fi
 
@@ -21,4 +21,4 @@ for _repo in $@; do
     done
 done
 
-msg "Don't forget to add them to the PKGREPOS array on $(dirname $0)/config"
+msg "Don't forget to add them to the PKGREPOS array on %s/config" "$(dirname "$(readlink -e "$0")")"

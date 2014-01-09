@@ -1,10 +1,10 @@
 #!/bin/bash
 
-. "$(dirname $0)/db-functions"
-. "$(dirname $0)/config"
+. "$(dirname "$(readlink -e "$0")")/db-functions"
+. "$(dirname "$(readlink -e "$0")")/config"
 
 if [ $# -ge 1 ]; then
-	warning "Calling $(basename $0) with a specific repository is no longer supported"
+	warning "Calling ${0##*/} with a specific repository is no longer supported"
 	exit 1
 fi
 

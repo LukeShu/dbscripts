@@ -1,7 +1,7 @@
 #!/bin/bash
 
-. "$(dirname $0)/../db-functions"
-. "$(dirname $0)/../config"
+. "$(dirname "$(readlink -e "$0")")/../db-functions"
+. "$(dirname "$(readlink -e "$0")")/../config"
 
 # setup paths
 SPATH="/srv/http/archweb"
@@ -14,7 +14,7 @@ REPOS=('community-testing' 'multilib-testing' 'multilib' 'community' 'extra' 'te
 LOGOUT="/tmp/archweb_update.log"
 
 # figure out what operation to perform
-cmd="$(basename $0)"
+cmd="${0##*/}"
 if [[ $cmd != "update-web-db" && $cmd != "update-web-files-db" ]]; then
 	die "Invalid command name '$cmd' specified!"
 fi

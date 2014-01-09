@@ -1,8 +1,8 @@
 #!/bin/bash
 # Creates the repo structure defined in config
 
-source $(dirname $0)/config
+source "$(dirname "$(readlink -e "$0")")/config"
 
 mkdir -p -- "${FTP_BASE}"/{"${PKGPOOL}","${SRCPOOL}"} "${ARCH_BASE}" "${CLEANUP_DESTDIR}" "${SOURCE_CLEANUP_DESTDIR}" "${STAGING}"
 
-$(dirname $0)/create-repo "${PKGREPOS[@]}"
+"$(dirname "$(readlink -e "$0")")/create-repo" "${PKGREPOS[@]}"

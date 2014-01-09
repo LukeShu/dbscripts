@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. "$(dirname $0)/../config"
+. "$(dirname "$(readlink -e "$0")")/../config"
 
 rsync -av --exclude=staging/ parabolagnulinux.org::abstar/ ${FTP_BASE}/
 

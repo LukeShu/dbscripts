@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $(dirname $0)/config
+source "$(dirname "$(readlink -e "$0")")/config"
 
 #dryrun="--dry-run"
 

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-. "$(dirname $0)/db-functions"
-. "$(dirname $0)/config"
+. "$(dirname "$(readlink -e "$0")")/db-functions"
+. "$(dirname "$(readlink -e "$0")")/config"
 
 if [ $# -lt 3 ]; then
-	msg "usage: $(basename $0) <repo> <arch> <pkgfile> ..."
+	msg "usage: ${0##*/} <repo> <arch> <pkgfile> ..."
 	exit 1
 fi
 
