@@ -3,6 +3,6 @@
 
 source $(dirname $0)/config
 
-mkdir -p ${FTP_BASE}/{${PKGPOOL},${SRCPOOL}} ${ARCH_BASE} ${CLEANUP_DESTDIR} ${SOURCE_CLEANUP_DESTDIR} ${STAGING}
+mkdir -p -- "${FTP_BASE}"/{"${PKGPOOL}","${SRCPOOL}"} "${ARCH_BASE}" "${CLEANUP_DESTDIR}" "${SOURCE_CLEANUP_DESTDIR}" "${STAGING}"
 
 $(dirname $0)/create-repo ${PKGREPOS[@]}

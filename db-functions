@@ -87,7 +87,7 @@ get_full_version() {
 script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.$(basename $0)"
 	if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
-		local _owner="$(stat -c %U $LOCKDIR)"
+		local _owner="$(/usr/bin/stat -c %U $LOCKDIR)"
 		error "Script $(basename $0) is already locked by $_owner."
 		exit 1
 	else
@@ -178,7 +178,7 @@ repo_lock () {
 	_count=0
 	while [ $_count -le $_trial ] || $_lockblock ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
-			_owner="$(stat -c %U $LOCKDIR)"
+			_owner="$(/usr/bin/stat -c %U $LOCKDIR)"
 			warning "Repo [${1}] (${2}) is already locked by $_owner. "
 			msg2 "Retrying in $LOCK_DELAY seconds..."
 		else
@@ -211,7 +211,7 @@ repo_unlock () { #repo_unlock <repo-name> <arch>
 _grep_pkginfo() {
 	local _ret
 
-	_ret="$(bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
+	_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
 	echo "${_ret#${2} = }"
 }
 
@@ -293,9 +293,6 @@ getpkgfile() {
 }
 
 getpkgfiles() {
-# Ignore anything that doesn't glob to PKGEXT
-    shopt -s nullglob
-
 	local f
 	if [ ! -z "$(echo ${@%\.*} | sed "s/ /\n/g" | sort | uniq -D)" ]; then
 		error 'Duplicate packages found!'
@@ -313,8 +310,6 @@ getpkgfiles() {
 	done
 
 	echo ${@}
-
-    shopt -u nullglob
 }
 
 check_pkgfile() {
@@ -485,7 +480,7 @@ set_repo_permission() {
 	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
 	if [ -w "${dbfile}" ]; then
-		local group=$(stat --printf='%G' "$(dirname "${dbfile}")")
+		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
 		chgrp $group "${dbfile}" || error "Could not change group of ${dbfile} to $group"
 		chgrp $group "${filesfile}" || error "Could not change group of ${filesfile} to $group"
 		chmod g+w "${dbfile}" || error "Could not set write permission for group $group to ${dbfile}"
@@ -502,9 +497,9 @@ arch_repo_add() {
 
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
-	repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
+	/usr/bin/repo-add -q "${repo}${DBEXT}" ${pkgs[@]} >/dev/null \
 		|| error "repo-add ${repo}${DBEXT} ${pkgs[@]}"
-	repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
+	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" ${pkgs[@]} \
 		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[@]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
@@ -521,9 +516,9 @@ arch_repo_remove() {
 		error "No database found at '${dbfile}'"
 		return 1
 	fi
-	repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
+	/usr/bin/repo-remove -q "${dbfile}" ${pkgs[@]} >/dev/null \
 		|| error "repo-remove ${dbfile} ${pkgs[@]}"
-	repo-remove -q "${filesfile}" ${pkgs[@]} \
+	/usr/bin/repo-remove -q "${filesfile}" ${pkgs[@]} \
 		|| error "repo-remove ${filesfile} ${pkgs[@]}"
 	set_repo_permission "${repo}" "${arch}"
 }
