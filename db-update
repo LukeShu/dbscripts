@@ -91,5 +91,6 @@ while read -r file; do
 	else
 		mkdir -p -- "${pub%/*}"
 		mv -vn "$file" "$pub"
+		echo "At `date`, script \"`basename $0`\" mailed to "maintenance@lists.parabolagnulinux.org"."
 	fi
 done < <(find other sources -type f)
