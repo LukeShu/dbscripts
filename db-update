@@ -3,6 +3,8 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
+shopt -s nullglob
+
 if [ $# -ge 1 ]; then
 	warning "Calling ${0##*/} with a specific repository is no longer supported"
 	exit 1
@@ -91,6 +93,5 @@ while read -r file; do
 	else
 		mkdir -p -- "${pub%/*}"
 		mv -vn "$file" "$pub"
-		echo "At `date`, script \"`basename $0`\" mailed to "maintenance@lists.parabolagnulinux.org"."
 	fi
 done < <(find other sources -type f)
