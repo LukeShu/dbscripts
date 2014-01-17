@@ -22,7 +22,7 @@ SOURCE_CLEANUP_KEEP=30
 LOCK_DELAY=10
 
 [ -n "${STAGING:-}" ] || STAGING="$HOME/staging/unknown/staging"
-#TMPDIR="/tmp"
+#export TMPDIR="/tmp"
 export TMPDIR=/srv/repo/tmp
 mkdir -p "$TMPDIR"
 ARCHES=(x86_64 i686 armv7h)
