@@ -222,7 +222,7 @@ load ../lib/common
 
 @test "package has to be aregular file" {
 	local p
-	local target=$(mktemp -d)
+	local target=$(mktemp -dt)
 	local arches=('i686' 'x86_64')
 
 	releasePackage extra 'pkg-simple-a'

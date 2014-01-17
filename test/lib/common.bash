@@ -83,7 +83,7 @@ setup() {
 	local a
 	PKGEXT=".pkg.tar.xz"
 
-	TMP="$(mktemp -d)"
+	TMP="$(mktemp -dt)"
 
 	export DBSCRIPTS_CONFIG=${TMP}/config.local
 	cat <<eot > "${DBSCRIPTS_CONFIG}"
