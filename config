@@ -3,9 +3,9 @@ FTP_BASE="/srv/http/repo/public"
 SVNREPO="/var/abs"
 
 # Repos from Arch
-ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib')
+ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib' 'multilib-testing')
 # Official Parabola repos
-OURREPOS=('libre' 'libre-testing')
+OURREPOS=('libre' 'libre-testing' 'libre-multilib' 'libre-multilib-testing')
 # User repos
 USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde' '~drtan')
 # Community project repos
