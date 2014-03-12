@@ -62,6 +62,8 @@ init() {
 
 	msg "%d packages in blacklist" ${#blacklist[@]}
 
+	test ${#blacklist[@]} -eq 0 && fatal_error "Empty blacklist"
+
 	# Sync the repos databases
 	get_repos
 
@@ -86,10 +88,10 @@ init() {
 			# TODO capture all removed packages for printing on debug mode
 			msg2 "Removing blacklisted packages from %s database..." .db
 			LC_ALL=C repo-remove "${db_file}" "${blacklist[@]}" \
-				|& sed -n 's/-> Removing/  &/p'
+			|& sed -n 's/-> Removing/	&/p'
 			msg2 "Removing blacklisted packages from %s database..." .files
 			LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}" \
-				|& sed -n 's/-> Removing/  &/p'
+			|& sed -n 's/-> Removing/	&/p'
 			# Get db contents
 			db=($(get_repo_content ${db_file}))
 
@@ -98,7 +100,10 @@ init() {
 			# Create a whitelist, add * wildcard to end
 			# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
 			# we aren't syncing them
-			printf '%s\n' "${db[@]}" | sed "s|$|*|g" > /tmp/${_repo}-${_arch}.whitelist
+			# IMPORTANT: the . in the sed command is needed because an empty
+			# whitelist would consist of a single * allowing any package to
+			# pass through
+			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > /tmp/${_repo}-${_arch}.whitelist
 
 			msg2 "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1) packages in whitelist"
 
@@ -130,8 +135,8 @@ init() {
 
 
 	msg "Syncing package pool"
-	# Concatenate all whitelists
-	cat ${whitelists[@]} | sort -u > /tmp/any.whitelist
+	# Concatenate all whitelists, check for single *s just in case
+	cat ${whitelists[@]} | grep -v "^\*$" | sort -u > /tmp/any.whitelist
 
 	msg2 "Retrieving $(wc -l /tmp/any.whitelist | cut -d' ' -f1) packages from pool"
 
@@ -182,10 +187,17 @@ source "$(dirname "$(readlink -e "$0")")/config"
 source "$(dirname "$(readlink -e "$0")")/local_config"
 source "$(dirname "$(readlink -e "$0")")/libremessages"
 
+# Check variables presence
+for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE
+	FTP_BASE SRCPOOLS PKGPOOLS; do
+
+	test -z "${!var}" && fatal_error "Empty ${var}"
+done
+
 # From makepkg
 set -E
 for signal in TERM HUP QUIT; do
-    trap "trap_exit $signal '%s signal caught. Exiting...' $signal" $signal
+		trap "trap_exit $signal '%s signal caught. Exiting...' $signal" $signal
 done
 trap 'trap_exit INT "Aborted by user! Exiting..."' INT
 trap 'trap_exit USR1 "An unknown error has occurred. Exiting..."' ERR

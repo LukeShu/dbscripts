@@ -75,3 +75,9 @@ error() {
 	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
+fatal_error() {
+	local mesg=$1; shift
+  error "$mesg" "$@"
+
+  exit 1
+}
