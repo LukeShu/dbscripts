@@ -188,8 +188,7 @@ source "$(dirname "$(readlink -e "$0")")/local_config"
 source "$(dirname "$(readlink -e "$0")")/libremessages"
 
 # Check variables presence
-for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE
-	FTP_BASE SRCPOOLS PKGPOOLS; do
+for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE SRCPOOLS PKGPOOLS; do
 
 	test -z "${!var}" && fatal_error "Empty ${var}"
 done
