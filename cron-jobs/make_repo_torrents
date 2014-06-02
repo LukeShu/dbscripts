@@ -38,7 +38,25 @@ public_location='/srv/http/repo/public/'
 tracker='http://t67.eu:6969/announce'  # t67.eu is run by Xylon
 
 # All mirrors go here
-declare -a url_prefixes=('http://repo.parabolagnulinux.org/' 'https://parabola.goodgnus.com.ar/' 'http://mirror.yandex.ru/mirrors/parabola/' 'http://alfplayer.com/parabola/')
+declare -a array=('http://repo.parabolagnulinux.org/' 'https://parabola.goodgnus.com.ar/' 'http://mirror.yandex.ru/mirrors/parabola/' 'http://alfplayer.com/parabola/')
+
+# I got this function from http://mywiki.wooledge.org/BashFAQ/026 . It
+# shuffles an array. Uses a global array variable. Must be compact
+# (not a sparse array). The array must be called `array'.
+shuffle() {
+   local i tmp size max rand
+
+   # $RANDOM % (i+1) is biased because of the limited range of $RANDOM
+   # Compensate by using a range which is a multiple of the array size.
+   size=${#array[*]}
+   max=$(( 32768 / size * size ))
+
+   for ((i=size-1; i>0; i--)); do
+      while (( (rand=$RANDOM) >= max )); do :; done
+      rand=$(( rand % (i+1) ))
+      tmp=${array[i]} array[i]=${array[rand]} array[rand]=$tmp
+   done
+}
 
 cd "${torrent_location}"
 
@@ -62,7 +80,12 @@ do
             # as a single argument to mktorrent)
             webseeds=''
 
-            for prefix in "${url_prefixes[@]}"
+            # Randomize the order of the list of webseeds because I
+            # don't know if transmission might always use the one at
+            # the top otherwize.
+            shuffle
+
+            for prefix in "${array[@]}"
             do
                 webseeds+="${prefix}${pkg#${public_location}},"
             done
