@@ -93,7 +93,8 @@ do
             # There should not be a random comma at the end of the webseeds
             webseeds="${webseeds%,}"
 
-	    mktorrent -a "${tracker}" "${pkg}" -w "${webseeds}"  # "${torrent_location}"
+	    mktorrent -a "${tracker}" "${pkg}" -w "${webseeds}" >/dev/null ||
+            echo "Error making torrent for \"${pkg}\""
 	fi
     done
 done
