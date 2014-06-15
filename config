@@ -12,14 +12,18 @@ USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jor
 PROJREPOS=('pcr' 'kernels' 'cross' 'java' 'java-ugly' 'nonprism')
 # Remote repos
 PKGREPOS=("${ARCHREPOS[@]}" "${OURREPOS[@]}" "${USERREPOS[@]}" "${PROJREPOS[@]}")
-PKGPOOL='pool/packages'
-SRCPOOL='sources/packages'
+PKGPOOL='pool/parabola'
+SRCPOOL='sources/parabola'
 
 # Directories where packages are shared between repos
 # *relative to FTP_BASE*
-PKGPOOLS=('pool/packages' 'pool/community')
+ARCHPKGPOOLS=(pool/{packages,community})
+OURPKGPOOLS=(pool/parabola)
+PKGPOOLS=(${OURPKGPOOLS[@]} ${ARCHPKGPOOLS[@]})
 # Directories where sources are stored
-SRCPOOLS=('sources/packages' 'sources/community')
+ARCHSRCPOOLS=(sources/{packages,community})
+OURPKGPOOLS=(sources/parabola)
+SRCPOOLS=(${OURSRCPOOLS[@]} ${ARCHSRCPOOLS[@]})
 
 CLEANUP_DESTDIR="$FTP_BASE/old/packages"
 CLEANUP_DRYRUN=false

@@ -143,14 +143,15 @@ init() {
 	# Sync
 	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 	# packages too
-	for PKGPOOL in ${PKGPOOLS[@]}; do
+	local pkgpool
+	for pkgpool in ${ARCHPKGPOOLS[@]}; do
 		rsync ${extra} --no-motd -rtlH \
 			--delay-updates \
 			--safe-links \
 			--include-from=/tmp/any.whitelist \
 			--exclude="*" \
-			rsync://${mirror}/${mirrorpath}/${PKGPOOL}/ \
-			${FTP_BASE}/${PKGPOOL}/
+			rsync://${mirror}/${mirrorpath}/${pkgpool}/ \
+			${FTP_BASE}/${pkgpool}/
 	done
 
 	# Sync sources
@@ -161,14 +162,15 @@ init() {
 	# Sync
 	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 	# packages too
-	for SRCPOOL in ${SRCPOOLS[@]}; do
+	local srcpool
+	for srcpool in ${ARCHSRCPOOLS[@]}; do
 		rsync ${extra} --no-motd -rtlH \
 			--delay-updates \
 			--safe-links \
 			--include-from=/tmp/any.whitelist \
 			--exclude="*" \
-			rsync://${mirror}/${mirrorpath}/${SRCPOOL}/ \
-			${FTP_BASE}/${SRCPOOL}/
+			rsync://${mirror}/${mirrorpath}/${srcpool}/ \
+			${FTP_BASE}/${srcpool}/
 	done
 
 	# Cleanup
@@ -188,7 +190,7 @@ source "$(dirname "$(readlink -e "$0")")/local_config"
 source "$(dirname "$(readlink -e "$0")")/libremessages"
 
 # Check variables presence
-for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE SRCPOOLS PKGPOOLS; do
+for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
 
 	test -z "${!var}" && fatal_error "Empty ${var}"
 done
