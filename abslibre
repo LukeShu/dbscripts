@@ -23,44 +23,44 @@ REPOS=(core extra community testing community-testing !staging !community-stagin
 # * Create repo.abs.tar.gz tarballs
 
 function sync_abs() {
-    for ARCH in any i686 x86_64; do
-        rsync ${SYNCARGS} ${SYNCSERVER}::abs/${ARCH}/ ${ABSROOT}/${ARCH} || return $?
-    done
+	for ARCH in any i686 x86_64; do
+		rsync ${SYNCARGS} ${SYNCSERVER}::abs/${ARCH}/ ${ABSROOT}/${ARCH} || return $?
+	done
 }
 
 function get_blacklist() {
 	printf ":: Updating blacklist...\t"
 	wget -q -O - "${BLACKLIST}" | cut -d':' -f1 | sort -u | \
-    sed "s/^/**\//" > ${BLFILE} || {
+		sed "s/^/**\//" > ${BLFILE} || {
 		printf "[FAILED]\n"
 		return 1
 	}
 
-# Prevent using an empty blacklist
-    [ $(wc -l ${BLFILE} | cut -d " " -f1) -eq 0 ] && return 1
+	# Prevent using an empty blacklist
+	[ $(wc -l ${BLFILE} | cut -d " " -f1) -eq 0 ] && return 1
 
 	printf "[OK]\n"
 }
 
 function sync_abs_libre() {
 
-# Clone ABSLibre git repo
-    if [ -d /var/tmp/abslibre/.git ]; then
-        pushd /var/tmp/abslibre >/dev/null 2>&1
-        git pull
-        popd  >/dev/null 2>&1
-    else 
-        git clone /srv/git/abslibre.git /var/tmp/abslibre
-    fi
+	# Clone ABSLibre git repo
+	if [ -d /var/tmp/abslibre/.git ]; then
+		pushd /var/tmp/abslibre >/dev/null 2>&1
+		git pull
+		popd  >/dev/null 2>&1
+	else
+		git clone /srv/git/abslibre.git /var/tmp/abslibre
+	fi
 
-# Sync from ABS and then sync from ABSLibre
+	# Sync from ABS and then sync from ABSLibre
 	printf ":: Syncing ABSLibre...\t"
 	(rsync ${SYNCARGS} --delete-excluded \
-        --exclude-from=${BLFILE} \
-        ${ABSROOT} \
-        ${ABSLIBRE} \
-    &&
-    for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --exclude=.git/ /var/tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
+		--exclude-from=${BLFILE} \
+		${ABSROOT} \
+		${ABSLIBRE} \
+		&&
+		for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --exclude=.git/ /var/tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
 		printf "[FAILED]\n"
 		return 1
 	}
@@ -70,46 +70,45 @@ function sync_abs_libre() {
 
 # This part is very hacky and particular to the current setup :P
 sync_pre_mips64el() {
-    pushd /home/fauno/Repos/abslibre-pre-mips64el >/dev/null
+	pushd /home/fauno/Repos/abslibre-pre-mips64el >/dev/null
 
-    sudo -u fauno sh -c "
-
-    rsync ${SYNCARGS} \
-          --exclude=.git* \
-          --exclude=community-staging \
-          --exclude=community-testing \
-          --exclude=gnome-unstable \
-          --exclude=kde-unstable \
-          --exclude=multilib \
-          --exclude=multilib-testing \
-          --exclude=multilib-staging \
-          --exclude=staging \
-          --exclude=testing \
-          ${ABSLIBRE}/x86_64/ \
-          /home/fauno/Repos/abslibre-pre-mips64el/ && \
-          git add . && \
-          git commit -m \"$(date)\" -a
-          git push origin master
-          git gc
-    "
+	sudo -u fauno sh -c "
+		rsync ${SYNCARGS} \
+			--exclude=.git* \
+			--exclude=community-staging \
+			--exclude=community-testing \
+			--exclude=gnome-unstable \
+			--exclude=kde-unstable \
+			--exclude=multilib \
+			--exclude=multilib-testing \
+			--exclude=multilib-staging \
+			--exclude=staging \
+			--exclude=testing \
+			${ABSLIBRE}/x86_64/ \
+			/home/fauno/Repos/abslibre-pre-mips64el/ &&
+			git add . &&
+			git commit -m \"$(date)\" -a
+		git push origin master
+		git gc
+		"
 }
 
 # Create .abs.tar.gz tarballs
 create_tarballs() {
-    for repo in ${ABSLIBRE}/{i686,x86_64}/*; do
-        baserepo=${repo##*/}
-        arch=$(basename $(dirname $repo))
+	for repo in ${ABSLIBRE}/{i686,x86_64}/*; do
+		baserepo=${repo##*/}
+		arch=$(basename $(dirname $repo))
 
-# Remove the old one
-        mkdir -p /srv/http/web/media/abs/$baserepo/os/$arch/
-        rm /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz
-# Create a new one joining arch and any
-# Remove the first part of the path (it could be $repo but any isn't hit)
-        bsdtar -czvf /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz \
-               -s ":${ABSLIBRE}/[a-z0-9_]\+/[a-z]\+::" \
-               $repo/* ${ABSLIBRE}/any/${baserepo}/*
+		# Remove the old one
+		mkdir -p /srv/http/web/media/abs/$baserepo/os/$arch/
+		rm /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz
+		# Create a new one joining arch and any
+		# Remove the first part of the path (it could be $repo but any isn't hit)
+		bsdtar -czvf /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz \
+			-s ":${ABSLIBRE}/[a-z0-9_]\+/[a-z]\+::" \
+			$repo/* ${ABSLIBRE}/any/${baserepo}/*
 
-    done
+	done
 }
 
 sync_abs || exit 1
