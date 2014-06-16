@@ -90,6 +90,7 @@ sync_pre_mips64el() {
           git add . && \
           git commit -m \"$(date)\" -a
           git push origin master
+          git gc
     "
 }
 
