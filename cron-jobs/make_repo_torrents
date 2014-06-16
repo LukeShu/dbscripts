@@ -38,7 +38,11 @@ public_location='/srv/http/repo/public/'
 tracker='http://t67.eu:6969/announce'  # t67.eu is run by Xylon
 
 # All mirrors go here
-declare -a array=('http://repo.parabolagnulinux.org/' 'https://parabola.goodgnus.com.ar/' 'http://mirror.yandex.ru/mirrors/parabola/' 'http://alfplayer.com/parabola/' 'http://mirror.parlementum.net/')
+#declare -a array=('http://repo.parabolagnulinux.org/' 'https://parabola.goodgnus.com.ar/' 'http://mirror.yandex.ru/mirrors/parabola/' 'http://alfplayer.com/parabola/' 'http://mirror.parlementum.net/')
+
+# I'm removing all mirrors but one since pacman2pacman now re-writes
+# the webseeds list to just point to the user's chosen mirror
+declare -a array=('http://repo.parabolagnulinux.org/')
 
 # I got this function from http://mywiki.wooledge.org/BashFAQ/026 . It
 # shuffles an array. Uses a global array variable. Must be compact
