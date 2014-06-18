@@ -71,7 +71,7 @@ init() {
 	# Traverse all repo-arch pairs
 	for _repo in "${ARCHREPOS[@]}"; do
 		for _arch in "${ARCHARCHES[@]}"; do
-			msg "Processing ${_repo}-${_arch}"
+			msg "Processing %s-%s" "${_repo}-${_arch}"
 
 			db_file=$(get_repo_file "${_repo}" "${_arch}")${DBEXT}
 			files_file=$(get_repo_file "${_repo}" "${_arch}")${FILESEXT}
@@ -106,7 +106,7 @@ init() {
 			# pass through
 			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > "/tmp/${_repo}-${_arch}.whitelist"
 
-			msg2 "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1) packages in whitelist"
+			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
 			# Sync excluding everything but whitelist
 			# We delete here for cleanup
@@ -139,7 +139,7 @@ init() {
 	# Concatenate all whitelists, check for single *s just in case
 	cat "${whitelists[@]}" | grep -v "^\*$" | sort -u > /tmp/any.whitelist
 
-	msg2 "Retrieving $(wc -l /tmp/any.whitelist | cut -d' ' -f1) packages from pool"
+	msg2 "Retrieving %d packages from pool" "$(wc -l /tmp/any.whitelist | cut -d' ' -f1)"
 
 	# Sync
 	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
@@ -192,7 +192,7 @@ source "$(dirname "$(readlink -e "$0")")/libremessages"
 
 # Check variables presence
 for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
-	test -z "${!var}" && fatal_error "Empty ${var}"
+	test -z "${!var}" && fatal_error "Empty %s" "${var}"
 done
 
 # From makepkg

@@ -30,7 +30,7 @@ EXTRAFLAGS=()
 
 for _repo in "${PKGREPOS[@]}"; do
 	for _arch in "${ARCHES[@]}"; do
-		msg "Getting ${_repo}-${_arch} database"
+		msg "Getting %s-%s database" "${_repo}" "${_arch}"
 
 		dbfile="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
 
@@ -51,7 +51,7 @@ done
 msg "Removing old files:"
 
 for POOL in "${PKGPOOLS[@]}" "${SRCPOOLS[@]}"; do
-	msg2 "${POOL}"
+	msg2 '%s' "${POOL}"
 
 	rsync "${EXTRAFLAGS[@]}" -va --delete-excluded \
 		--include-from="/tmp/${0##*/}.$$.filter" \

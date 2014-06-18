@@ -6,7 +6,7 @@
 
 # Traverse all repos
 for _repo in "${PKGREPOS[@]}"; do
-	msg "Cleaning up [${_repo}]"
+	msg "Cleaning up [%s]" "${_repo}"
 
 	# Find all pkgnames on this repo's abs
 	on_abs=($(
@@ -30,7 +30,7 @@ for _repo in "${PKGREPOS[@]}"; do
 
 	# quit if abs is empty
 	if [ ${#on_abs[*]} -eq 0 ]; then
-		warning "[${_repo}]'s ABS tree is empty, skipping"
+		warning "[%s]'s ABS tree is empty, skipping" "${_repo}"
 		break
 	fi
 

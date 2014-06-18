@@ -22,7 +22,7 @@ BASEARCH='x86_64'
 
 # Traverse all Arch repos
 for _repo in "${ARCHREPOS[@]}"; do
-	msg "Processing ${_repo}..."
+	msg "Processing %s..." "${_repo}"
 
 	# Find 'any' packages
 	# This is hardcoded but it could release other arches...
@@ -31,12 +31,12 @@ for _repo in "${ARCHREPOS[@]}"; do
 	             -printf "%f "))
 
 	if [ ${#PKGS[@]} -eq 0 ]; then
-		msg2 "No 'any' packages here"
+		msg2 "No '%s' packages here" any
 		continue
 	fi
 
 	for _arch in "${OURARCHES[@]}"; do
-		msg2 "Syncing ${_arch}..."
+		msg2 "Syncing %s..." "${_arch}"
 
 		# Sync 'any' only and extract the synced packages
 		SYNCED=($(
@@ -54,7 +54,7 @@ for _repo in "${ARCHREPOS[@]}"; do
 			continue
 		fi
 
-		msg2 "Synced ${#SYNCED[@]} packages: ${SYNCED[@]}"
+		msg2 "Synced %d packages: %s" "${#SYNCED[@]}" "${SYNCED[*]}"
 
 		msg2 "Adding to db..."
 

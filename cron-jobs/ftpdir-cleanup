@@ -36,17 +36,17 @@ for repo in "${PKGREPOS[@]}"; do
 
 		missing_pkgs=($(comm -13 "${WORKDIR}/repo-${repo}-${arch}" "${WORKDIR}/db-${repo}-${arch}"))
 		if [ ${#missing_pkgs[@]} -ge 1 ]; then
-			error "Missing packages in [${repo}] (${arch})..."
+			error "Missing packages in [%s] (%s)..." "${repo}" "${arch}"
 			for missing_pkg in "${missing_pkgs[@]}"; do
-				msg2 "${missing_pkg}"
+				msg2 '%s' "${missing_pkg}"
 			done
 		fi
 
 		old_pkgs=($(comm -23 "${WORKDIR}/repo-${repo}-${arch}" "${WORKDIR}/db-${repo}-${arch}"))
 		if [ ${#old_pkgs[@]} -ge 1 ]; then
-			msg "Removing old packages from [${repo}] (${arch})..."
+			msg "Removing old packages from [%s] (%s)..." "${repo}" "${arch}"
 			for old_pkg in "${old_pkgs[@]}"; do
-				msg2 "${old_pkg}"
+				msg2 '%s' "${old_pkg}"
 				clean_pkg "${FTP_BASE}/${repo}/os/${arch}/${old_pkg}"
 			done
 		fi
@@ -62,7 +62,7 @@ old_pkgs=($(comm -23 "${WORKDIR}/pool" "${WORKDIR}/db"))
 if [ ${#old_pkgs[@]} -ge 1 ]; then
 	msg "Removing old packages from package pool..."
 	for old_pkg in "${old_pkgs[@]}"; do
-		msg2 "${old_pkg}"
+		msg2 '%s' "${old_pkg}"
 		clean_pkg "$FTP_BASE/${PKGPOOL}/${old_pkg}"
 	done
 fi
@@ -71,7 +71,7 @@ old_pkgs=($(find "${CLEANUP_DESTDIR}" -type f -name "*${PKGEXT}" -mtime +"${CLEA
 if [ ${#old_pkgs[@]} -ge 1 ]; then
 	msg "Removing old packages from the cleanup directory..."
 	for old_pkg in "${old_pkgs[@]}"; do
-		msg2 "${old_pkg}"
+		msg2 '%s' "${old_pkg}"
 		if ! "${CLEANUP_DRYRUN}"; then
 			rm -f "${CLEANUP_DESTDIR}/${old_pkg}"
 			rm -f "${CLEANUP_DESTDIR}/${old_pkg}.sig"

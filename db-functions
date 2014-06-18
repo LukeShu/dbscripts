@@ -97,7 +97,7 @@ script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.${0##*/}"
 	if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 		local _owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
-		error "Script ${0##*/} is already locked by $_owner."
+		error "Script %s is already locked by %s." "${0##*/}" "$_owner"
 		exit 1
 	else
 		set_umask
@@ -108,7 +108,7 @@ script_lock() {
 script_unlock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.${0##*/}"
 	if [ ! -d "$LOCKDIR" ]; then
-		warning "Script ${0##*/} was not locked!"
+		warning "Script %s was not locked!" "${0##*/}"
 		restore_umask
 		return 1
 	else
@@ -128,12 +128,12 @@ cleanup() {
 		repo=${l%.*}
 		arch=${l#*.}
 		if [ -d "$TMPDIR/.repolock.$repo.$arch" ]; then
-			msg "Removing left over lock from [${repo}] (${arch})"
+			msg "Removing left over lock from [%s] (%s)" "${repo}" "${arch}"
 			repo_unlock "$repo" "$arch"
 		fi
 	done
 	if [ -d "$TMPDIR/.scriptlock.${0##*/}" ]; then
-		msg "Removing left over lock from ${0##*/}"
+		msg "Removing left over lock from %s" "${0##*/}"
 		script_unlock
 	fi
 	rm -rf "$WORKDIR"
@@ -146,7 +146,7 @@ abort() {
 }
 
 die() {
-	error "$*"
+	error "$@"
 	cleanup 1
 }
 
@@ -167,11 +167,11 @@ repo_lock () {
 
 	# This is the lock file used by repo-add and repo-remove
 	if [ -f "${DBLOCKFILE}" ]; then
-		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat "$DBLOCKFILE")"
+		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(<"$DBLOCKFILE")"
 		return 1
 	fi
 	if [ -f "${FILESLOCKFILE}" ]; then
-		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat "$FILESLOCKFILE")"
+		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$2" "$2" "$(<"$FILESLOCKFILE")"
 		return 1
 	fi
 
@@ -188,8 +188,8 @@ repo_lock () {
 	while [ "$_count" -le "$_trial" ] || "$_lockblock" ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
-			warning "Repo [${1}] (${2}) is already locked by $_owner. "
-			msg2 "Retrying in $LOCK_DELAY seconds..."
+			warning "Repo [%s] (%s) is already locked by %s." "$1" "$2" "$_owner"
+			msg2 "Retrying in %d seconds..." "$LOCK_DELAY"
 		else
 			LOCKS+=("$1.$2")
 			set_umask
@@ -199,14 +199,14 @@ repo_lock () {
 		let _count=$_count+1
 	done
 
-	error "Repo [${1}] (${2}) is already locked by $_owner. Giving up!"
+	error "Repo [%s] (%s) is already locked by %s. Giving up!" "${1}" "${2}" "$_owner"
 	return 1
 }
 
 repo_unlock () { #repo_unlock <repo-name> <arch>
 	local LOCKDIR="$TMPDIR/.repolock.$1.$2"
 	if [ ! -d "$LOCKDIR" ]; then
-		warning "Repo lock [${1}] (${2}) was not locked!"
+		warning "Repo lock [%s] (%s) was not locked!" "${1}" "${2}"
 		restore_umask
 		return 1
 	else
@@ -254,7 +254,7 @@ getpkgname() {
 
 	_name="$(_grep_pkginfo "$1" "pkgname")"
 	if [ -z "$_name" ]; then
-		error "Package '$1' has no pkgname in the PKGINFO. Fail!"
+		error "Package '%s' has no pkgname in the PKGINFO. Fail!" "$1"
 		exit 1
 	fi
 
@@ -267,7 +267,7 @@ getpkgver() {
 
 	_ver="$(_grep_pkginfo "$1" "pkgver")"
 	if [ -z "$_ver" ]; then
-		error "Package '$1' has no pkgver in the PKGINFO. Fail!"
+		error "Package '%s' has no pkgver in the PKGINFO. Fail!" "$1"
 		exit 1
 	fi
 
@@ -279,7 +279,7 @@ getpkgarch() {
 
 	_ver="$(_grep_pkginfo "$1" "arch")"
 	if [ -z "$_ver" ]; then
-		error "Package '$1' has no arch in the PKGINFO. Fail!"
+		error "Package '%s' has no arch in the PKGINFO. Fail!" "$1"
 		exit 1
 	fi
 
@@ -291,10 +291,10 @@ getpkgfile() {
 		error 'No canonical package found!'
 		exit 1
 	elif [ ! -f "${1}" ]; then
-		error "Package ${1} not found!"
+		error "Package %s not found!" "${1}"
 		exit 1
 	elif "${REQUIRE_SIGNATURE}" && [ ! -f "${1}.sig" ]; then
-		error "Package signature ${1}.sig not found!"
+		error "Package signature %s not found!" "${1}.sig"
 		exit 1
 	fi
 
@@ -310,10 +310,10 @@ getpkgfiles() {
 
 	for f in "${@}"; do
 		if  [ ! -f "${f}" ]; then
-			error "Package ${f} not found!"
+			error "Package %s not found!" "${f}"
 			exit 1
 		elif "${REQUIRE_SIGNATURE}" && [ ! -f "${f}.sig" ]; then
-			error "Package signature ${f}.sig not found!"
+			error "Package signature %s not found!" "${f}.sig"
 			exit 1
 		fi
 	done
@@ -384,7 +384,7 @@ check_splitpkgs() {
 	for pkgfile in "${pkgfiles[@]}"; do
 		issplitpkg "${pkgfile}" || continue
 		local _pkgbase="$(getpkgbase "${pkgfile}")"
-		msg2 "Checking $_pkgbase"
+		msg2 "Checking %s" "$_pkgbase"
 		local _pkgname="$(getpkgname "${pkgfile}")"
 		local _pkgarch="$(getpkgarch "${pkgfile}")"
 		mkdir -p "${repo}/${_pkgarch}/${_pkgbase}"
@@ -490,12 +490,12 @@ set_repo_permission() {
 
 	if [ -w "${dbfile}" ]; then
 		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
-		chgrp "$group" "${dbfile}"    || error "Could not change group of ${dbfile} to $group"
-		chgrp "$group" "${filesfile}" || error "Could not change group of ${filesfile} to $group"
-		chmod g+w "${dbfile}"    || error "Could not set write permission for group $group to ${dbfile}"
-		chmod g+w "${filesfile}" || error "Could not set write permission for group $group to ${filesfile}"
+		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "${dbfile}" "$group"
+		chgrp "$group" "${filesfile}" || error "Could not change group of %s to %s" "${filesfile}" "$group"
+		chmod g+w "${dbfile}"    || error "Could not set write permission for group %s to %s" "$group" "${dbfile}"
+		chmod g+w "${filesfile}" || error "Could not set write permission for group %s to %s" "$group" "${filesfile}"
 	else
-		error "You don't have permission to change ${dbfile}"
+		error "You don't have permission to change %s" "${dbfile}"
 	fi
 }
 
@@ -507,9 +507,9 @@ arch_repo_add() {
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
 	/usr/bin/repo-add -q "${repo}${DBEXT}" "${pkgs[@]}" >/dev/null \
-		|| error "repo-add ${repo}${DBEXT} ${pkgs[*]}"
+		|| error '%s' "repo-add ${repo}${DBEXT} ${pkgs[*]}"
 	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" "${pkgs[@]}" \
-		|| error "repo-add -f ${repo}${FILESEXT} ${pkgs[*]}"
+		|| error '%s' "repo-add -f ${repo}${FILESEXT} ${pkgs[*]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
 }
@@ -522,12 +522,12 @@ arch_repo_remove() {
 	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
 	if [ ! -f "${dbfile}" ]; then
-		error "No database found at '${dbfile}'"
+		error "No database found at '%s'" "${dbfile}"
 		return 1
 	fi
 	/usr/bin/repo-remove -q "${dbfile}" "${pkgs[@]}" >/dev/null \
-		|| error "repo-remove ${dbfile} ${pkgs[*]}"
+		|| error '%s' "repo-remove ${dbfile} ${pkgs[*]}"
 	/usr/bin/repo-remove -q "${filesfile}" "${pkgs[@]}" \
-		|| error "repo-remove ${filesfile} ${pkgs[*]}"
+		|| error '%s' "repo-remove ${filesfile} ${pkgs[*]}"
 	set_repo_permission "${repo}" "${arch}"
 }

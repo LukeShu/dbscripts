@@ -4,7 +4,7 @@
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -lt 3 ]; then
-	msg "usage: ${0##*/} <repo-from> <repo-to> <pkgname|pkgbase> ..."
+	msg "usage: %s <repo-from> <repo-to> <pkgname|pkgbase> ..." "${0##*/}"
 	exit 1
 fi
 
@@ -15,7 +15,7 @@ ftppath_from="${FTP_BASE}/${repo_from}/os/"
 ftppath_to="${FTP_BASE}/${repo_to}/os/"
 
 if ! check_repo_permission "$repo_to" || ! check_repo_permission "$repo_from"; then
-	die "You don't have permission to move packages from ${repo_from} to ${repo_to}"
+	die "You don't have permission to move packages from %s to %s" "${repo_from}" "${repo_to}"
 fi
 
 # TODO: this might lock too much (architectures)
@@ -53,10 +53,10 @@ for pkgbase in "${args[@]:2}"; do
 			continue 2
 		fi
 	done
-	die "${pkgbase} not found in ${repo_from}"
+	die "%s not found in %s" "${pkgbase}" "${repo_from}"
 done
 
-msg "Moving packages from [${repo_from}] to [${repo_to}]..."
+msg "Moving packages from [%s] to [%s]..." "${repo_from}" "${repo_to}"
 
 declare -A add_pkgs
 declare -A remove_pkgs
@@ -70,7 +70,7 @@ for pkgbase in "${args[@]:2}"; do
 			else
 				tarches=("${pkgarch}")
 			fi
-			msg2 "${pkgbase} (${tarches[*]})"
+			msg2 '%s (%s)' "${pkgbase}" "${tarches[*]}"
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
 			pkgver=$(. "${svnrepo_from}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
 

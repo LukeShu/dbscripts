@@ -4,7 +4,7 @@
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -lt 3 ]; then
-	msg "usage: ${0##*/} <repo> <arch> <pkgname|pkgbase> ..."
+	msg "usage: %s <repo> <arch> <pkgname|pkgbase> ..." "${0##*/}"
 	exit 1
 fi
 
@@ -13,7 +13,7 @@ arch="$2"
 pkgbases=("${@:3}")
 
 if ! check_repo_permission "$repo"; then
-	die "You don't have permission to remove packages from ${repo}"
+	die "You don't have permission to remove packages from %s" "${repo}"
 fi
 
 if [ "$arch" == "any" ]; then
@@ -28,13 +28,13 @@ done
 
 remove_pkgs=()
 for pkgbase in "${pkgbases[@]}"; do
-	msg "Removing $pkgbase from [$repo]..."
+	msg "Removing %s from [%s]..." "$pkgbase" "$repo"
 
 	if [ -d "${SVNREPO}/$repo/$pkgbase" ]; then
 		remove_pkgs=($(. "${SVNREPO}/$repo/$pkgbase/PKGBUILD"; echo "${pkgname[@]}"))
 	else
-		warning "$pkgbase not found in ABS(libre)"
-		warning "Removing only $pkgbase from the repo"
+		warning "%s not found in ABS(libre)" "$pkgbase"
+		warning "Removing only %s from the repo" "$pkgbase"
 		warning "If it was a split package you have to remove the others yourself!"
 		remove_pkgs+=("$pkgbase")
 	fi

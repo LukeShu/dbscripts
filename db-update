@@ -6,14 +6,14 @@
 shopt -s nullglob
 
 if [ $# -ge 1 ]; then
-	warning "Calling ${0##*/} with a specific repository is no longer supported"
+	warning "Calling %s with a specific repository is no longer supported" "${0##*/}"
 	exit 1
 fi
 
 # Find repos with packages to release
 repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 1 -type d ! -empty -printf '%f ' 2>/dev/null))
 if [ $? -ge 1 ]; then
-	die "Could not read ${STAGING}"
+	die "Could not read %s" "${STAGING}"
 fi
 
 # TODO: this might lock too much (architectures)
@@ -28,37 +28,37 @@ for repo in "${repos[@]}"; do
 	pkgs=($(getpkgfiles "${STAGING}/${repo}/"*${PKGEXT}))
 	if [ $? -eq 0 ]; then
 		if [ ${#pkgs[@]} -gt 0 ] && ! check_repo_permission "${repo}"; then
-			die "You don't have permission to update packages in ${repo}"
+			die "You don't have permission to update packages in %s" "${repo}"
 		fi
 		for pkg in "${pkgs[@]}"; do
 			if [ -h "${pkg}" ]; then
-				die "Package ${repo}/${pkg##*/} is a symbolic link"
+				die "Package %s is a symbolic link" "${repo}/${pkg##*/}"
 			fi
 			if ! check_pkgfile "${pkg}"; then
-				die "Package ${repo}/${pkg##*/} is not consistent with its meta data"
+				die "Package %s is not consistent with its meta data" "${repo}/${pkg##*/}"
 			fi
 			if ! check_pkgrepos "${pkg}"; then
-				die "Package ${repo}/${pkg##*/} already exists in another repository"
+				die "Package %s already exists in another repository" "${repo}/${pkg##*/}"
 			fi
 		done
 		# This is fucking obnoxious
 		#if ! check_splitpkgs ${repo} "${pkgs[@]}"; then
-		#	die "Missing split packages for ${repo}"
+		#	die "Missing split packages for %s" "${repo}"
 		#fi
 	else
-		die "Could not read ${STAGING}"
+		die "Could not read %s" "${STAGING}"
 	fi
 done
 
 for repo in "${repos[@]}"; do
-	msg "Updating [${repo}]..."
+	msg "Updating [%s]..." "${repo}"
 	any_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-any${PKGEXT} 2>/dev/null))
 	for pkgarch in "${ARCHES[@]}"; do
 		add_pkgs=()
 		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-"${pkgarch}"${PKGEXT} 2>/dev/null))
 		for pkg in "${arch_pkgs[@]}" "${any_pkgs[@]}"; do
 			pkgfile="${pkg##*/}"
-			msg2 "${pkgfile} (${pkgarch})"
+			msg2 '%s (%s)' "${pkgfile}" "${pkgarch}"
 			# any packages might have been moved by the previous run
 			if [ -f "${pkg}" ]; then
 				mv "${pkg}" "$FTP_BASE/${PKGPOOL}"

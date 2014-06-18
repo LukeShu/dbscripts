@@ -24,7 +24,7 @@ set -e
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -lt 1 ]; then
-	msg "usage: ${0##*/} <architecture>"
+	msg "usage: %s <architecture>" "${0##*/}"
 	exit 1
 fi
 

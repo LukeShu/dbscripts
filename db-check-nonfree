@@ -4,7 +4,7 @@
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -ge 1 ]; then
-	warning "Calling ${0##*/} with a specific repository is not supported"
+	warning "Calling %s with a specific repository is not supported" "${0##*/}"
 	exit 1
 fi
 
@@ -19,7 +19,7 @@ msg "Check nonfree in repo:"
 nonfree=($(cut -d: -f1 "${BLACKLIST_FILE}" | sort -u))
 for repo in "${ARCHREPOS[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
-		msg2 "$repo $pkgarch"
+		msg2 "%s %s" "$repo" "$pkgarch"
 		if [ ! -f "${FTP_BASE}/${repo}/os/${pkgarch}/${repo}${DBEXT}" ]; then
 			continue
 		fi
@@ -33,7 +33,7 @@ for repo in "${ARCHREPOS[@]}"; do
 			fi
 		done
 		if [ ${#cleanpkgs[@]} -ge 1 ]; then
-			msg2 "Nonfree: ${cleanpkgs[*]}"
+			msg2 "Nonfree: %s" "${cleanpkgs[*]}"
 			arch_repo_remove "${repo}" "${pkgarch}" "${cleanpkgs[@]}"
 		fi
 	done
