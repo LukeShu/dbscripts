@@ -12,9 +12,9 @@ clean_pkg() {
 			if [ -h "$pkg" ]; then
 				rm -f "$pkg" "$pkg.sig"
 			else
-				mv -f "$pkg" "$CLEANUP_DESTDIR"
+				mv_acl "$pkg" "$CLEANUP_DESTDIR/${pkg##*/}"
 				if [ -e "$pkg.sig" ]; then
-					mv -f "$pkg.sig" "$CLEANUP_DESTDIR"
+					mv_acl "$pkg.sig" "$CLEANUP_DESTDIR/${pkg##*/}.sig"
 				fi
 				touch "${CLEANUP_DESTDIR}/${pkg##*/}"
 			fi
