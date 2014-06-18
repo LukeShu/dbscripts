@@ -1,7 +1,3 @@
-#/bin/bash # as a hint to text editors
-_paraboladir=/srv/http/repo/public
-
-# db-sync
 #mirror="mirrors.uk2.net"
 mirror="mirrors.kernel.org"
 #mirror="mirror.umd.edu"
@@ -9,9 +5,3 @@ mirror="mirrors.kernel.org"
 #mirror="mirror.us.leaseweb.net"
 #mirror="mirror.de.leaseweb.net"
 mirrorpath="archlinux"
-
-# yf-update
-blacklist=${_paraboladir}/docs/blacklist.txt
-whitelist=${_paraboladir}/docs/whitelist.txt
-
-unset _paraboladir
