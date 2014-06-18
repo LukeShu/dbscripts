@@ -28,6 +28,9 @@ trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 EXTRAFLAGS=()
 "${CLEANUP_DRYRUN}" && EXTRAFLAGS+=(--dry-run)
 
+filter=$(mktemp -t "${0##*/}.XXXXXXXXXX")
+trap "rm -f -- $(printf %q "$filter")" EXIT
+
 for _repo in "${PKGREPOS[@]}"; do
 	for _arch in "${ARCHES[@]}"; do
 		msg "Getting %s-%s database" "${_repo}" "${_arch}"
@@ -43,7 +46,7 @@ for _repo in "${PKGREPOS[@]}"; do
 		bsdtar tf "${dbfile}" | \
 			cut -d'/' -f1 | \
 			sort -u | \
-			sed "s|$|*|" >> "/tmp/${0##*/}.$$.filter"
+			sed "s|$|*|" >> "$filter"
 
 	done
 done
@@ -54,7 +57,7 @@ for POOL in "${PKGPOOLS[@]}" "${SRCPOOLS[@]}"; do
 	msg2 '%s' "${POOL}"
 
 	rsync "${EXTRAFLAGS[@]}" -va --delete-excluded \
-		--include-from="/tmp/${0##*/}.$$.filter" \
+		--include-from="$filter" \
 		--exclude="*" \
 		"${FTP_BASE}/${POOL}/" \
 		"${FTP_BASE}/${POOL}/"
