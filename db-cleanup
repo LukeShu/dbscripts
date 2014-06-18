@@ -64,7 +64,6 @@ for POOL in "${PKGPOOLS[@]}" "${SRCPOOLS[@]}"; do
 done
 
 msg "Removing dead symlinks:"
-find -L "${FTP_BASE}/" -type l
-"${CLEANUP_DRYRUN}" || find -L "${FTP_BASE}/" -type l -delete
-
-exit $?
+actions=(-print)
+"${CLEANUP_DRYRUN}" || actions+=(-delete)
+find -L "${FTP_BASE}/" -type l "${actions[@]}"
