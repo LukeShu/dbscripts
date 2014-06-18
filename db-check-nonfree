@@ -4,7 +4,7 @@
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -ge 1 ]; then
-	warning "Calling %s with a specific repository is not supported" "${0##*/}"
+	error "Calling %s with a specific repository is not supported" "${0##*/}"
 	exit 1
 fi
 

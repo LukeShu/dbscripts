@@ -188,7 +188,7 @@ repo_lock () {
 	while [ "$_count" -le "$_trial" ] || "$_lockblock" ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
-			warning "Repo [%s] (%s) is already locked by %s." "$1" "$2" "$_owner"
+			warning "Repo [%s] (%s) is already locked by %s." "${1}" "${2}" "$_owner"
 			msg2 "Retrying in %d seconds..." "$LOCK_DELAY"
 		else
 			LOCKS+=("$1.$2")
@@ -490,7 +490,7 @@ set_repo_permission() {
 
 	if [ -w "${dbfile}" ]; then
 		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
-		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "${dbfile}" "$group"
+		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "${dbfile}"    "$group"
 		chgrp "$group" "${filesfile}" || error "Could not change group of %s to %s" "${filesfile}" "$group"
 		chmod g+w "${dbfile}"    || error "Could not set write permission for group %s to %s" "$group" "${dbfile}"
 		chmod g+w "${filesfile}" || error "Could not set write permission for group %s to %s" "$group" "${filesfile}"
