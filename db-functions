@@ -171,7 +171,7 @@ repo_lock () {
 		return 1
 	fi
 	if [ -f "${FILESLOCKFILE}" ]; then
-		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$2" "$2" "$(<"$FILESLOCKFILE")"
+		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(<"$FILESLOCKFILE")"
 		return 1
 	fi
 
