@@ -298,7 +298,7 @@ getpkgfile() {
 		exit 1
 	fi
 
-	echo ${1}
+	echo "${1}"
 }
 
 getpkgfiles() {
@@ -425,11 +425,11 @@ check_splitpkgs() {
 check_pkgrepos() {
 	local pkgfile=$1
 
-	local pkgname="$(getpkgname ${pkgfile})"
+	local pkgname="$(getpkgname "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local pkgver="$(getpkgver ${pkgfile})"
+	local pkgver="$(getpkgver "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local pkgarch="$(getpkgarch ${pkgfile})"
+	local pkgarch="$(getpkgarch "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
 
 	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
