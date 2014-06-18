@@ -21,7 +21,7 @@ trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 BASEARCH='x86_64'
 
 # Traverse all Arch repos
-for _repo in ${ARCHREPOS[@]}; do
+for _repo in "${ARCHREPOS[@]}"; do
 	msg "Processing ${_repo}..."
 
 	# Find 'any' packages
@@ -35,7 +35,7 @@ for _repo in ${ARCHREPOS[@]}; do
 		continue
 	fi
 
-	for _arch in ${OURARCHES[@]}; do
+	for _arch in "${OURARCHES[@]}"; do
 		msg2 "Syncing ${_arch}..."
 
 		# Sync 'any' only and extract the synced packages
@@ -44,8 +44,8 @@ for _repo in ${ARCHREPOS[@]}; do
 					--include='*-any.pkg.tar.?z' \
 					--include='*-any.pkg.tar.?z.sig' \
 					--exclude='*' \
-					${FTP_BASE}/${_repo}/os/${BASEARCH}/ \
-					${FTP_BASE}/${_repo}/os/${_arch}/ 2>&1 | \
+					"${FTP_BASE}/${_repo}/os/${BASEARCH}/" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/" 2>&1 | \
 					grep 'any\.pkg\.tar\..z$' | \
 					cut -d ' ' -f 1 ))
 
@@ -58,11 +58,10 @@ for _repo in ${ARCHREPOS[@]}; do
 
 		msg2 "Adding to db..."
 
-		pushd ${FTP_BASE}/${_repo}/os/${_arch}/ >/dev/null 
+		pushd "${FTP_BASE}/${_repo}/os/${_arch}/" >/dev/null
 
 		# Add the packages to the db
-		repo-add ${_repo}${DBEXT} \
-			${SYNCED[@]}
+		repo-add "${_repo}${DBEXT}" "${SYNCED[@]}"
 
 		popd >/dev/null 
 
