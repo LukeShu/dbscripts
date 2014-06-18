@@ -94,7 +94,7 @@ for repo in "${PKGREPOS[@]}"; do
 
 			# Build the actual source package
 			pushd "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/${pkgbase}" >/dev/null
-			makepkg --nocolor --allsource --ignorearch # >/dev/null 2>&1
+			SRCPKGDEST=. makepkg --nocolor --allsource --ignorearch --skippgpcheck >"${WORKDIR}/${pkgbase}.log" 2>&1
 			if [ $? -eq 0 ] && [ -f "${pkgbase}-${pkgver}${SRCEXT}" ]; then
 				mv_acl "${pkgbase}-${pkgver}${SRCEXT}" "${FTP_BASE}/${SRCPOOL}/${pkgbase}-${pkgver}${SRCEXT}"
 				# Avoid creating the same source package for every arch
@@ -102,6 +102,7 @@ for repo in "${PKGREPOS[@]}"; do
 				newpkgs+=("${pkgbase}-${pkgver}${SRCEXT}")
 			else
 				failedpkgs+=("${pkgbase}-${pkgver}${SRCEXT}")
+				cat "${WORKDIR}/${pkgbase}.log" >> "${WORKDIR}/makepkg-fail.log"
 			fi
 			popd >/dev/null
 		fi
@@ -145,6 +146,11 @@ if [ ${#old_pkgs[@]} -ge 1 ]; then
 		msg2 '%s' "${old_pkg}"
 		"${SOURCE_CLEANUP_DRYRUN}" || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
 	done
+fi
+
+if [ -f "${WORKDIR}/makepkg-fail.log" ]; then
+	msg "Log of failed packages"
+	cat "${WORKDIR}/makepkg-fail.log"
 fi
 
 script_unlock
