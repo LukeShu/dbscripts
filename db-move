@@ -74,7 +74,7 @@ for pkgbase in ${args[@]:2}; do
 			else
 				tarches=("${pkgarch}")
 			fi
-			msg2 "${pkgbase} ($(echo ${tarches[@]}))"
+			msg2 "${pkgbase} (${tarches[*]})"
 			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
 			pkgver=$(. "${svnrepo_from}/PKGBUILD"; get_full_version)
 
