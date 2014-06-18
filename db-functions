@@ -404,8 +404,7 @@ check_splitpkgs() {
 		fi
 
 		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo "${pkgname[@]}"))
-		for svnname in "${svnnames[@]}"; do
-			echo "${svnname}" >> "${repo}/${_pkgarch}/${_pkgbase}/svn"
+		printf '%s\n' "${svnnames[@]}" >> "${repo}/${_pkgarch}/${_pkgbase}/svn"
 		done
 	done
 	popd >/dev/null
