@@ -9,7 +9,7 @@ script_lock
 
 for repo in "${PKGREPOS[@]}"; do
 	for arch in "${ARCHES[@]}"; do
-		repo_lock ${repo} ${arch} || exit 1
+		repo_lock "${repo}" "${arch}" || exit 1
 	done
 done
 
@@ -41,7 +41,7 @@ done
 
 for repo in "${PKGREPOS[@]}"; do
 	for arch in "${ARCHES[@]}"; do
-		repo_unlock ${repo} ${arch}
+		repo_unlock "${repo}" "${arch}"
 	done
 done
 
@@ -74,7 +74,7 @@ for repo in "${PKGREPOS[@]}"; do
 		# Build the source package if its not already there
 		if ! grep -Fqx "${pkgbase}-${pkgver}${SRCEXT}" "${WORKDIR}/available-src-pkgs"; then
 			# Check if we had failed before
-			if in_array "${pkgbase}-${pkgver}${SRCEXT}" ${failedpkgs[@]}; then
+			if in_array "${pkgbase}-${pkgver}${SRCEXT}" "${failedpkgs[@]}"; then
 				continue
 			fi
 
@@ -99,9 +99,9 @@ for repo in "${PKGREPOS[@]}"; do
 				mv "${pkgbase}-${pkgver}${SRCEXT}" "${FTP_BASE}/${SRCPOOL}"
 				# Avoid creating the same source package for every arch
 				echo "${pkgbase}-${pkgver}${SRCEXT}" >> "${WORKDIR}/available-src-pkgs"
-				newpkgs[${#newpkgs[*]}]="${pkgbase}-${pkgver}${SRCEXT}"
+				newpkgs+=("${pkgbase}-${pkgver}${SRCEXT}")
 			else
-				failedpkgs[${#failedpkgs[*]}]="${pkgbase}-${pkgver}${SRCEXT}"
+				failedpkgs+=("${pkgbase}-${pkgver}${SRCEXT}")
 			fi
 			popd >/dev/null
 		fi
@@ -128,22 +128,22 @@ old_pkgs=($(comm -23 "${WORKDIR}/available-src-pkgs.sort" "${WORKDIR}/expected-s
 
 if [ ${#old_pkgs[@]} -ge 1 ]; then
 	msg "Removing old source packages..."
-	${SOURCE_CLEANUP_DRYRUN} && warning 'dry run mode is active'
+	"${SOURCE_CLEANUP_DRYRUN}" && warning 'dry run mode is active'
 	for old_pkg in "${old_pkgs[@]}"; do
 		msg2 "${old_pkg}"
-		if ! ${SOURCE_CLEANUP_DRYRUN}; then
+		if ! "${SOURCE_CLEANUP_DRYRUN}"; then
 			mv "$FTP_BASE/${SRCPOOL}/${old_pkg}" "${SOURCE_CLEANUP_DESTDIR}"
 			touch "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
 		fi
 	done
 fi
 
-old_pkgs=($(find ${SOURCE_CLEANUP_DESTDIR} -type f -name "*${SRCEXT}" -mtime +${SOURCE_CLEANUP_KEEP} -printf '%f\n'))
+old_pkgs=($(find "${SOURCE_CLEANUP_DESTDIR}" -type f -name "*${SRCEXT}" -mtime +"${SOURCE_CLEANUP_KEEP}" -printf '%f\n'))
 if [ ${#old_pkgs[@]} -ge 1 ]; then
 	msg "Removing old source packages from the cleanup directory..."
 	for old_pkg in "${old_pkgs[@]}"; do
 		msg2 "${old_pkg}"
-		${SOURCE_CLEANUP_DRYRUN} || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
+		"${SOURCE_CLEANUP_DRYRUN}" || rm -f "${SOURCE_CLEANUP_DESTDIR}/${old_pkg}"
 	done
 fi
 

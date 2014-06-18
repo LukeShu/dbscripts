@@ -14,14 +14,14 @@ repo_to="${args[1]}"
 ftppath_from="${FTP_BASE}/${repo_from}/os/"
 ftppath_to="${FTP_BASE}/${repo_to}/os/"
 
-if ! check_repo_permission $repo_to || ! check_repo_permission $repo_from; then
+if ! check_repo_permission "$repo_to" || ! check_repo_permission "$repo_from"; then
 	die "You don't have permission to move packages from ${repo_from} to ${repo_to}"
 fi
 
 # TODO: this might lock too much (architectures)
 for pkgarch in "${ARCHES[@]}"; do
-	repo_lock ${repo_to} ${pkgarch} || exit 1
-	repo_lock ${repo_from} ${pkgarch} || exit 1
+	repo_lock "${repo_to}" "${pkgarch}" || exit 1
+	repo_lock "${repo_from}" "${pkgarch}" || exit 1
 done
 
 # First loop is to check that all necessary files exist
@@ -29,12 +29,12 @@ for pkgbase in "${args[@]:2}"; do
 	for pkgarch in "${ARCHES[@]}" 'any'; do
 		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
 		if [ -r "${svnrepo_from}/PKGBUILD" ]; then
-			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
+			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
 			if [ ${#pkgnames[@]} -lt 1 ]; then
 				die "Could not read pkgname"
 			fi
 
-			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
+			pkgver=$(. "${svnrepo_from}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
 			if [ -z "${pkgver}" ]; then
 				die "Could not read pkgver"
 			fi
@@ -47,7 +47,7 @@ for pkgbase in "${args[@]:2}"; do
 
 			for pkgname in "${pkgnames[@]}"; do
 				for tarch in "${tarches[@]}"; do
-					getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT} >/dev/null
+					getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} >/dev/null
 				done
 			done
 			continue 2
@@ -71,22 +71,22 @@ for pkgbase in "${args[@]:2}"; do
 				tarches=("${pkgarch}")
 			fi
 			msg2 "${pkgbase} (${tarches[*]})"
-			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo ${pkgname[@]}))
-			pkgver=$(. "${svnrepo_from}/PKGBUILD"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}))
+			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
+			pkgver=$(. "${svnrepo_from}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
 
 			for pkgname in "${pkgnames[@]}"; do
 				for tarch in "${tarches[@]}"; do
-					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/"${pkgname}-${pkgver}-${pkgarch}${PKGEXT})
+					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT})
 					pkgfile="${pkgpath##*/}"
 
 					# copy package to pool if needed
 					# TODO: can be removed once every package has been moved to the package pool
-					if [ ! -f ${FTP_BASE}/${PKGPOOL}/${pkgfile} ]; then
-						cp ${pkgpath} ${FTP_BASE}/${PKGPOOL}
+					if [ ! -f "${FTP_BASE}/${PKGPOOL}/${pkgfile}" ]; then
+						cp "${pkgpath}" "${FTP_BASE}/${PKGPOOL}"
 					fi
-					ln -s "../../../${PKGPOOL}/${pkgfile}" ${ftppath_to}/${tarch}/
-					if [ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]; then
-						ln -s "../../../${PKGPOOL}/${pkgfile}.sig" ${ftppath_to}/${tarch}/
+					ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
+					if [ -f "${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig" ]; then
+						ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "${ftppath_to}/${tarch}/"
 					fi
 					add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
 					remove_pkgs[${tarch}]+="${pkgname} "
@@ -104,6 +104,6 @@ for tarch in "${ARCHES[@]}"; do
 done
 
 for pkgarch in "${ARCHES[@]}"; do
-	repo_unlock ${repo_from} ${pkgarch}
-	repo_unlock ${repo_to} ${pkgarch}
+	repo_unlock "${repo_from}" "${pkgarch}"
+	repo_unlock "${repo_to}" "${pkgarch}"
 done

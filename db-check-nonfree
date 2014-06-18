@@ -11,12 +11,12 @@ fi
 # TODO: this might lock too much (architectures)
 for repo in "${repos[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
-		repo_lock ${repo} ${pkgarch} || exit 1
+		repo_lock "${repo}" "${pkgarch}" || exit 1
 	done
 done
 
 msg "Check nonfree in repo:"
-nonfree=($(cut -d: -f1 ${BLACKLIST_FILE} | sort -u))
+nonfree=($(cut -d: -f1 "${BLACKLIST_FILE}" | sort -u))
 for repo in "${ARCHREPOS[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
 		msg2 "$repo $pkgarch"
@@ -41,6 +41,6 @@ done
 
 for repo in "${repos[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
-		repo_unlock ${repo} ${pkgarch}
+		repo_unlock "${repo}" "${pkgarch}"
 	done
 done

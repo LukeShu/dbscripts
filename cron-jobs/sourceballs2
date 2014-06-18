@@ -24,11 +24,11 @@ pushd "${SVNREPO}" >/dev/null
 for repo in "${PKGREPOS[@]}"; do
 	msg "Sourceballing [${repo}]"
 
-	pushd $repo >/dev/null
+	pushd "$repo" >/dev/null
 	find -maxdepth 1 -type d | while read pkg; do
 		pushd "${SVNREPO}/$repo/$pkg" >/dev/null
 
-		[[ ! -e PKGBUILD ]] && {
+		[[ ! -e ./PKGBUILD ]] && {
 			warning "$repo/$pkg is not a package"
 			continue
 		}
@@ -41,7 +41,7 @@ for repo in "${PKGREPOS[@]}"; do
 			optdepends license arch options check mksource
 
 		for _pkg in "${pkgname[@]}"; do
-			unset package_${_pkg} >/dev/null 2>&1
+			unset "package_${_pkg}" >/dev/null 2>&1
 		done
 
 		pkgbase=${pkgbase:-$pkgname}
@@ -54,7 +54,7 @@ for repo in "${PKGREPOS[@]}"; do
 
 		makepkg --allsource --ignorearch -c >/dev/null 2>&1
 
-		[ $? -ne 0 ] && plain ${srcfile}
+		[ $? -ne 0 ] && plain '%s' "${srcfile}"
 
 	done # end find pkgs
 	popd >/dev/null

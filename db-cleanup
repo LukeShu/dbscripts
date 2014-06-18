@@ -25,10 +25,11 @@ trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
 trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
 trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 
-${CLEANUP_DRYRUN} && EXTRAFLAGS+=" --dry-run"
+EXTRAFLAGS=()
+"${CLEANUP_DRYRUN}" && EXTRAFLAGS+=(--dry-run)
 
-for _repo in ${PKGREPOS[@]}; do
-	for _arch in ${ARCHES[@]}; do
+for _repo in "${PKGREPOS[@]}"; do
+	for _arch in "${ARCHES[@]}"; do
 		msg "Getting ${_repo}-${_arch} database"
 
 		dbfile="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
@@ -42,25 +43,25 @@ for _repo in ${PKGREPOS[@]}; do
 		bsdtar tf "${dbfile}" | \
 			cut -d'/' -f1 | \
 			sort -u | \
-			sed "s|$|*|" >> /tmp/${0##*/}.$$.filter
+			sed "s|$|*|" >> "/tmp/${0##*/}.$$.filter"
 
 	done
 done
 
 msg "Removing old files:"
 
-for POOL in ${PKGPOOLS[@]} ${SRCPOOLS[@]}; do
+for POOL in "${PKGPOOLS[@]}" "${SRCPOOLS[@]}"; do
 	msg2 "${POOL}"
 
-	rsync ${EXTRAFLAGS} -va --delete-excluded \
+	rsync "${EXTRAFLAGS[@]}" -va --delete-excluded \
 		--include-from="/tmp/${0##*/}.$$.filter" \
 		--exclude="*" \
-		${FTP_BASE}/${POOL}/ \
-		${FTP_BASE}/${POOL}/
+		"${FTP_BASE}/${POOL}/" \
+		"${FTP_BASE}/${POOL}/"
 done
 
 msg "Removing symlinks:"
-find -L ${FTP_BASE}/ -type l 
-${CLEANUP_DRYRUN} || find -L ${FTP_BASE}/ -type l -delete
+find -L "${FTP_BASE}/" -type l
+"${CLEANUP_DRYRUN}" || find -L "${FTP_BASE}/" -type l -delete
 
 exit $?

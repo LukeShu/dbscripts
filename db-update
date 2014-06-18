@@ -19,7 +19,7 @@ fi
 # TODO: this might lock too much (architectures)
 for repo in "${repos[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
-		repo_lock ${repo} ${pkgarch} || exit 1
+		repo_lock "${repo}" "${pkgarch}" || exit 1
 	done
 done
 
@@ -55,7 +55,7 @@ for repo in "${repos[@]}"; do
 	any_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-any${PKGEXT} 2>/dev/null))
 	for pkgarch in "${ARCHES[@]}"; do
 		add_pkgs=()
-		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-${pkgarch}${PKGEXT} 2>/dev/null))
+		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-"${pkgarch}"${PKGEXT} 2>/dev/null))
 		for pkg in "${arch_pkgs[@]}" "${any_pkgs[@]}"; do
 			pkgfile="${pkg##*/}"
 			msg2 "${pkgfile} (${pkgarch})"
@@ -81,7 +81,7 @@ done
 
 for repo in "${repos[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
-		repo_unlock ${repo} ${pkgarch}
+		repo_unlock "${repo}" "${pkgarch}"
 	done
 done
 

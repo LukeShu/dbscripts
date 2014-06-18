@@ -7,7 +7,7 @@ clean_pkg() {
 	local pkg
 	local target
 
-	if ! ${CLEANUP_DRYRUN}; then
+	if ! "${CLEANUP_DRYRUN}"; then
 		for pkg in "$@"; do
 			if [ -h "$pkg" ]; then
 				rm -f "$pkg" "$pkg.sig"
@@ -22,8 +22,7 @@ clean_pkg() {
 	fi
 }
 
-
-${CLEANUP_DRYRUN} && warning 'dry run mode is active'
+"${CLEANUP_DRYRUN}" && warning 'dry run mode is active'
 
 for repo in "${PKGREPOS[@]}"; do
 	for arch in "${ARCHES[@]}"; do
@@ -38,7 +37,7 @@ for repo in "${PKGREPOS[@]}"; do
 		missing_pkgs=($(comm -13 "${WORKDIR}/repo-${repo}-${arch}" "${WORKDIR}/db-${repo}-${arch}"))
 		if [ ${#missing_pkgs[@]} -ge 1 ]; then
 			error "Missing packages in [${repo}] (${arch})..."
-			for missing_pkg in ${missing_pkgs[@]}; do
+			for missing_pkg in "${missing_pkgs[@]}"; do
 				msg2 "${missing_pkg}"
 			done
 		fi
@@ -46,7 +45,7 @@ for repo in "${PKGREPOS[@]}"; do
 		old_pkgs=($(comm -23 "${WORKDIR}/repo-${repo}-${arch}" "${WORKDIR}/db-${repo}-${arch}"))
 		if [ ${#old_pkgs[@]} -ge 1 ]; then
 			msg "Removing old packages from [${repo}] (${arch})..."
-			for old_pkg in ${old_pkgs[@]}; do
+			for old_pkg in "${old_pkgs[@]}"; do
 				msg2 "${old_pkg}"
 				clean_pkg "${FTP_BASE}/${repo}/os/${arch}/${old_pkg}"
 			done
@@ -62,18 +61,18 @@ cat "${WORKDIR}/db-"* | sort -u > "${WORKDIR}/db"
 old_pkgs=($(comm -23 "${WORKDIR}/pool" "${WORKDIR}/db"))
 if [ ${#old_pkgs[@]} -ge 1 ]; then
 	msg "Removing old packages from package pool..."
-	for old_pkg in ${old_pkgs[@]}; do
+	for old_pkg in "${old_pkgs[@]}"; do
 		msg2 "${old_pkg}"
 		clean_pkg "$FTP_BASE/${PKGPOOL}/${old_pkg}"
 	done
 fi
 
-old_pkgs=($(find ${CLEANUP_DESTDIR} -type f -name "*${PKGEXT}" -mtime +${CLEANUP_KEEP} -printf '%f\n'))
+old_pkgs=($(find "${CLEANUP_DESTDIR}" -type f -name "*${PKGEXT}" -mtime +"${CLEANUP_KEEP}" -printf '%f\n'))
 if [ ${#old_pkgs[@]} -ge 1 ]; then
 	msg "Removing old packages from the cleanup directory..."
-	for old_pkg in ${old_pkgs[@]}; do
+	for old_pkg in "${old_pkgs[@]}"; do
 		msg2 "${old_pkg}"
-		if ! ${CLEANUP_DRYRUN}; then
+		if ! "${CLEANUP_DRYRUN}"; then
 			rm -f "${CLEANUP_DESTDIR}/${old_pkg}"
 			rm -f "${CLEANUP_DESTDIR}/${old_pkg}.sig"
 		fi
@@ -82,7 +81,7 @@ fi
 
 for repo in "${PKGREPOS[@]}"; do
 	for arch in "${ARCHES[@]}"; do
-		repo_unlock ${repo} ${arch}
+		repo_unlock "${repo}" "${arch}"
 	done
 done
 

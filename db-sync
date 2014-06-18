@@ -16,7 +16,8 @@
 
 # Run as `V=true db-sync` to get verbose output
 VERBOSE=${V}
-${VERBOSE} && extra="-v"
+extra=()
+${VERBOSE} && extra+=(-v)
 
 WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
@@ -24,19 +25,19 @@ trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
 # Returns contents of a repo
 get_repos() {
 	# Exclude everything but db files
-	rsync ${extra} --no-motd -mrtlH --no-p --include="*/" \
+	rsync "${extra[@]}" --no-motd -mrtlH --no-p --include="*/" \
 		--include="*.db" \
 		--include="*${DBEXT}" \
 		--include="*.files" \
 		--include="*${FILESEXT}" \
 		--exclude="*" \
 		--delete-after \
-		rsync://${mirror}/${mirrorpath}/ "$WORKDIR"
+		"rsync://${mirror}/${mirrorpath}/" "$WORKDIR"
 }
 
 get_repo_content() {
 	# Return all contents
-	bsdtar tf ${1} | \
+	bsdtar tf "${1}" | \
 		cut -d "/" -f 1 | \
 		sort -u
 }
@@ -68,12 +69,12 @@ init() {
 	get_repos
 
 	# Traverse all repo-arch pairs
-	for _repo in ${ARCHREPOS[@]}; do
-		for _arch in ${ARCHARCHES[@]}; do
+	for _repo in "${ARCHREPOS[@]}"; do
+		for _arch in "${ARCHARCHES[@]}"; do
 			msg "Processing ${_repo}-${_arch}"
 
-			db_file=$(get_repo_file ${_repo} ${_arch})${DBEXT}
-			files_file=$(get_repo_file ${_repo} ${_arch})${FILESEXT}
+			db_file=$(get_repo_file "${_repo}" "${_arch}")${DBEXT}
+			files_file=$(get_repo_file "${_repo}" "${_arch}")${FILESEXT}
 
 			if [ ! -f "${db_file}" ]; then
 				warning "%s doesn't exist, skipping this repo-arch" "${db_file}"
@@ -93,7 +94,7 @@ init() {
 			LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}" \
 			|& sed -n 's/-> Removing/	&/p'
 			# Get db contents
-			db=($(get_repo_content ${db_file}))
+			db=($(get_repo_content "${db_file}"))
 
 			msg2 "Process clean db for syncing..."
 
@@ -103,30 +104,30 @@ init() {
 			# IMPORTANT: the . in the sed command is needed because an empty
 			# whitelist would consist of a single * allowing any package to
 			# pass through
-			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > /tmp/${_repo}-${_arch}.whitelist
+			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > "/tmp/${_repo}-${_arch}.whitelist"
 
 			msg2 "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1) packages in whitelist"
 
 			# Sync excluding everything but whitelist
 			# We delete here for cleanup
-			rsync ${extra} --no-motd -rtlH \
+			rsync "${extra[@]}" --no-motd -rtlH \
 				--delete-after \
 				--delete-excluded \
 				--delay-updates \
-				--include-from=/tmp/${_repo}-${_arch}.whitelist \
+				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
 				--exclude="*" \
-				rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/ \
-				${FTP_BASE}/${_repo}/os/${_arch}/
+				"rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/" \
+				"${FTP_BASE}/${_repo}/os/${_arch}/"
 
 			# Add a new whitelist
 			whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
 
 			msg "Putting databases back in place"
-			rsync ${extra} --no-motd -rtlH \
+			rsync "${extra[@]}" --no-motd -rtlH \
 				--delay-updates \
 				--safe-links \
-				${WORKDIR}/${_repo}/os/${_arch}/ \
-				${FTP_BASE}/${_repo}/os/${_arch}/
+				"${WORKDIR}/${_repo}/os/${_arch}/" \
+				"${FTP_BASE}/${_repo}/os/${_arch}/"
 
 			# Cleanup
 			unset db 
@@ -136,7 +137,7 @@ init() {
 
 	msg "Syncing package pool"
 	# Concatenate all whitelists, check for single *s just in case
-	cat ${whitelists[@]} | grep -v "^\*$" | sort -u > /tmp/any.whitelist
+	cat "${whitelists[@]}" | grep -v "^\*$" | sort -u > /tmp/any.whitelist
 
 	msg2 "Retrieving $(wc -l /tmp/any.whitelist | cut -d' ' -f1) packages from pool"
 
@@ -144,14 +145,14 @@ init() {
 	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 	# packages too
 	local pkgpool
-	for pkgpool in ${ARCHPKGPOOLS[@]}; do
-		rsync ${extra} --no-motd -rtlH \
+	for pkgpool in "${ARCHPKGPOOLS[@]}"; do
+		rsync "${extra[@]}" --no-motd -rtlH \
 			--delay-updates \
 			--safe-links \
 			--include-from=/tmp/any.whitelist \
 			--exclude="*" \
-			rsync://${mirror}/${mirrorpath}/${pkgpool}/ \
-			${FTP_BASE}/${pkgpool}/
+			"rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
+			"${FTP_BASE}/${pkgpool}/"
 	done
 
 	# Sync sources
@@ -163,14 +164,14 @@ init() {
 	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
 	# packages too
 	local srcpool
-	for srcpool in ${ARCHSRCPOOLS[@]}; do
-		rsync ${extra} --no-motd -rtlH \
+	for srcpool in "${ARCHSRCPOOLS[@]}"; do
+		rsync "${extra[@]}" --no-motd -rtlH \
 			--delay-updates \
 			--safe-links \
 			--include-from=/tmp/any.whitelist \
 			--exclude="*" \
-			rsync://${mirror}/${mirrorpath}/${srcpool}/ \
-			${FTP_BASE}/${srcpool}/
+			"rsync://${mirror}/${mirrorpath}/${srcpool}/" \
+			"${FTP_BASE}/${srcpool}/"
 	done
 
 	# Cleanup
@@ -191,14 +192,13 @@ source "$(dirname "$(readlink -e "$0")")/libremessages"
 
 # Check variables presence
 for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
-
 	test -z "${!var}" && fatal_error "Empty ${var}"
 done
 
 # From makepkg
 set -E
 for signal in TERM HUP QUIT; do
-		trap "trap_exit $signal '%s signal caught. Exiting...' $signal" $signal
+	trap "trap_exit $signal '%s signal caught. Exiting...' $signal" "$signal"
 done
 trap 'trap_exit INT "Aborted by user! Exiting..."' INT
 trap 'trap_exit USR1 "An unknown error has occurred. Exiting..."' ERR

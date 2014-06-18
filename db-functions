@@ -12,7 +12,7 @@ set_umask () {
 }
 
 restore_umask () {
-	umask $UMASK >/dev/null
+	umask "$UMASK" >/dev/null
 }
 
 # just like mv -f, but we touch the file and then copy the content so
@@ -75,7 +75,7 @@ in_array() {
 	[[ -z $1 ]] && return 1 # Not Found
 	local item
 	for item in "$@"; do
-		[[ $item = $needle ]] && return 0 # Found
+		[[ $item = "$needle" ]] && return 0 # Found
 	done
 	return 1 # Not Found
 }
@@ -87,16 +87,16 @@ in_array() {
 get_full_version() {
 	if [[ $1 -eq 0 ]]; then
 		# zero epoch case, don't include it in version
-		echo $2-$3
+		echo "$2-$3"
 	else
-		echo $1:$2-$3
+		echo "$1:$2-$3"
 	fi
 }
 
 script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.${0##*/}"
 	if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
-		local _owner="$(/usr/bin/stat -c %U $LOCKDIR)"
+		local _owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
 		error "Script ${0##*/} is already locked by $_owner."
 		exit 1
 	else
@@ -129,7 +129,7 @@ cleanup() {
 		arch=${l#*.}
 		if [ -d "$TMPDIR/.repolock.$repo.$arch" ]; then
 			msg "Removing left over lock from [${repo}] (${arch})"
-			repo_unlock $repo $arch
+			repo_unlock "$repo" "$arch"
 		fi
 	done
 	if [ -d "$TMPDIR/.scriptlock.${0##*/}" ]; then
@@ -137,7 +137,7 @@ cleanup() {
 		script_unlock
 	fi
 	rm -rf "$WORKDIR"
-	[ "$1" ] && exit $1
+	[ "$1" ] && exit "$1"
 }
 
 abort() {
@@ -167,11 +167,11 @@ repo_lock () {
 
 	# This is the lock file used by repo-add and repo-remove
 	if [ -f "${DBLOCKFILE}" ]; then
-		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat $DBLOCKFILE)"
+		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat "$DBLOCKFILE")"
 		return 1
 	fi
 	if [ -f "${FILESLOCKFILE}" ]; then
-		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat ${FILESLOCKFILE})"
+		error "Repo [${1}] (${2}) is already locked by repo-{add,remove} process $(cat "$FILESLOCKFILE")"
 		return 1
 	fi
 
@@ -185,17 +185,17 @@ repo_lock () {
 	fi
 
 	_count=0
-	while [ $_count -le $_trial ] || $_lockblock ; do
+	while [ "$_count" -le "$_trial" ] || "$_lockblock" ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
-			_owner="$(/usr/bin/stat -c %U $LOCKDIR)"
+			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
 			warning "Repo [${1}] (${2}) is already locked by $_owner. "
 			msg2 "Retrying in $LOCK_DELAY seconds..."
 		else
-			LOCKS[${#LOCKS[*]}]="$1.$2"
+			LOCKS+=("$1.$2")
 			set_umask
 			return 0
 		fi
-		sleep $LOCK_DELAY
+		sleep "$LOCK_DELAY"
 		let _count=$_count+1
 	done
 
@@ -293,7 +293,7 @@ getpkgfile() {
 	elif [ ! -f "${1}" ]; then
 		error "Package ${1} not found!"
 		exit 1
-	elif ${REQUIRE_SIGNATURE} && [ ! -f "${1}.sig" ]; then
+	elif "${REQUIRE_SIGNATURE}" && [ ! -f "${1}.sig" ]; then
 		error "Package signature ${1}.sig not found!"
 		exit 1
 	fi
@@ -303,7 +303,7 @@ getpkgfile() {
 
 getpkgfiles() {
 	local f
-	if [ ! -z "$(echo ${@%\.*} | sed "s/ /\n/g" | sort | uniq -D)" ]; then
+	if [ ! -z "$(printf '%s\n' "${@%\.*}" | sort | uniq -D)" ]; then
 		error 'Duplicate packages found!'
 		exit 1
 	fi
@@ -312,7 +312,7 @@ getpkgfiles() {
 		if  [ ! -f "${f}" ]; then
 			error "Package ${f} not found!"
 			exit 1
-		elif ${REQUIRE_SIGNATURE} && [ ! -f "${f}.sig" ]; then
+		elif "${REQUIRE_SIGNATURE}" && [ ! -f "${f}.sig" ]; then
 			error "Package signature ${f}.sig not found!"
 			exit 1
 		fi
@@ -324,11 +324,11 @@ getpkgfiles() {
 check_pkgfile() {
 	local pkgfile=$1
 
-	local pkgname="$(getpkgname ${pkgfile})"
+	local pkgname="$(getpkgname "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local pkgver="$(getpkgver ${pkgfile})"
+	local pkgver="$(getpkgver "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local pkgarch="$(getpkgarch ${pkgfile})"
+	local pkgarch="$(getpkgarch "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
 
 	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
@@ -342,13 +342,13 @@ check_pkgfile() {
 
 check_pkgsvn() {
 	local pkgfile="${1}"
-	local _pkgbase="$(getpkgbase ${pkgfile})"
+	local _pkgbase="$(getpkgbase "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local _pkgname="$(getpkgname ${pkgfile})"
+	local _pkgname="$(getpkgname "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local _pkgver="$(getpkgver ${pkgfile})"
+	local _pkgver="$(getpkgver "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
-	local _pkgarch="$(getpkgarch ${pkgfile})"
+	local _pkgarch="$(getpkgarch "${pkgfile}")"
 	[ $? -ge 1 ] && return 1
 	local repo="${2}"
 
@@ -361,10 +361,10 @@ check_pkgsvn() {
 		[ $? -ge 1 ] && return 1
 	fi
 
-	local svnver="$(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo $(get_full_version ${epoch:-0} ${pkgver} ${pkgrel}) )"
+	local svnver="$(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")"
 	[ "${svnver}" == "${_pkgver}" ] || return 1
 
-	local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
+	local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo "${pkgname[@]}"))
 	in_array "${_pkgname}" "${svnnames[@]}" || return 1
 
 	return 0
@@ -383,19 +383,19 @@ check_splitpkgs() {
 
 	for pkgfile in "${pkgfiles[@]}"; do
 		issplitpkg "${pkgfile}" || continue
-		local _pkgbase="$(getpkgbase ${pkgfile})"
+		local _pkgbase="$(getpkgbase "${pkgfile}")"
 		msg2 "Checking $_pkgbase"
-		local _pkgname="$(getpkgname ${pkgfile})"
-		local _pkgarch="$(getpkgarch ${pkgfile})"
+		local _pkgname="$(getpkgname "${pkgfile}")"
+		local _pkgarch="$(getpkgarch "${pkgfile}")"
 		mkdir -p "${repo}/${_pkgarch}/${_pkgbase}"
 		echo "${_pkgname}" >> "${repo}/${_pkgarch}/${_pkgbase}/staging"
 
 		if [ ! -f "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" ]; then
 			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
 
-			cp -r ${SVNREPO}/$repo/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
-				cp -r ${SVNREPO}/libre/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
-				cp -r ${SVNREPO}/libre-testing/$_pkgbase/PKGBUILD "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
+			cp -r "${SVNREPO}/$repo/$_pkgbase/PKGBUILD" "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
+				cp -r "${SVNREPO}/libre/$_pkgbase/PKGBUILD" "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null 2>&1 || \
+				cp -r "${SVNREPO}/libre-testing/$_pkgbase/PKGBUILD" "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/$_pkgbase">/dev/null 2>&1
 
 			[[ $? -ge 1 ]] && {
 				echo "Failed $_pkgbase-$_pkgver-$_pkgarch"
@@ -403,7 +403,7 @@ check_splitpkgs() {
 			}
 		fi
 
-		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo ${pkgname[@]}))
+		local svnnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}"; echo "${pkgname[@]}"))
 		for svnname in "${svnnames[@]}"; do
 			echo "${svnname}" >> "${repo}/${_pkgarch}/${_pkgbase}/svn"
 		done
@@ -475,8 +475,8 @@ check_repo_permission() {
 	for arch in ${ARCHES}; do
 		local dir="${FTP_BASE}/${repo}/os/${arch}/"
 		[ -w "${dir}" ] || return 1
-		[ -f "${dir}"${repo}${DBEXT} -a ! -w "${dir}"${repo}${DBEXT} ] && return 1
-		[ -f "${dir}"${repo}${FILESEXT} -a ! -w "${dir}"${repo}${FILESEXT} ] && return 1
+		[ -f "${dir}${repo}"${DBEXT} -a ! -w "${dir}${repo}"${DBEXT} ] && return 1
+		[ -f "${dir}${repo}"${FILESEXT} -a ! -w "${dir}${repo}"${FILESEXT} ] && return 1
 	done
 
 	return 0
@@ -490,9 +490,9 @@ set_repo_permission() {
 
 	if [ -w "${dbfile}" ]; then
 		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
-		chgrp $group "${dbfile}" || error "Could not change group of ${dbfile} to $group"
-		chgrp $group "${filesfile}" || error "Could not change group of ${filesfile} to $group"
-		chmod g+w "${dbfile}" || error "Could not set write permission for group $group to ${dbfile}"
+		chgrp "$group" "${dbfile}"    || error "Could not change group of ${dbfile} to $group"
+		chgrp "$group" "${filesfile}" || error "Could not change group of ${filesfile} to $group"
+		chmod g+w "${dbfile}"    || error "Could not set write permission for group $group to ${dbfile}"
 		chmod g+w "${filesfile}" || error "Could not set write permission for group $group to ${filesfile}"
 	else
 		error "You don't have permission to change ${dbfile}"
