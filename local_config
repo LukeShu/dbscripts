@@ -10,9 +10,6 @@ mirror="mirrors.kernel.org"
 #mirror="mirror.de.leaseweb.net"
 mirrorpath="archlinux"
 
-# mkrepo
-repodir=${_paraboladir}
-
 # yf-update
 blacklist=${_paraboladir}/docs/blacklist.txt
 whitelist=${_paraboladir}/docs/whitelist.txt
