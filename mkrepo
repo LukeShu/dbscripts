@@ -6,10 +6,10 @@
 source "$(dirname "$(readlink -e "$0")")/config"
 
 for repo in "$@"; do
-   echo ":: Creating [$repo]"
-   for arch in "${ARCHES[@]}"; do
-       mkdir -pv "${FTP_BASE}/${repo}/os/${arch}"
-   done
+	echo ":: Creating [$repo]"
+	for arch in "${ARCHES[@]}"; do
+		mkdir -pv "${FTP_BASE}/${repo}/os/${arch}"
+	done
 done
 
 echo ":: All done.  Add the repo to the ParabolaWeb admin page."

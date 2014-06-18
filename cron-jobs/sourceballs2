@@ -22,41 +22,41 @@ find "${FTP_BASE}/${SRCPOOL}" -xtype f -name "*${SRCEXT}" -printf '%f\n' | sort 
 pushd "${SVNREPO}" >/dev/null
 
 for repo in "${PKGREPOS[@]}"; do
-    msg "Sourceballing [${repo}]"
+	msg "Sourceballing [${repo}]"
 
-    pushd $repo >/dev/null
-    find -maxdepth 1 -type d | while read pkg; do
-        pushd "${SVNREPO}/$repo/$pkg" >/dev/null
+	pushd $repo >/dev/null
+	find -maxdepth 1 -type d | while read pkg; do
+		pushd "${SVNREPO}/$repo/$pkg" >/dev/null
 
-        [[ ! -e PKGBUILD ]] && {
-            warning "$repo/$pkg is not a package"
-            continue
-        }
+		[[ ! -e PKGBUILD ]] && {
+			warning "$repo/$pkg is not a package"
+			continue
+		}
 
-# Unset the previous data
-        unset pkgbase pkgname pkgver pkgrel
-        source PKGBUILD
+		# Unset the previous data
+		unset pkgbase pkgname pkgver pkgrel
+		source PKGBUILD
 
-        unset build package url pkgdesc source md5sums depends makedepends \
-              optdepends license arch options check mksource
+		unset build package url pkgdesc source md5sums depends makedepends \
+			optdepends license arch options check mksource
 
-        for _pkg in "${pkgname[@]}"; do
-            unset package_${_pkg} >/dev/null 2>&1
-        done
+		for _pkg in "${pkgname[@]}"; do
+			unset package_${_pkg} >/dev/null 2>&1
+		done
 
-        pkgbase=${pkgbase:-$pkgname}
-        srcfile="${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}"
+		pkgbase=${pkgbase:-$pkgname}
+		srcfile="${pkgbase}-${pkgver}-${pkgrel}${SRCEXT}"
 
 		echo "${srcfile}" >> "${WORKDIR}/expected-src-pkgs"
 
-        # Skip already sourceballed
-        [ -e "${SRCPKGDEST}/${srcfile}" ] && continue
+		# Skip already sourceballed
+		[ -e "${SRCPKGDEST}/${srcfile}" ] && continue
 
-        makepkg --allsource --ignorearch -c >/dev/null 2>&1
+		makepkg --allsource --ignorearch -c >/dev/null 2>&1
 
-        [ $? -ne 0 ] && plain ${srcfile}
+		[ $? -ne 0 ] && plain ${srcfile}
 
-    done # end find pkgs
-    popd >/dev/null
+	done # end find pkgs
+	popd >/dev/null
 
 done # end repos

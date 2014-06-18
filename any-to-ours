@@ -2,9 +2,9 @@
 # Releases 'any' packages from Arch arches to ours
 
 trap_exit() {
-    echo
-    error "$@"
-    exit 1
+	echo
+	error "$@"
+	exit 1
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
@@ -22,51 +22,51 @@ BASEARCH='x86_64'
 
 # Traverse all Arch repos
 for _repo in ${ARCHREPOS[@]}; do
-    msg "Processing ${_repo}..."
+	msg "Processing ${_repo}..."
 
-# Find 'any' packages
-# This is hardcoded but it could release other arches...
-    PKGS=($(find "${FTP_BASE}/${_repo}/os/${BASEARCH}/" \
-                 -iname '*-any.pkg.tar.?z' \
-                 -printf "%f "))
+	# Find 'any' packages
+	# This is hardcoded but it could release other arches...
+	PKGS=($(find "${FTP_BASE}/${_repo}/os/${BASEARCH}/" \
+	             -iname '*-any.pkg.tar.?z' \
+	             -printf "%f "))
 
-    if [ ${#PKGS[@]} -eq 0 ]; then
-        msg2 "No 'any' packages here"
-        continue
-    fi
+	if [ ${#PKGS[@]} -eq 0 ]; then
+		msg2 "No 'any' packages here"
+		continue
+	fi
 
-    for _arch in ${OURARCHES[@]}; do
-        msg2 "Syncing ${_arch}..."
+	for _arch in ${OURARCHES[@]}; do
+		msg2 "Syncing ${_arch}..."
 
-# Sync 'any' only and extract the synced packages
-        SYNCED=($(
-        rsync -av \
-              --include='*-any.pkg.tar.?z' \
-              --include='*-any.pkg.tar.?z.sig' \
-              --exclude='*' \
-              ${FTP_BASE}/${_repo}/os/${BASEARCH}/ \
-              ${FTP_BASE}/${_repo}/os/${_arch}/ 2>&1 | \
-            grep 'any\.pkg\.tar\..z$' | \
-            cut -d ' ' -f 1 ))
+		# Sync 'any' only and extract the synced packages
+		SYNCED=($(
+				rsync -av \
+					--include='*-any.pkg.tar.?z' \
+					--include='*-any.pkg.tar.?z.sig' \
+					--exclude='*' \
+					${FTP_BASE}/${_repo}/os/${BASEARCH}/ \
+					${FTP_BASE}/${_repo}/os/${_arch}/ 2>&1 | \
+					grep 'any\.pkg\.tar\..z$' | \
+					cut -d ' ' -f 1 ))
 
-        if [ ${#SYNCED[@]} -eq 0 ]; then
-            msg2 "Already synced (or error happened)"
-            continue
-        fi
+		if [ ${#SYNCED[@]} -eq 0 ]; then
+			msg2 "Already synced (or error happened)"
+			continue
+		fi
 
-        msg2 "Synced ${#SYNCED[@]} packages: ${SYNCED[@]}"
+		msg2 "Synced ${#SYNCED[@]} packages: ${SYNCED[@]}"
 
-        msg2 "Adding to db..."
+		msg2 "Adding to db..."
 
-        pushd ${FTP_BASE}/${_repo}/os/${_arch}/ >/dev/null 
+		pushd ${FTP_BASE}/${_repo}/os/${_arch}/ >/dev/null 
 
-# Add the packages to the db
-        repo-add ${_repo}${DBEXT} \
-                 ${SYNCED[@]}
+		# Add the packages to the db
+		repo-add ${_repo}${DBEXT} \
+			${SYNCED[@]}
 
-        popd >/dev/null 
+		popd >/dev/null 
 
-# Avoid mixups
-        unset SYNCED PKGS
-    done
+		# Avoid mixups
+		unset SYNCED PKGS
+	done
 done

@@ -33,6 +33,6 @@ shift
 
 for repo in "${PKGREPOS[@]}"
 do
-    db="${FTP_BASE}/${repo}/os/${arch}/${repo}.db"
-    [ -f "$db" ] && "$(dirname "$(readlink -e "$0")")/db-list-unsigned-packages.py" "$repo" "$@" < "$db"
+	db="${FTP_BASE}/${repo}/os/${arch}/${repo}.db"
+	[ -f "$db" ] && "$(dirname "$(readlink -e "$0")")/db-list-unsigned-packages.py" "$repo" "$@" < "$db"
 done

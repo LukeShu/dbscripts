@@ -77,7 +77,7 @@ error() {
 
 fatal_error() {
 	local mesg=$1; shift
-  error "$mesg" "$@"
+	error "$mesg" "$@"
 
-  exit 1
+	exit 1
 }

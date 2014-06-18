@@ -10,9 +10,9 @@
 # * Instant cleanup!
 
 trap_exit() {
-    echo
-    error "$@"
-    exit 1
+	echo
+	error "$@"
+	exit 1
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
@@ -28,35 +28,35 @@ trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
 ${CLEANUP_DRYRUN} && EXTRAFLAGS+=" --dry-run"
 
 for _repo in ${PKGREPOS[@]}; do
-    for _arch in ${ARCHES[@]}; do
-        msg "Getting ${_repo}-${_arch} database"
+	for _arch in ${ARCHES[@]}; do
+		msg "Getting ${_repo}-${_arch} database"
 
-        dbfile="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
+		dbfile="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
 
-        if [ ! -r "${dbfile}" ]; then
-            warning "Not found"
-            continue
-        fi
+		if [ ! -r "${dbfile}" ]; then
+			warning "Not found"
+			continue
+		fi
 
-# Echo the contents into a filter file
-        bsdtar tf "${dbfile}" | \
-            cut -d'/' -f1 | \
-            sort -u | \
-            sed "s|$|*|" >> /tmp/${0##*/}.$$.filter
+		# Echo the contents into a filter file
+		bsdtar tf "${dbfile}" | \
+			cut -d'/' -f1 | \
+			sort -u | \
+			sed "s|$|*|" >> /tmp/${0##*/}.$$.filter
 
-    done
+	done
 done
 
 msg "Removing old files:"
 
 for POOL in ${PKGPOOLS[@]} ${SRCPOOLS[@]}; do
-    msg2 "${POOL}"
+	msg2 "${POOL}"
 
-    rsync ${EXTRAFLAGS} -va --delete-excluded \
-          --include-from="/tmp/${0##*/}.$$.filter" \
-          --exclude="*" \
-          ${FTP_BASE}/${POOL}/ \
-          ${FTP_BASE}/${POOL}/
+	rsync ${EXTRAFLAGS} -va --delete-excluded \
+		--include-from="/tmp/${0##*/}.$$.filter" \
+		--exclude="*" \
+		${FTP_BASE}/${POOL}/ \
+		${FTP_BASE}/${POOL}/
 done
 
 msg "Removing symlinks:"
