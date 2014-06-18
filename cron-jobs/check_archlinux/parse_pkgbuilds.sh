@@ -10,21 +10,12 @@ variables=('pkgname' 'pkgbase' 'epoch' 'pkgver' 'pkgrel' 'makedepends' 'arch' ${
 readonly -a variables splitpkg_overrides
 
 backup_package_variables() {
-	for var in ${splitpkg_overrides[@]}; do
-		indirect="${var}_backup"
-		eval "${indirect}=(\${$var[@]})"
-	done
+	restore_package_variables=$(declare -p "${splitpkg_overrides[@]}" 2>/dev/null || true)
 }
 
 restore_package_variables() {
-	for var in ${splitpkg_overrides[@]}; do
-		indirect="${var}_backup"
-		if [ -n "${!indirect}" ]; then
-			eval "${var}=(\${$indirect[@]})"
-		else
-			unset ${var}
-		fi
-	done
+	unset "${splitpkg_overrides[@]}"
+	eval "$restore_package_variables"
 }
 
 print_info() {
