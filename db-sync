@@ -186,7 +186,7 @@ trap_exit() {
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
-source "$(dirname "$(readlink -e "$0")")/local_config"
+source "$(dirname "$(readlink -e "$0")")/db-sync.conf"
 source "$(dirname "$(readlink -e "$0")")/libremessages"
 
 # Check variables presence
