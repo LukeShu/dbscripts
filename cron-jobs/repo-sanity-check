@@ -51,5 +51,4 @@ for _repo in "${PKGREPOS[@]}"; do
 
 	msg2 "Removed the following packages:"
 	plain '%s' "${remove[@]}"
-
 done

@@ -8,7 +8,7 @@ if [ $# -lt 1 ]; then
 	exit 1
 fi
 
-# Lock everything to reduce  possibility of interfering task between the different repo-updates
+# Lock everything to reduce possibility of interfering task between the different repo-updates
 script_lock
 for repo in  'core' 'extra' 'testing'; do
 	for pkgarch in "${ARCHES[@]}"; do
