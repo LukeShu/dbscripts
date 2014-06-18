@@ -79,7 +79,7 @@ for repo in "${PKGREPOS[@]}"; do
 			fi
 
 			# Get the sources from svn
-			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}"
+			mkdir -p -m0770 "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}"
 			#svn export -q "${SVNREPO}/${pkgbase}/repos/${repo}-${pkgarch}" \
 			#	"${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/${pkgbase}" >/dev/null 2>&1
 
