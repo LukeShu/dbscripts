@@ -273,7 +273,7 @@ getpkgfile() {
 		error "Package %s not found!" "$1"
 		exit 1
 	elif [[ ! -f ${1}.sig ]]; then
-		error "Package signature %s.sig not found!" "$1"
+		error "Package signature %s not found!" "$1.sig"
 		exit 1
 	fi
 
