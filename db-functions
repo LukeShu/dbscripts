@@ -273,7 +273,7 @@ getpkgfile() {
 		error "Package %s not found!" "$1"
 		exit 1
 	elif [[ ! -f ${1}.sig ]]; then
-		error "Package signature %s.sig not found!" "$1"
+		error "Package signature %s not found!" "$1.sig"
 		exit 1
 	fi
 
@@ -448,7 +448,7 @@ arch_repo_add() {
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
 	/usr/bin/repo-add -q "${repo}${DBEXT}" "${pkgs[@]}" \
-		|| error "repo-add ${repo}${DBEXT} ${pkgs[*]}"
+		|| error '%s' "repo-add ${repo}${DBEXT} ${pkgs[*]}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
 
@@ -466,7 +466,7 @@ arch_repo_remove() {
 		return 1
 	fi
 	/usr/bin/repo-remove -q "${dbfile}" "${pkgs[@]}" \
-		|| error "repo-remove ${dbfile} ${pkgs[*]}"
+		|| error '%s' "repo-remove ${dbfile} ${pkgs[*]}"
 	set_repo_permission "${repo}" "${arch}"
 
 	REPO_MODIFIED=1
