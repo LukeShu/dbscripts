@@ -47,7 +47,7 @@ OURARCHES=(mips64el)
 ARCHES=(${ARCHARCHES[@]} ${OURARCHES[@]})
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
-PKGEXT=".pkg.tar.?z"
+PKGEXT=".pkg.tar.xz"
 SRCEXT=".src.tar.gz"
 
 MAKEPKGCONF="~/.makepkg.conf"
