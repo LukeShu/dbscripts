@@ -34,8 +34,8 @@ esac
 torrent_location='/srv/http/repo/public/torrents/'
 public_location='/srv/http/repo/public/'
 
-# Tracker announce URL
-tracker='http://t67.eu:6969/announce'  # t67.eu is run by Xylon
+# Tracker announce URLs, comma seperated
+tracker='http://t67.eu:6969/announce,http://tracker.hackcoop.com.ar/announce'  # t67.eu is run by Xylon
 
 # All mirrors go here
 #declare -a array=('http://repo.parabolagnulinux.org/' 'https://parabola.goodgnus.com.ar/' 'http://mirror.yandex.ru/mirrors/parabola/' 'http://alfplayer.com/parabola/' 'http://mirror.parlementum.net/')
