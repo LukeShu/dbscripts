@@ -3,7 +3,10 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
-shopt -s nullglob
+if [[ $STAGING = *luke* ]]; then
+    set -x
+    PKGEXT='.pkg.tar.?z'
+fi
 
 if [ $# -ge 1 ]; then
 	warning "Calling %s with a specific repository is no longer supported" "${0##*/}"
@@ -32,11 +35,11 @@ done
 
 # check if packages are valid
 for repo in "${repos[@]}"; do
+	if ! check_repo_permission "${repo}"; then
+		die "You don't have permission to update packages in %s" "${repo}"
+	fi
 	pkgs=($(getpkgfiles "${STAGING}/${repo}/"*${PKGEXT}))
 	if [ $? -eq 0 ]; then
-		if [ ${#pkgs[@]} -gt 0 ] && ! check_repo_permission "${repo}"; then
-			die "You don't have permission to update packages in %s" "${repo}"
-		fi
 		for pkg in "${pkgs[@]}"; do
 			if [ -h "${pkg}" ]; then
 				die "Package %s is a symbolic link" "${repo}/${pkg##*/}"
@@ -95,10 +98,10 @@ done
 cd "${STAGING}"
 while read -r file; do
 	pub="${FTP_BASE}/${file}"
-	if [[ -f $pub ]]; then
+	if [[ -f "$pub" ]]; then
 		warning "file already exists: %s" "${file}"
 	else
 		mkdir -p -- "${pub%/*}"
 		mv -vn "$file" "$pub"
 	fi
-done < <(find other sources -type f)
+done < <(find other sources -type f 2>/dev/null)
