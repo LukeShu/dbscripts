@@ -46,6 +46,8 @@ do
     find "${dir}" -name '*\.pkg\.tar\.xz' |
     while read pkg
     do
+	pkg_name="${pkg##*/}"
+
         if [[ -h "${pkg}" ]]  # check if it's a symbolic link
         then
             # We get the target of the symlink
@@ -56,7 +58,7 @@ do
         # `make_individual_torrent' to make it.
 	if ! [[ -f "${torrent_location}${pkg_name}.torrent" ]]
 	then
-            /srv/http/repo/dbscripts/make_individual_torrent "${pkg}"
+            /srv/http/repo/dbscripts/make_individual_torrent "${pkg}" "${public_location}"
 	fi
     done
 done

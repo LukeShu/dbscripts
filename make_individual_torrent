@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This script is called by `make_repo_torrents' to make a torrent. It
-# depends on `mktorrent'. It takes the following arg:
+# depends on `mktorrent'. It takes the following args:
 # $1 - path of package
+# $2 - public location
 
 # Comma seperated list of trackers, no spaces
 # t67.eu is run by Xylon, hackcoop by fauno & friends
@@ -33,7 +34,14 @@ then
     echo 1
 fi
 
+if [[ -z "${2}" ]]
+then
+    echo "Error. Second arg must be the public location."
+    echo 1
+fi
+
 pkg="${1}"
+public_location="${2}"
 
 pkg_name="${pkg##*/}"
 
