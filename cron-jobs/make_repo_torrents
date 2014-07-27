@@ -31,8 +31,9 @@ esac
 
 # pacman doesn't support multiple different packages of the same name,
 # so it's OK to just stuff all the torrents into a single directory.
-torrent_location='/srv/http/repo/public/torrents/'
-public_location='/srv/http/repo/public/'
+. "$(dirname "$(readlink -e "$0")")/../config"
+public_location="$FTP_BASE/"
+torrent_location="$FTP_BASE/torrents/"
 
 # Tracker announce URLs, comma seperated
 tracker='http://t67.eu:6969/announce,http://tracker.hackcoop.com.ar/announce'  # t67.eu is run by Xylon
