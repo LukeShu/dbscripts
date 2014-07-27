@@ -1,0 +1,109 @@
+#! /bin/bash
+# Copyright (C) 2014 Joseph Graham <joseph@t67.eu>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This script depends on `mktorrent'
+
+username=$( id -un )
+
+case "${username}" in
+    repo | root )
+        true
+        ;;
+    * )
+        echo "This script must be run as repo user or root user."
+        echo "ByeBye!"
+        exit 1
+        ;;
+esac
+
+# pacman doesn't support multiple different packages of the same name,
+# so it's OK to just stuff all the torrents into a single directory.
+torrent_location='/srv/http/repo/public/torrents/'
+public_location='/srv/http/repo/public/'
+
+# Tracker announce URLs, comma seperated
+tracker='http://t67.eu:6969/announce,http://tracker.hackcoop.com.ar/announce'  # t67.eu is run by Xylon
+
+# All mirrors go here
+#declare -a array=('http://repo.parabolagnulinux.org/' 'https://parabola.goodgnus.com.ar/' 'http://mirror.yandex.ru/mirrors/parabola/' 'http://alfplayer.com/parabola/' 'http://mirror.parlementum.net/')
+
+# I'm removing all mirrors but one since pacman2pacman now re-writes
+# the webseeds list to just point to the user's chosen mirror
+declare -a array=('http://repo.parabolagnulinux.org/')
+
+# I got this function from http://mywiki.wooledge.org/BashFAQ/026 . It
+# shuffles an array. Uses a global array variable. Must be compact
+# (not a sparse array). The array must be called `array'.
+shuffle() {
+   local i tmp size max rand
+
+   # $RANDOM % (i+1) is biased because of the limited range of $RANDOM
+   # Compensate by using a range which is a multiple of the array size.
+   size=${#array[*]}
+   max=$(( 32768 / size * size ))
+
+   for ((i=size-1; i>0; i--)); do
+      while (( (rand=$RANDOM) >= max )); do :; done
+      rand=$(( rand % (i+1) ))
+      tmp=${array[i]} array[i]=${array[rand]} array[rand]=$tmp
+   done
+}
+
+cd "${torrent_location}"
+
+find "${public_location}" -name 'os' -type 'd' |
+while read dir
+do
+    find "${dir}" -name '*\.pkg\.tar\.xz' |
+    while read pkg
+    do
+	pkg_name="${pkg##*/}"
+
+        if [[ -h "${pkg}" ]]  # check if it's a symbolic link
+        then
+            # We get the target of the symlink
+            pkg=$( readlink -f "${pkg}" )
+        fi
+
+	if ! [[ -f "${torrent_location}${pkg_name}.torrent" ]]
+	then
+            # We need to make a comma seperated list of webseeds (this is passed
+            # as a single argument to mktorrent)
+            webseeds=''
+
+            # Randomize the order of the list of webseeds because I
+            # don't know if transmission might always use the one at
+            # the top otherwize.
+            shuffle
+
+            for prefix in "${array[@]}"
+            do
+                webseeds+="${prefix}${pkg#${public_location}},"
+            done
+
+            # There should not be a random comma at the end of the webseeds
+            webseeds="${webseeds%,}"
+
+	    mktorrent -a "${tracker}" "${pkg}" -w "${webseeds}" >/dev/null ||
+            echo "Error making torrent for \"${pkg}\""
+	fi
+    done
+done
+
+if [[ "${username}" == root ]]
+then
+    chown repo *
+fi
