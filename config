@@ -9,7 +9,7 @@ OURREPOS=('libre' 'libre-testing' 'libre-multilib' 'libre-multilib-testing')
 # User repos
 USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde' '~drtan')
 # Community project repos
-PROJREPOS=('pcr' 'kernels' 'cross' 'java' 'nonprism')
+PROJREPOS=('nonprism' 'nonprism-testing' 'pcr' 'kernels' 'cross' 'java')
 # Remote repos
 PKGREPOS=("${ARCHREPOS[@]}" "${OURREPOS[@]}" "${USERREPOS[@]}" "${PROJREPOS[@]}")
 PKGPOOL='pool/parabola'
