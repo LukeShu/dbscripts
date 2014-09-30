@@ -32,6 +32,7 @@ esac
 
 # pacman doesn't support multiple different packages of the same name,
 # so it's OK to just stuff all the torrents into a single directory.
+script_directory="$(dirname "$(readlink -e "$0")")/.."
 . "$(dirname "$(readlink -e "$0")")/../config"
 public_location="$FTP_BASE/"
 torrent_location="$FTP_BASE/torrents/"
@@ -58,7 +59,7 @@ do
         # `make_individual_torrent' to make it.
 	if ! [[ -f "${torrent_location}${pkg_name}.torrent" ]]
 	then
-            /srv/http/repo/dbscripts/make_individual_torrent "${pkg}" "${public_location}"
+            "$script_directory/make_individual_torrent" "${pkg}" "${public_location}"
 	fi
     done
 done
