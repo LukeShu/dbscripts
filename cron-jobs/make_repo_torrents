@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This script finds any updated packages and makes calls
+# This script finds any updated packages and calls
 # `make_indivudual_torrent' for each of them.
 
 username=$( id -un )
