@@ -141,6 +141,7 @@ cleanup() {
 
 	if (( REPO_MODIFIED )); then
 		date +%s > "${FTP_BASE}/lastupdate"
+		date -u +%s > "${FTP_BASE}/lastsync"
 	fi
 
 	[ "$1" ] && exit "$1"
