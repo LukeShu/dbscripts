@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/hint/bash
 
 # Some PKGBUILDs need CARCH to be set
 CARCH="x86_64"

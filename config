@@ -1,4 +1,4 @@
-#!/bin/bash # as a hint to text editors
+#!/hint/bash
 FTP_BASE="/srv/repo/main"
 SVNREPO="/var/abs"
 
