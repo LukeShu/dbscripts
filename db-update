@@ -3,11 +3,6 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
-if [[ $STAGING = *luke* ]]; then
-    set -x
-    PKGEXT='.pkg.tar.?z'
-fi
-
 if [ $# -ge 1 ]; then
 	warning "Calling %s with a specific repository is no longer supported" "${0##*/}"
 	exit 1
