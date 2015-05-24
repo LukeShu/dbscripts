@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e -x
+
 ABSLIBRE=/srv/abslibre
 ABSGIT=/srv/git/repositories/abslibre.git
 # Remote
@@ -111,14 +113,9 @@ create_tarballs() {
 	done
 }
 
-sync_abs || exit 1
-get_blacklist || exit 1
-sync_abs_libre || exit 1
+sync_abs
+get_blacklist
+sync_abs_libre
 # This is being done at repo server now
-sync_pre_mips64el || exit 1
-#create_tarballs || exit 1
-
-echo "Exclusion list used"
-cat ${BLFILE}
-
-exit 0
+sync_pre_mips64el
+#create_tarballs
