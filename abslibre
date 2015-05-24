@@ -5,7 +5,7 @@ ABSGIT=/srv/git/repositories/abslibre.git
 # Remote
 # ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
 BLACKLIST='https://projects.parabolagnulinux.org/blacklist.git/plain/blacklist.txt'
-SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g'
+SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g --quiet'
 BLFILE=/tmp/blacklist.txt
 
 # Variables from abs.conf
@@ -60,7 +60,7 @@ function sync_abs_libre() {
 		${ABSROOT} \
 		${ABSLIBRE} \
 		&&
-		for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --exclude=.git/ /var/tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
+		for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ /var/tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
 		printf "[FAILED]\n"
 		return 1
 	}
