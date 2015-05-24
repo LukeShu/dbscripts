@@ -4,10 +4,10 @@ set -e -x
 
 FTP_BASE=/srv/repo/main
 ABSLIBRE=/srv/abslibre
-ABSGIT=/srv/git/repositories/abslibre.git
+ABSGIT=/srv/git/abslibre/abslibre.git
 # Remote
 # ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
-BLACKLIST='https://projects.parabolagnulinux.org/blacklist.git/plain/blacklist.txt'
+BLACKLIST=/home/repo/blacklist/blacklist.txt
 SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g --quiet'
 BLFILE=/tmp/blacklist.txt
 
@@ -29,11 +29,15 @@ function sync_abs() {
 	for ARCH in any i686 x86_64; do
 		rsync ${SYNCARGS} ${SYNCSERVER}::abs/${ARCH}/ ${ABSROOT}/${ARCH} || return $?
 	done
+
+	# fix some permissions
+	find "${ABSROOT}" -type d -print0 | xargs -0 chmod 755
+	find "${ABSROOT}" -type f -print0 | xargs -0 chmod 644
 }
 
 function get_blacklist() {
 	printf ":: Updating blacklist...\t"
-	wget -q -O - "${BLACKLIST}" | cut -d':' -f1 | sort -u | \
+	cat "${BLACKLIST}" | cut -d':' -f1 | sort -u | \
 		sed "s/^/**\//" > ${BLFILE} || {
 		printf "[FAILED]\n"
 		return 1
@@ -67,6 +71,10 @@ function sync_abs_libre() {
 		printf "[FAILED]\n"
 		return 1
 	}
+
+	# fix some permissions
+	find "${ABSLIBRE}" -type d -print0 | xargs -0 chmod 755
+	find "${ABSLIBRE}" -type f -print0 | xargs -0 chmod 644
 
 	printf "[OK]\n"
 }
@@ -104,10 +112,10 @@ create_tarballs() {
 
 		# Remove the old one
 		mkdir -p $FTP_BASE/$baserepo/os/$arch/
-		rm $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz
+		rm -fv $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz
 		# Create a new one joining arch and any
 		# Remove the first part of the path (it could be $repo but any isn't hit)
-		bsdtar -czvf $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz \
+		bsdtar -czf $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz \
 			-s ":${ABSLIBRE}/[a-z0-9_]\+/[a-z]\+::" \
 			$repo/* ${ABSLIBRE}/any/${baserepo}/*
 
@@ -117,6 +125,5 @@ create_tarballs() {
 sync_abs
 get_blacklist
 sync_abs_libre
-# This is being done at repo server now
-sync_pre_mips64el
-#create_tarballs
+#sync_pre_mips64el
+create_tarballs
