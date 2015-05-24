@@ -27,14 +27,14 @@ done
 # First loop is to check that all necessary files exist
 for pkgbase in "${args[@]:2}"; do
 	for pkgarch in "${ARCHES[@]}" 'any'; do
-		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
-		if [ -r "${svnrepo_from}/PKGBUILD" ]; then
-			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
+		xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
+		if [ -r "${xbsrepo_from}/PKGBUILD" ]; then
+			pkgnames=($(. "${xbsrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
 			if [ ${#pkgnames[@]} -lt 1 ]; then
 				die "Could not read pkgname"
 			fi
 
-			pkgver=$(. "${svnrepo_from}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
+			pkgver=$(. "${xbsrepo_from}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
 			if [ -z "${pkgver}" ]; then
 				die "Could not read pkgver"
 			fi
@@ -61,18 +61,20 @@ msg "Moving packages from [%s] to [%s]..." "${repo_from}" "${repo_to}"
 declare -A add_pkgs
 declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
-	for pkgarch in "${ARCHES[@]}" 'any'; do
-		svnrepo_from="${SVNREPO}/${repo_from}/${pkgbase}"
-
-		if [ -f "${svnrepo_from}/PKGBUILD" ]; then
+	# move the package in xbs
+	arches=($(xbs move "${repo_from}" "${repo_to}" "${pkgbase}"))
+	# move the package in ftp
+	for pkgarch in "${arches[@]}"; do
+		xbsrepo_to="$(xbs releasepath "$pkgbase" "$repo_to" "$pkgarch")"
+		if true; then # to add an indent level to make merging easier
 			if [ "${pkgarch}" == 'any' ]; then
 				tarches=("${ARCHES[@]}")
 			else
 				tarches=("${pkgarch}")
 			fi
 			msg2 '%s (%s)' "${pkgbase}" "${tarches[*]}"
-			pkgnames=($(. "${svnrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
-			pkgver=$(. "${svnrepo_from}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
+			pkgnames=($(. "${xbsrepo_to}/PKGBUILD"; echo "${pkgname[@]}"))
+			pkgver=$(. "${xbsrepo_to}/PKGBUILD"; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
 
 			for pkgname in "${pkgnames[@]}"; do
 				for tarch in "${tarches[@]}"; do

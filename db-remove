@@ -30,11 +30,13 @@ remove_pkgs=()
 for pkgbase in "${pkgbases[@]}"; do
 	msg "Removing %s from [%s]..." "$pkgbase" "$repo"
 
-	path="${SVNREPO}/$repo/$pkgbase"
+	path="$(xbs releasepath "$pkgbase" "$repo" "$arch")"
 	if [ -d "$path" ]; then
 		remove_pkgs+=($(. "$path/PKGBUILD"; echo "${pkgname[@]}"))
+		xbs unrelease "$pkgbase" "$repo" "$arch"
 	else
-		warning "%s not found in ABS(libre)" "$pkgbase"
+		warning "%s not found in %s for %s" \
+			"$pkgbase" "$(xbs name)" "$repo-$arch"
 		warning "Removing only %s from the repo" "$pkgbase"
 		warning "If it was a split package you have to remove the others yourself!"
 		remove_pkgs+=("$pkgbase")

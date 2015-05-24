@@ -1,6 +1,6 @@
 #!/hint/bash
+
 FTP_BASE="/srv/repo/main"
-SVNREPO="/var/abs"
 
 # Repos from Arch
 ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib' 'multilib-testing')
