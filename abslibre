@@ -2,6 +2,7 @@
 
 set -e -x
 
+FTP_BASE=/srv/repo/main
 ABSLIBRE=/srv/abslibre
 ABSGIT=/srv/git/repositories/abslibre.git
 # Remote
@@ -52,7 +53,7 @@ function sync_abs_libre() {
 		git pull
 		popd  >/dev/null 2>&1
 	else
-		git clone /srv/git/abslibre.git /var/tmp/abslibre
+		git clone "$ABSGIT" /var/tmp/abslibre
 	fi
 
 	# Sync from ABS and then sync from ABSLibre
@@ -102,11 +103,11 @@ create_tarballs() {
 		arch=$(basename $(dirname $repo))
 
 		# Remove the old one
-		mkdir -p /srv/http/web/media/abs/$baserepo/os/$arch/
-		rm /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz
+		mkdir -p $FTP_BASE/$baserepo/os/$arch/
+		rm $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz
 		# Create a new one joining arch and any
 		# Remove the first part of the path (it could be $repo but any isn't hit)
-		bsdtar -czvf /srv/http/web/media/abs/$baserepo/os/$arch/$baserepo.abs.tar.gz \
+		bsdtar -czvf $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz \
 			-s ":${ABSLIBRE}/[a-z0-9_]\+/[a-z]\+::" \
 			$repo/* ${ABSLIBRE}/any/${baserepo}/*
 
