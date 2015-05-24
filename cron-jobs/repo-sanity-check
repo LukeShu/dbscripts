@@ -1,5 +1,8 @@
 #!/bin/bash
-# Solves issue165... on the old flyspray install.  I have no idea what issue that was.
+# Solves issue165... on the old roundup install.  From the database
+# backups, the title was "Older/deprecated packages never leave the
+# repo", I don't know how the body of the issue is stored in the DB,
+# but the title says enough, I think.
 
 . "$(dirname "$(readlink -e "$0")")/../config"
 . "$(dirname "$(readlink -e "$0")")/../db-functions"
