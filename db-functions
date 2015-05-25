@@ -3,6 +3,20 @@
 . /usr/share/makepkg/util.sh
 . "$(dirname "${BASH_SOURCE[0]}")/db-abs"
 
+# Used:
+#   libmakepkg/util/message.sh:
+#     plain, msg, msg2, warning, error
+#   libmakepkg/util/pkgbuild.sh:
+#     get_full_version
+#   libmakepkg/util/util.sh:
+#     in_array
+#   devtools/common.sh:
+#     abort, die
+# Overwritten:
+#   devtools/common.sh:
+#     cleanup
+. "$(librelib common)"
+
 # global shell options for enhanced bash scripting
 shopt -s extglob globstar nullglob
 
@@ -95,16 +109,6 @@ cleanup() {
 	fi
 
 	[[ -n $1 ]] && exit "$1"
-}
-
-abort() {
-	msg 'Aborting...'
-	cleanup 0
-}
-
-die() {
-	error "$@"
-	cleanup 1
 }
 
 trap abort INT QUIT TERM HUP
