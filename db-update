@@ -64,7 +64,6 @@ for repo in "${repos[@]}"; do
 		add_pkgs=()
 		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-"${pkgarch}"${PKGEXT} 2>/dev/null))
 		for pkg in "${arch_pkgs[@]}" "${any_pkgs[@]}"; do
-			add_dirs+=("${STAGING}/abslibre/$(getpkgarch "$pkg")/$(getpkgbase "$pkg")")
 			pkgfile="${pkg##*/}"
 			msg2 "%s (%s)" "${pkgfile}" "${pkgarch}"
 			# any packages might have been moved by the previous run
@@ -79,6 +78,7 @@ for repo in "${repos[@]}"; do
 			if [ -f "$FTP_BASE/${PKGPOOL}/${pkgfile}.sig" ]; then
 				ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "$FTP_BASE/$repo/os/${pkgarch}"
 			fi
+			add_dirs+=("${STAGING}/abslibre/$(getpkgarch "$FTP_BASE/$PKGPOOL/$pkgfile")/$repo/$(getpkgbase "$FTP_BASE/$PKGPOOL/$pkgfile")")
 			add_pkgs+=("${pkgfile}")
 		done
 		for add_dir in "${add_dirs[@]}"; do
