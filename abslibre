@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e -x
+set -e
 
 FTP_BASE=/srv/repo/main
 ABSLIBRE=/srv/abslibre
@@ -52,12 +52,12 @@ function get_blacklist() {
 function sync_abs_libre() {
 
 	# Clone ABSLibre git repo
-	if [ -d /var/tmp/abslibre/.git ]; then
-		pushd /var/tmp/abslibre >/dev/null 2>&1
+	if [ -d /tmp/abslibre/.git ]; then
+		pushd /tmp/abslibre >/dev/null 2>&1
 		git pull
 		popd  >/dev/null 2>&1
 	else
-		git clone "$ABSGIT" /var/tmp/abslibre
+		git clone "$ABSGIT" /tmp/abslibre
 	fi
 
 	# Sync from ABS and then sync from ABSLibre
@@ -67,7 +67,7 @@ function sync_abs_libre() {
 		${ABSROOT} \
 		${ABSLIBRE} \
 		&&
-		for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ /var/tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
+		for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ /tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
 		printf "[FAILED]\n"
 		return 1
 	}
