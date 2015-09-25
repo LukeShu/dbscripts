@@ -4,6 +4,7 @@ FTP_BASE="/srv/repo/main"
 
 # Repos from Arch
 ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib' 'multilib-testing')
+ARMREPOS=('core' 'extra' 'community')
 # Official Parabola repos
 OURREPOS=('libre' 'libre-testing' 'libre-multilib' 'libre-multilib-testing')
 # User repos

@@ -1,0 +1,168 @@
+#!/bin/bash
+# Syncs Arch repos based on info contained in repo.db files
+# License: GPLv3
+
+# Principles
+# * Get repo.db from an Arch-like repo
+# * Generate a list of available packages
+# * Create sync whitelist (based on package blacklist)
+# * Get packages
+# * Check package signatures
+# * Check database signatures
+# * Sync repo => repo
+
+# TODO
+# * make a tarball of files used for forensics
+
+# Run as `V=true db-sync` to get verbose output
+VERBOSE=${V}
+extra=()
+${VERBOSE} && extra+=(-v)
+
+WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
+trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
+
+# Returns contents of a repo
+get_repos() {
+	# Exclude everything but db files
+	rsync "${extra[@]}" --no-motd -mrtlH --no-p --include="*/" \
+		--include="*.db" \
+		--include="*${DBEXT}" \
+		--include="*.files" \
+		--include="*${FILESEXT}" \
+		--exclude="*" \
+		--delete-after \
+		"rsync://${mirror}/${mirrorpath}/" "$WORKDIR"
+}
+
+get_repo_content() {
+	# Return all contents
+	bsdtar tf "${1}" | \
+		cut -d "/" -f 1 | \
+		sort -u
+}
+
+# Prints blacklisted packages
+get_blacklist() {
+	cut -d ':' -f 1 "${BLACKLIST_FILE}"
+}
+
+# repo
+# arch
+get_repo_file() {
+	echo "${WORKDIR}/${2}/${1}/${1}"
+}
+
+# Process the databases and get the libre packages
+init() {
+
+	# Get the blacklisted packages
+	blacklist=($(get_blacklist))
+	# Store all the whitelist files
+	whitelists=()
+
+	msg "%d packages in blacklist" ${#blacklist[@]}
+
+	test ${#blacklist[@]} -eq 0 && fatal_error "Empty blacklist"
+
+	# Sync the repos databases
+	get_repos
+
+	# Traverse all repo-arch pairs
+	for _arch in "${OURARCHES[@]}"; do
+		for _repo in "${ARMREPOS[@]}"; do
+			msg "Processing %s-%s" "${_repo}-${_arch}"
+
+			db_file=$(get_repo_file "${_repo}" "${_arch}")${DBEXT}
+			files_file=$(get_repo_file "${_repo}" "${_arch}")${FILESEXT}
+
+			if [ ! -f "${db_file}" ]; then
+				warning "%s doesn't exist, skipping this arch-repo" "${db_file}"
+				continue
+			fi
+			if [ ! -f "${files_file}" ]; then
+				warning "%s doesn't exist, skipping this arch-repo" "${files_file}"
+				continue
+			fi
+
+			# Remove blacklisted packages and count them
+			# TODO capture all removed packages for printing on debug mode
+			msg2 "Removing blacklisted packages from %s database..." .db
+			LC_ALL=C repo-remove "${db_file}" "${blacklist[@]}" \
+			|& sed -n 's/-> Removing/	&/p'
+			msg2 "Removing blacklisted packages from %s database..." .files
+			LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}" \
+			|& sed -n 's/-> Removing/	&/p'
+			# Get db contents
+			db=($(get_repo_content "${db_file}"))
+
+			msg2 "Process clean db for syncing..."
+
+			# Create a whitelist, add * wildcard to end
+			# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
+			# we aren't syncing them
+			# IMPORTANT: the . in the sed command is needed because an empty
+			# whitelist would consist of a single * allowing any package to
+			# pass through
+			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > "/tmp/${_repo}-${_arch}.whitelist"
+
+			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
+
+			# Sync excluding everything but whitelist
+			# We delete here for cleanup
+			rsync "${extra[@]}" --no-motd -rtlH \
+				--delete-after \
+				--delete-excluded \
+				--delay-updates \
+				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
+				--exclude="*" \
+				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
+				"${FTP_BASE}/${_repo}/os/${_arch}/"
+
+			# Add a new whitelist
+			whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
+
+			msg "Putting databases back in place"
+			rsync "${extra[@]}" --no-motd -rtlH \
+				--delay-updates \
+				--safe-links \
+				"${WORKDIR}/${_arch}/${_repo}/" \
+				"${FTP_BASE}/${_repo}/os/${_arch}/"
+
+			# Cleanup
+			unset db 
+		done
+	done
+
+	date -u +%s > "${FTP_BASE}/lastsync"
+
+	# Cleanup
+	unset blacklist whitelists _arch _repo repo_file
+}
+
+trap_exit() {
+	local signal=$1; shift
+	echo
+	error "$@"
+	trap -- "$signal"
+	kill "-$signal" "$$"
+}
+
+source "$(dirname "$(readlink -e "$0")")/config"
+source "$(dirname "$(readlink -e "$0")")/db-sync-arm.conf"
+source "$(dirname "$(readlink -e "$0")")/db-libremessages"
+
+# Check variables presence
+for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
+	test -z "${!var}" && fatal_error "Empty %s" "${var}"
+done
+
+# From makepkg
+set -E
+for signal in TERM HUP QUIT; do
+	trap "trap_exit $signal '%s signal caught. Exiting...' $signal" "$signal"
+done
+trap 'trap_exit INT "Aborted by user! Exiting..."' INT
+trap 'trap_exit USR1 "An unknown error has occurred. Exiting..."' ERR
+
+init
