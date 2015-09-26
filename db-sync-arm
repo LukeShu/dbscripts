@@ -156,8 +156,7 @@ init() {
 			# Search packages in whitelist to create symlinks
 			sed -i 's/^/\^/' "/tmp/${_repo}-${_arch}.whitelist"
 
-			ls "${FTP_BASE}/${pkgpool}/" \
-			grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
+			ls "${FTP_BASE}/${pkgpool}/" | grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
 			> "/tmp/${_repo}-${_arch}.pkgwhitelist"
 
 			msg "Putting symlinks in ${_repo}/os/${_arch}"
