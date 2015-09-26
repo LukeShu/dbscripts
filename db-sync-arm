@@ -102,8 +102,6 @@ init() {
 			msg2 "Process clean db for syncing..."
 
 			# Create a whitelist, add arch and * wildcard to end
-			# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
-			# we aren't syncing them
 			# IMPORTANT: the . in the sed command is needed because an empty
 			# whitelist would consist of a single * allowing any package to
 			# pass through
@@ -154,23 +152,41 @@ init() {
 			fi
 
 			# Search packages in whitelist to create symlinks
-			sed -i 's/^/\^/' "/tmp/${_repo}-${_arch}.whitelist"
-
-			ls "${FTP_BASE}/${pkgpool}/" | grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
-			> "/tmp/${_repo}-${_arch}.pkgwhitelist"
+			sed -i 's/\*/\.pkg\.tar\.xz/' "/tmp/${_repo}-${_arch}.whitelist"
 
 			msg "Putting symlinks in ${_repo}/os/${_arch}"
+
 			while read _pkgfile; do
-				ln -sf "../../../${pkgpool}/${_pkgfile}" "${FTP_BASE}/${_repo}/os/${_arch}"
-			done < "/tmp/${_repo}-${_arch}.pkgwhitelist"
+				# Symlink to package
+				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}" ]; then
+					ln -sf "../../../${pkgpool}/${_pkgfile}" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
+				fi
+
+				# Symlink to signature
+				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}.sig" ]; then
+					ln -sf "../../../${pkgpool}/${_pkgfile}.sig" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
+				fi
+			done < "/tmp/${_repo}-${_arch}.whitelist"
 
 			# Putting symlinks to "any" packages
 			ls "${FTP_BASE}/${_repo}/os/i686/" | grep '\-any\.' \
-			> "/tmp/${_repo}-${_arch}-any.pkgwhitelist"
+			> "/tmp/${_repo}-any.pkgwhitelist"
 
 			while read _pkgfile; do
-				ln -sf "../../../${pkgpool}/${_pkgfile}" "${FTP_BASE}/${_repo}/os/${_arch}"
-			done < "/tmp/${_repo}-${_arch}-any.pkgwhitelist"
+				# Symlink to package
+				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}" ]; then
+					ln -sf "../../../${pkgpool}/${_pkgfile}" \
+					"${FTP_BASE}/${_repo}/os/${_arch}"
+				fi
+
+				# Symlink to signature
+				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}.sig" ]; then
+					ln -sf "../../../${pkgpool}/${_pkgfile}.sig" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
+				fi
+			done < "/tmp/${_repo}-any.pkgwhitelist"
 		done
 	done
 
