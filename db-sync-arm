@@ -166,7 +166,7 @@ init() {
 			done < "/tmp/${_repo}-${_arch}.pkgwhitelist"
 
 			# Putting symlinks to "any" packages
-			ls "${FTP_BASE}/${_repo}/os/${_arch}/" | grep '\-any\.' \
+			ls "${FTP_BASE}/${_repo}/os/i686/" | grep '\-any\.' \
 			> "/tmp/${_repo}-${_arch}-any.pkgwhitelist"
 
 			while read _pkgfile; do
