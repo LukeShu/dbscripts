@@ -14,6 +14,8 @@
 # TODO
 # * make a tarball of files used for forensics
 
+set -e
+
 # Run as `V=true db-sync` to get verbose output
 VERBOSE=${V}
 extra=()
@@ -71,7 +73,7 @@ init() {
 	# Traverse all repo-arch pairs
 	for _repo in "${ARCHREPOS[@]}"; do
 		for _arch in "${ARCHARCHES[@]}"; do
-			msg "Processing %s-%s" "${_repo}-${_arch}"
+			msg "Processing %s-%s" "${_repo}" "${_arch}"
 
 			db_file=$(get_repo_file "${_repo}" "${_arch}")${DBEXT}
 			files_file=$(get_repo_file "${_repo}" "${_arch}")${FILESEXT}

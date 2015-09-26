@@ -52,13 +52,8 @@ function get_blacklist() {
 function sync_abs_libre() {
 
 	# Clone ABSLibre git repo
-	if [ -d /tmp/abslibre/.git ]; then
-		pushd /tmp/abslibre >/dev/null 2>&1
-		git pull
-		popd  >/dev/null 2>&1
-	else
-		git clone "$ABSGIT" /tmp/abslibre
-	fi
+	rm -rf /tmp/abslibre
+	git clone "$ABSGIT" /tmp/abslibre
 
 	# Sync from ABS and then sync from ABSLibre
 	printf ":: Syncing ABSLibre...\t"

@@ -1,0 +1,26 @@
+#!/bin/bash
+# Dummy helper to send email to parabola-dev
+# It does nothing if no output
+# Aurélien DESBRIERES <aurelien@xload.io>
+# GPL v3 or later.
+# testing version !!!
+
+LIST="maintenance@lists.parabolagnulinux.org"
+FROM="maintenance@lists.parabolagnulinux.org"
+
+SUBJECT="Database Updated $(date +"%d-%m-%Y")"
+if [ $db-update  1 ]; then
+    SUBJECT="$1 $(date +"%d-%m-%Y")"
+fi
+
+stdin="$(cat)"
+#echo used to strip whitespace for checking for actual data
+if [ -n "$(echo $stdin)" ]; then
+
+echo "Subject: $SUBJECT
+To: $LIST
+From: $FROM
+
+$stdin" | /usr/sbin/sendmail -F$FROM "$LIST"
+
+fi

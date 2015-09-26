@@ -1,0 +1,10 @@
+Message from aurelien.
+
+Working on #bug 5 https://labs.parabola.nu/issues/5
+
+db-update~old is the untouched file
+
+db-update is the testing file
+
+
+db-update-mailer is another (testing) one for the moment. in cron/
