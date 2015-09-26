@@ -101,13 +101,13 @@ init() {
 
 			msg2 "Process clean db for syncing..."
 
-			# Create a whitelist, add * wildcard to end
+			# Create a whitelist, add arch and * wildcard to end
 			# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
 			# we aren't syncing them
 			# IMPORTANT: the . in the sed command is needed because an empty
 			# whitelist would consist of a single * allowing any package to
 			# pass through
-			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > "/tmp/${_repo}-${_arch}.whitelist"
+			printf '%s\n' "${db[@]}" | sed "s|.$|&-${_arch}*|g" > "/tmp/${_repo}-${_arch}.whitelist"
 
 			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
@@ -156,15 +156,22 @@ init() {
 			# Search packages in whitelist to create symlinks
 			sed -i 's/^/\^/' "/tmp/${_repo}-${_arch}.whitelist"
 
-			ls "${FTP_BASE}/${pkgpool}/" | grep "${_arch}" \
+			ls "${FTP_BASE}/${pkgpool}/" \
 			grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
 			> "/tmp/${_repo}-${_arch}.pkgwhitelist"
 
-			msg "Putting symlinks"
+			msg "Putting symlinks in ${_repo}/os/${_arch}"
 			while read _pkgfile; do
 				ln -sf "../../../${pkgpool}/${_pkgfile}" "${FTP_BASE}/${_repo}/os/${_arch}"
 			done < "/tmp/${_repo}-${_arch}.pkgwhitelist"
 
+			# Putting symlinks to "any" packages
+			ls "${FTP_BASE}/${_repo}/os/${_arch}/" | grep '\-any\.' \
+			> "/tmp/${_repo}-${_arch}-any.pkgwhitelist"
+
+			while read _pkgfile; do
+				ln -sf "../../../${pkgpool}/${_pkgfile}" "${FTP_BASE}/${_repo}/os/${_arch}"
+			done < "/tmp/${_repo}-${_arch}-any.pkgwhitelist"
 		done
 	done
 
