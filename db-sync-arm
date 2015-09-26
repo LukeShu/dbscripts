@@ -118,6 +118,8 @@ init() {
 				pkgpool="pool/packages"
 			fi
 
+			msg2 "Retrieving %d packages to pool" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
+
 			# Sync excluding everything but whitelist
 			rsync "${extra[@]}" --no-motd -rtlH \
 				--delay-updates \
@@ -134,10 +136,28 @@ init() {
 				"${WORKDIR}/${_arch}/${_repo}/" \
 				"${FTP_BASE}/${_repo}/os/${_arch}/"
 
+			# Cleanup
+			unset db 
+		done
+	done
+
+
+	msg "Generating symbolic links to pool"
+
+	for _arch in "${OURARCHES[@]}"; do
+		for _repo in "${ARMREPOS[@]}"; do
+			# Set pkgpool to symlink
+			if [ "${_repo}" = "community" ]; then
+				pkgpool="pool/community"
+			else
+				pkgpool="pool/packages"
+			fi
+
 			# Search packages in whitelist to create symlinks
 			sed -i 's/^/\^/' "/tmp/${_repo}-${_arch}.whitelist"
 
-			ls ${FTP_BASE}/${pkgpool}/ | grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
+			ls "${FTP_BASE}/${pkgpool}/" | grep "${_arch}" \
+			grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
 			> "/tmp/${_repo}-${_arch}.pkgwhitelist"
 
 			msg "Putting symlinks"
@@ -145,8 +165,6 @@ init() {
 				ln -sf "../../../${pkgpool}/${_pkgfile}" "${FTP_BASE}/${_repo}/os/${_arch}"
 			done < "/tmp/${_repo}-${_arch}.pkgwhitelist"
 
-			# Cleanup
-			unset db 
 		done
 	done
 
