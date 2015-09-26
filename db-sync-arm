@@ -69,6 +69,7 @@ init() {
 	get_repos
 
 	# Traverse all repo-arch pairs
+	local pkgpool
 	for _arch in "${OURARCHES[@]}"; do
 		for _repo in "${ARMREPOS[@]}"; do
 			msg "Processing %s-%s" "${_repo}-${_arch}"
@@ -108,19 +109,21 @@ init() {
 
 			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
+			# Set pkgpool to sync packages
+			if [ "${_repo}" = "community" ]; then
+				pkgpool="pool/community"
+			else
+				pkgpool="pool/packages"
+			fi
+
 			# Sync excluding everything but whitelist
-			# We delete here for cleanup
 			rsync "${extra[@]}" --no-motd -rtlH \
-				--delete-after \
-				--delete-excluded \
 				--delay-updates \
+				--safe-links \
 				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
 				--exclude="*" \
 				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
-				"${FTP_BASE}/${_repo}/os/${_arch}/"
-
-			# Add a new whitelist
-			whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
+				"${FTP_BASE}/${pkgpool}/"
 
 			msg "Putting databases back in place"
 			rsync "${extra[@]}" --no-motd -rtlH \
@@ -129,41 +132,26 @@ init() {
 				"${WORKDIR}/${_arch}/${_repo}/" \
 				"${FTP_BASE}/${_repo}/os/${_arch}/"
 
+			# Search packages in whitelist to create symlinks
+			sed -i 's/^/\^/' "/tmp/${_repo}-${_arch}.whitelist"
+
+			ls ${FTP_BASE}/${pkgpool}/ | grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
+			> "/tmp/${_repo}-${_arch}.pkgwhitelist"
+
+			msg "Putting symlinks"
+			while read _pkgfile; do
+				ln -sf "../../../${pkgpool}/${_pkgfile}" "${FTP_BASE}/${_repo}/os/${_arch}"
+			done < "/tmp/${_repo}-${_arch}.pkgwhitelist"
+
 			# Cleanup
 			unset db 
-		done
-	done
-
-
-	msg "Syncing package pool"
-
-	# Traverse all repo-arch pairs
-	local pkgpool
-	for _arch in "${OURARCHES[@]}"; do
-		for _repo in "${ARMREPOS[@]}"; do
-			if [ "${_repo}" = "community" ]; then
-				pkgpool="pool/community"
-			else
-				pkgpool="pool/packages"
-			fi
-
-			# Sync
-			# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
-			# packages too
-			rsync "${extra[@]}" --no-motd -rtlH \
-				--delay-updates \
-				--safe-links \
-				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
-				--exclude="*" \
-				"${FTP_BASE}/${_repo}/os/${_arch}/" \
-				"${FTP_BASE}/${pkgpool}/"
 		done
 	done
 
 	date -u +%s > "${FTP_BASE}/lastsync"
 
 	# Cleanup
-	unset blacklist whitelists _arch _repo repo_file
+	unset blacklist whitelists _arch _repo repo_file _pkgfile
 }
 
 trap_exit() {
