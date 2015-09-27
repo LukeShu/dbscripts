@@ -175,16 +175,10 @@ init() {
 			> "/tmp/${_repo}-any.pkgwhitelist"
 
 			while read _pkgfile; do
-				# Symlink to package
+				# Symlink to package and signature
 				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}" ]; then
 					ln -sf "../../../${pkgpool}/${_pkgfile}" \
-					"${FTP_BASE}/${_repo}/os/${_arch}"
-				fi
-
-				# Symlink to signature
-				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}.sig" ]; then
-					ln -sf "../../../${pkgpool}/${_pkgfile}.sig" \
-					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
 				fi
 			done < "/tmp/${_repo}-any.pkgwhitelist"
 		done
