@@ -139,7 +139,7 @@ init() {
 	for _arch in "${OURARCHES[@]}"; do
 		for _repo in "${ARMREPOS[@]}"; do
 			# Modify whitelist to search packages and create symlinks
-			sed -i "s/*/-${_arch}.pkg.tar.xz/g" > "/tmp/${_repo}-${_arch}.whitelist"
+			sed -i "s/*/-${_arch}.pkg.tar.xz/g" "/tmp/${_repo}-${_arch}.whitelist"
 			cp "/tmp/${_repo}-${_arch}.whitelist" "/tmp/${_repo}-any.whitelist"
 
 			msg "Putting symlinks in ${_repo}/os/${_arch}"
