@@ -71,7 +71,6 @@ init() {
 	get_repos
 
 	# Traverse all repo-arch pairs
-	local pkgpool
 	for _arch in "${OURARCHES[@]}"; do
 		for _repo in "${ARMREPOS[@]}"; do
 			msg "Processing %s-%s" "${_repo}" "${_arch}"
@@ -101,20 +100,15 @@ init() {
 
 			msg2 "Process clean db for syncing..."
 
-			# Create a whitelist, add arch and * wildcard to end
+			# Create a whitelist, add * wildcard to end
+			# TODO due to lack of -arch suffix, the pool sync retrieves every arch even if
+			# we aren't syncing them
 			# IMPORTANT: the . in the sed command is needed because an empty
 			# whitelist would consist of a single * allowing any package to
 			# pass through
-			printf '%s\n' "${db[@]}" | sed "s|.$|&-${_arch}*|g" > "/tmp/${_repo}-${_arch}.whitelist"
+			printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > "/tmp/${_repo}-${_arch}.whitelist"
 
 			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
-
-			# Set pkgpool to sync packages
-			if [ "${_repo}" = "community" ]; then
-				pkgpool="pool/community"
-			else
-				pkgpool="pool/packages"
-			fi
 
 			msg2 "Retrieving %d packages to pool" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
@@ -125,7 +119,7 @@ init() {
 				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
 				--exclude="*" \
 				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
-				"${FTP_BASE}/${pkgpool}/"
+				"${FTP_BASE}/${PKGPOOLARM}/"
 
 			msg "Putting databases back in place"
 			rsync "${extra[@]}" --no-motd -rtlH \
@@ -144,40 +138,38 @@ init() {
 
 	for _arch in "${OURARCHES[@]}"; do
 		for _repo in "${ARMREPOS[@]}"; do
-			# Set pkgpool to symlink
-			if [ "${_repo}" = "community" ]; then
-				pkgpool="pool/community"
-			else
-				pkgpool="pool/packages"
-			fi
-
-			# Search packages in whitelist to create symlinks
-			sed -i 's/\*/\.pkg\.tar\.xz/' "/tmp/${_repo}-${_arch}.whitelist"
+			# Modify whitelist to search packages and create symlinks
+			sed -i "s/*/-${_arch}.pkg.tar.xz/g" "/tmp/${_repo}-${_arch}.whitelist"
 
 			msg "Putting symlinks in ${_repo}/os/${_arch}"
 
 			while read _pkgfile; do
 				# Symlink to package
-				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}" ]; then
-					ln -sf "../../../${pkgpool}/${_pkgfile}" \
+				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}" ]; then
+					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
 				fi
 
 				# Symlink to signature
-				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}.sig" ]; then
-					ln -sf "../../../${pkgpool}/${_pkgfile}.sig" \
+				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}.sig" ]; then
+					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
 				fi
 			done < "/tmp/${_repo}-${_arch}.whitelist"
 
+			# Modify whitelist to search "any" packages and create symlinks
+			sed -i "s/^/\^/g" "/tmp/${_repo}-${_arch}.whitelist"
+			sed -i "s/-i686./-any./g" "/tmp/${_repo}-${_arch}.whitelist"
+
 			# Putting symlinks to "any" packages
-			ls "${FTP_BASE}/${_repo}/os/i686/" | grep '\-any\.' \
+			ls "${FTP_BASE}/${PKGPOOLARM}/" | grep '\-any\.' \
+			| grep -w -f "/tmp/${_repo}-${_arch}.whitelist" \
 			> "/tmp/${_repo}-any.pkgwhitelist"
 
 			while read _pkgfile; do
 				# Symlink to package and signature
-				if [ -f "${FTP_BASE}/${pkgpool}/${_pkgfile}" ]; then
-					ln -sf "../../../${pkgpool}/${_pkgfile}" \
+				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}" ]; then
+					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
 				fi
 			done < "/tmp/${_repo}-any.pkgwhitelist"

@@ -14,6 +14,7 @@ PROJREPOS=('nonsystemd' 'nonsystemd-testing' 'nonprism' 'nonprism-testing' 'pcr'
 # Remote repos
 PKGREPOS=("${ARCHREPOS[@]}" "${OURREPOS[@]}" "${USERREPOS[@]}" "${PROJREPOS[@]}")
 PKGPOOL='pool/parabola'
+PKGPOOLARM='pool/arch_gnu+linux_arm'
 SRCPOOL='sources/parabola'
 
 # Directories where packages are shared between repos
