@@ -13,26 +13,26 @@ USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jor
 PROJREPOS=('nonsystemd' 'nonsystemd-testing' 'nonprism' 'nonprism-testing' 'pcr' 'kernels' 'cross' 'java')
 # Remote repos
 PKGREPOS=("${ARCHREPOS[@]}" "${OURREPOS[@]}" "${USERREPOS[@]}" "${PROJREPOS[@]}")
-PKGPOOL='pool/parabola'
+PKGPOOL='pool/parabola_gnu+linux'
 PKGPOOLARM='pool/arch_gnu+linux_arm'
-SRCPOOL='sources/parabola'
+SRCPOOL='src/parabola_gnu+linux'
 
 # Directories where packages are shared between repos
 # *relative to FTP_BASE*
-ARCHPKGPOOLS=(pool/{packages,community})
-OURPKGPOOLS=(pool/parabola)
+ARCHPKGPOOLS=(pool/arch_gnu+linux_x86{,_community})
+OURPKGPOOLS=(pool/parabola_gnu+linux)
 PKGPOOLS=(${OURPKGPOOLS[@]} ${ARCHPKGPOOLS[@]})
 # Directories where sources are stored
-ARCHSRCPOOLS=(sources/{packages,community})
-OURPKGPOOLS=(sources/parabola)
+ARCHSRCPOOLS=(src/arch_gnu+linux_x86{,_community})
+OURPKGPOOLS=(src/parabola_gnu+linux)
 SRCPOOLS=(${OURSRCPOOLS[@]} ${ARCHSRCPOOLS[@]})
 
-CLEANUP_DESTDIR="$FTP_BASE/old/packages"
+CLEANUP_DESTDIR="$FTP_BASE/old/pkg"
 CLEANUP_DRYRUN=false
 # Time in days to keep moved packages
 CLEANUP_KEEP=30
 
-SOURCE_CLEANUP_DESTDIR="$FTP_BASE/old/sources"
+SOURCE_CLEANUP_DESTDIR="$FTP_BASE/old/src"
 SOURCE_CLEANUP_DRYRUN=true
 # Time in days to keep moved sourcepackages
 SOURCE_CLEANUP_KEEP=30
@@ -56,4 +56,4 @@ MAKEPKGCONF="~/.makepkg.conf"
 BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"
 
 # parabolaweb root
-WEB_DIR=/srv/http/parabolagnulinux.org/web
+WEB_DIR=/srv/http/parabola.nu/web
