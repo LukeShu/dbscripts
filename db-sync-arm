@@ -159,7 +159,7 @@ init() {
 
 			# Modify whitelist to search "any" packages and create symlinks
 			sed -i "s/^/\^/g" "/tmp/${_repo}-${_arch}.whitelist"
-			sed -i "s/-i686./-any./g" "/tmp/${_repo}-${_arch}.whitelist"
+			sed -i "s/-${_arch}./-any./g" "/tmp/${_repo}-${_arch}.whitelist"
 
 			# Putting symlinks to "any" packages
 			ls "${FTP_BASE}/${PKGPOOLARM}/" | grep '\-any\.' \
