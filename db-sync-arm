@@ -147,7 +147,7 @@ init() {
 			while read _pkgfile; do
 				# Symlink to package
 				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}" ]; then
-					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}" \
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
 
 					# Delete entry to "any" whitelist
@@ -156,7 +156,7 @@ init() {
 
 				# Symlink to signature
 				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}.sig" ]; then
-					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
 
 					# Delete entry to "any" whitelist
@@ -173,13 +173,13 @@ init() {
 			while read _pkgfile; do
 				# Symlink to package
 				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}" ]; then
-					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}" \
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
 				fi
 
 				# Symlink to signature
 				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}.sig" ]; then
-					ln -sf "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
 				fi
 			done < "/tmp/${_repo}-any.whitelist"
