@@ -20,12 +20,14 @@ SRCPOOL='src/parabola_gnu+linux'
 # Directories where packages are shared between repos
 # *relative to FTP_BASE*
 ARCHPKGPOOLS=(pool/{packages,community})
+ARMPKGPOOLS=(pool/arch_gnu+linux_arm)
 OURPKGPOOLS=(pool/parabola_gnu+linux)
-PKGPOOLS=(${OURPKGPOOLS[@]} ${ARCHPKGPOOLS[@]})
+PKGPOOLS=(${OURPKGPOOLS[@]} ${ARMPKGPOOLS[@]} ${ARCHPKGPOOLS[@]})
 # Directories where sources are stored
 ARCHSRCPOOLS=(sources/{packages,community})
+ARMSRCPOOLS=(src/arch_gnu+linux_arm)
 OURPKGPOOLS=(src/parabola_gnu+linux)
-SRCPOOLS=(${OURSRCPOOLS[@]} ${ARCHSRCPOOLS[@]})
+SRCPOOLS=(${OURSRCPOOLS[@]} ${ARMSRCPOOLS[@]} ${ARCHSRCPOOLS[@]})
 
 CLEANUP_DESTDIR="$FTP_BASE/old/pkg"
 CLEANUP_DRYRUN=false
