@@ -13,18 +13,6 @@ PKGREPOS=(
 PKGPOOL='pool/parabola_gnu+linux'
 SRCPOOL='src/parabola_gnu+linux'
 
-# Directories where packages are shared between repos
-# *relative to FTP_BASE*
-PKGPOOLS=(pool/parabola_gnu+linux # Parabola GNU/Linux-libre
-	  pool/arch_gnu+linux_arm # Arch Linux ARM
-	  pool/{packages,community} # Arch Linux
-	 )
-# Directories where sources are stored
-SRCPOOLS=(src/parabola_gnu+linux # Parabola GNU/Linux-libre
-	  src/arch_gnu+linux_arm # Arch Linux ARM
-	  sources/{packages,community} # Arch Linux
-	 )
-
 CLEANUP_DESTDIR="$FTP_BASE/old/pkg"
 CLEANUP_DRYRUN=false
 # Time in days to keep moved packages

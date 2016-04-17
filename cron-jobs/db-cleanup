@@ -16,6 +16,7 @@ trap_exit() {
 }
 
 source "$(dirname $(dirname "$(readlink -e "$0")"))/config"
+source "$(dirname "$(readlink -e "$0")")/db-cleanup.conf"
 source "$(librelib messages)"
 
 # From makepkg
