@@ -162,7 +162,7 @@ def check(arguments):
 def main():
     """Get arguments and run the command."""
     from argparse import ArgumentParser
-    parser = ArgumentParser(prog="check-package-libraries.py",
+    parser = ArgumentParser(prog="db-check-package-libraries",
                             description="Check packages for "
                             "provided/needed libraries")
     parser.add_argument("-d", "--database", type=str,

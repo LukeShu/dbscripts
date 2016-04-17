@@ -16,7 +16,7 @@
 
 set -e
 
-# Run as `V=true db-sync` to get verbose output
+# Run as `V=true db-import-pkg-archlinux` to get verbose output
 VERBOSE=${V}
 extra=()
 ${VERBOSE} && extra+=(-v)
@@ -52,7 +52,7 @@ get_blacklist() {
 # repo
 # arch
 get_repo_file() {
-	echo "${WORKDIR}/${1}/os/${2}/${1}"
+	echo "${WORKDIR}/${2}/${1}/${1}"
 }
 
 # Process the databases and get the libre packages
@@ -71,19 +71,19 @@ init() {
 	get_repos
 
 	# Traverse all repo-arch pairs
-	for _repo in "${ARCHREPOS[@]}"; do
-		for _arch in "${ARCHARCHES[@]}"; do
+	for _arch in "${OURARCHES[@]}"; do
+		for _repo in "${ARMREPOS[@]}"; do
 			msg "Processing %s-%s" "${_repo}" "${_arch}"
 
 			db_file=$(get_repo_file "${_repo}" "${_arch}")${DBEXT}
 			files_file=$(get_repo_file "${_repo}" "${_arch}")${FILESEXT}
 
 			if [ ! -f "${db_file}" ]; then
-				warning "%s doesn't exist, skipping this repo-arch" "${db_file}"
+				warning "%s doesn't exist, skipping this arch-repo" "${db_file}"
 				continue
 			fi
 			if [ ! -f "${files_file}" ]; then
-				warning "%s doesn't exist, skipping this repo-arch" "${files_file}"
+				warning "%s doesn't exist, skipping this arch-repo" "${files_file}"
 				continue
 			fi
 
@@ -110,25 +110,22 @@ init() {
 
 			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
+			msg2 "Retrieving %d packages to pool" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
+
 			# Sync excluding everything but whitelist
-			# We delete here for cleanup
 			rsync "${extra[@]}" --no-motd -rtlH \
-				--delete-after \
-				--delete-excluded \
 				--delay-updates \
+				--safe-links \
 				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
 				--exclude="*" \
-				"rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/" \
-				"${FTP_BASE}/${_repo}/os/${_arch}/"
-
-			# Add a new whitelist
-			whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
+				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
+				"${FTP_BASE}/${PKGPOOLARM}/"
 
 			msg "Putting databases back in place"
 			rsync "${extra[@]}" --no-motd -rtlH \
 				--delay-updates \
 				--safe-links \
-				"${WORKDIR}/${_repo}/os/${_arch}/" \
+				"${WORKDIR}/${_arch}/${_repo}/" \
 				"${FTP_BASE}/${_repo}/os/${_arch}/"
 
 			# Cleanup
@@ -137,49 +134,41 @@ init() {
 	done
 
 
-	msg "Syncing package pool"
-	# Concatenate all whitelists, check for single *s just in case
-	cat "${whitelists[@]}" | grep -v "^\*$" | sort -u > /tmp/any.whitelist
+	msg "Generating symbolic links to pool"
 
-	msg2 "Retrieving %d packages from pool" "$(wc -l /tmp/any.whitelist | cut -d' ' -f1)"
+	for _arch in "${OURARCHES[@]}"; do
+		for _repo in "${ARMREPOS[@]}"; do
+			# Modify whitelist to search packages and create symlinks
+			sed -i "s/*/-${_arch}.pkg.tar.xz/g" "/tmp/${_repo}-${_arch}.whitelist"
 
-	# Sync
-	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
-	# packages too
-	local pkgpool
-	for pkgpool in "${ARCHPKGPOOLS[@]}"; do
-		rsync "${extra[@]}" --no-motd -rtlH \
-			--delay-updates \
-			--safe-links \
-			--include-from=/tmp/any.whitelist \
-			--exclude="*" \
-			"rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
-			"${FTP_BASE}/${pkgpool}/"
-	done
+			msg "Putting symlinks in ${_repo}/os/${_arch}"
 
-	# Sync sources
-	msg "Syncing source pool"
-	#sed "s|\.pkg\.tar\.|.src.tar.|" /tmp/any.whitelist > /tmp/any-src.whitelist
-	#msg2 "Retrieving %d sources from pool" $(wc -l < /tmp/any-src.whitelist)
+			while read _pkgfile; do
+				# Symlink to package
+				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}" ]; then
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
+				elif [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile/${_arch}/any}" ]; then
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile/${_arch}/any}" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile/${_arch}/any}"
+				fi
 
-	# Sync
-	# *Don't delete-after*, this is the job of cleanup scripts. It will remove our
-	# packages too
-	local srcpool
-	for srcpool in "${ARCHSRCPOOLS[@]}"; do
-		rsync "${extra[@]}" --no-motd -rtlH \
-			--delay-updates \
-			--safe-links \
-			--include-from=/tmp/any.whitelist \
-			--exclude="*" \
-			"rsync://${mirror}/${mirrorpath}/${srcpool}/" \
-			"${FTP_BASE}/${srcpool}/"
+				# Symlink to signature
+				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}.sig" ]; then
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
+				elif [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile/${_arch}/any}.sig" ]; then
+					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile/${_arch}/any}.sig" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile/${_arch}/any}.sig"
+				fi
+			done < "/tmp/${_repo}-${_arch}.whitelist"
+		done
 	done
 
 	date -u +%s > "${FTP_BASE}/lastsync"
 
 	# Cleanup
-	unset blacklist whitelists _arch _repo repo_file
+	unset blacklist whitelists _arch _repo repo_file _pkgfile
 }
 
 trap_exit() {
@@ -191,7 +180,7 @@ trap_exit() {
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
-source "$(dirname "$(readlink -e "$0")")/db-sync.conf"
+source "$(dirname "$(readlink -e "$0")")/db-import-pkg-archlinuxarm.conf"
 source "$(dirname "$(readlink -e "$0")")/db-libremessages"
 
 # Check variables presence
