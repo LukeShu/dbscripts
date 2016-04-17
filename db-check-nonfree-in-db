@@ -5,7 +5,7 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="nonfree_in_db",
+        prog="db-check-nonfree-in-db",
         description="Cleans nonfree files on repo",)
 
     parser.add_argument("-k", "--blacklist-file", type=str,
