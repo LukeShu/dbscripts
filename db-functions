@@ -1,7 +1,7 @@
 #!/hint/bash
 
 # Some PKGBUILDs need CARCH to be set
-CARCH="x86_64"
+CARCH=$(. "$(librelib conf.sh)"; load_files makepkg; echo "$CARCH")
 
 # Useful functions
 UMASK=""
@@ -26,73 +26,21 @@ mv_acl() {
 
 # set up general environment
 WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
+if [ -n "${SVNUSER}" ]; then
+	setfacl -m u:"${SVNUSER}":rwx "${WORKDIR}"
+	setfacl -m d:u:"${USER}":rwx "${WORKDIR}"
+	setfacl -m d:u:"${SVNUSER}":rwx "${WORKDIR}"
+fi
 LOCKS=()
 REPO_MODIFIED=0
 
-# check if messages are to be printed using color
-unset ALL_OFF BOLD BLUE GREEN RED YELLOW
-if [[ -t 2 ]]; then
-	ALL_OFF="$(tput sgr0)"
-	BOLD="$(tput bold)"
-	BLUE="${BOLD}$(tput setaf 4)"
-	GREEN="${BOLD}$(tput setaf 2)"
-	RED="${BOLD}$(tput setaf 1)"
-	YELLOW="${BOLD}$(tput setaf 3)"
-fi
-readonly ALL_OFF BOLD BLUE GREEN RED YELLOW
-
-plain() {
-	local mesg=$1; shift
-	printf "${BOLD}    ${mesg}${ALL_OFF}\n" "$@"
-}
-
-msg() {
-	local mesg=$1; shift
-	printf "${GREEN}==>${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
-}
-
-msg2() {
-	local mesg=$1; shift
-	printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
-}
-
-warning() {
-	local mesg=$1; shift
-	printf "${YELLOW}==> WARNING:${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-error() {
-	local mesg=$1; shift
-	printf "${RED}==> ERROR${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
-}
-
-##
-#  usage : in_array( $needle, $haystack )
-# return : 0 - found
-#          1 - not found
-##
-in_array() {
-	local needle=$1; shift
-	[[ -z $1 ]] && return 1 # Not Found
-	local item
-	for item in "$@"; do
-		[[ $item = "$needle" ]] && return 0 # Found
-	done
-	return 1 # Not Found
-}
-
-##
-#  usage : get_full_version( $epoch, $pkgver, $pkgrel )
-# return : full version spec, including epoch (if necessary), pkgver, pkgrel
-##
-get_full_version() {
-	if [[ $1 -eq 0 ]]; then
-		# zero epoch case, don't include it in version
-		echo "$2-$3"
-	else
-		echo "$1:$2-$3"
-	fi
-}
+# Used: plain, msg, msg2, warning, error, in_array, get_full_version, abort, die
+# Overwritten: cleanup
+# Ignored: stat_busy, stat_done,
+#          setup_workdir, trap_abort, trap_exit,
+#          lock, slock, lock_close
+#          pkgver_equal, find_cached_package, check_root
+. "$(librelib common)"
 
 script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.${0##*/}"
@@ -141,20 +89,9 @@ cleanup() {
 
 	if (( REPO_MODIFIED )); then
 		date +%s > "${FTP_BASE}/lastupdate"
-		date -u +%s > "${FTP_BASE}/lastsync"
 	fi
 
 	[ "$1" ] && exit "$1"
-}
-
-abort() {
-	msg 'Aborting...'
-	cleanup 0
-}
-
-die() {
-	error "$@"
-	cleanup 1
 }
 
 trap abort INT QUIT TERM HUP
@@ -165,7 +102,6 @@ trap cleanup EXIT
 repo_lock () {
 	local LOCKDIR="$TMPDIR/.repolock.$1.$2"
 	local DBLOCKFILE="${FTP_BASE}/${1}/os/${2}/${1}${DBEXT}.lck"
-	local FILESLOCKFILE="${FTP_BASE}/${1}/os/${2}/${1}${FILESEXT}.lck"
 	local _count
 	local _trial
 	local _timeout
@@ -175,10 +111,6 @@ repo_lock () {
 	# This is the lock file used by repo-add and repo-remove
 	if [ -f "${DBLOCKFILE}" ]; then
 		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(<"$DBLOCKFILE")"
-		return 1
-	fi
-	if [ -f "${FILESLOCKFILE}" ]; then
-		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(<"$FILESLOCKFILE")"
 		return 1
 	fi
 
@@ -340,7 +272,7 @@ check_pkgfile() {
 
 	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
 
-	if echo "${pkgfile##*/}" | grep -q "${pkgname}-${pkgver}-${pkgarch}"; then
+	if echo "${pkgfile##*/}" | grep "${pkgname}-${pkgver}-${pkgarch}" &>/dev/null; then
 		return 0
 	else
 		return 1
@@ -492,10 +424,8 @@ arch_repo_add() {
 	printf -v pkgs_str -- '%q ' "${pkgs[@]}"
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
-	/usr/bin/repo-add -q "${repo}${DBEXT}" "${pkgs[@]}" >/dev/null \
+	/usr/bin/repo-add -q "${repo}${DBEXT}" "${pkgs[@]}" \
 		|| error 'repo-add %q %s' "${repo}${DBEXT}" "${pkgs_str% }"
-	/usr/bin/repo-add -f -q "${repo}${FILESEXT}" "${pkgs[@]}" \
-		|| error 'repo-add -f %q %s' "${repo}${FILESEXT}" "${pkgs_str% }"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
 
@@ -507,17 +437,14 @@ arch_repo_remove() {
 	local arch=$2
 	local pkgs=("${@:3}")
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
-	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
 	if [ ! -f "${dbfile}" ]; then
 		error "No database found at '%s'" "${dbfile}"
 		return 1
 	fi
 	printf -v pkgs_str -- '%q ' "${pkgs[@]}"
-	/usr/bin/repo-remove -q "${dbfile}" "${pkgs[@]}" >/dev/null \
+	/usr/bin/repo-remove -q "${dbfile}" "${pkgs[@]}" \
 		|| error 'repo-remove %q %s' "${dbfile}" "${pkgs_str% }"
-	/usr/bin/repo-remove -q "${filesfile}" "${pkgs[@]}" \
-		|| error 'repo-remove %q %s' "${filesfile}" "${pkgs_str% }"
 	set_repo_permission "${repo}" "${arch}"
 
 	REPO_MODIFIED=1

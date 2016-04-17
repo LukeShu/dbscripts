@@ -63,11 +63,10 @@ for repo in "${PKGREPOS[@]}"; do
 		if grep -Fqx "${pkgbase}" "${dirname}/sourceballs.skip"; then
 			continue
 		fi
-		# Commenting out, we'll sourceball everything
 		# Check if the license or .force file does not enforce creating a source package
-#		if ! (chk_license ${pkglicense[@]} || grep -Fqx "${pkgbase}" "${dirname}/sourceballs.force"); then
-#			continue
-#		fi
+		if ! ([[ -z ${ALLOWED_LICENSES[*]} ]] || chk_license "${pkglicense[@]}" || grep -Fqx "${pkgbase}" "${dirname}/sourceballs.force"); then
+			continue
+		fi
 		# Store the expected file name of the source package
 		echo "${pkgbase}-${pkgver}${SRCEXT}" >> "${WORKDIR}/expected-src-pkgs"
 
@@ -118,8 +117,8 @@ for repo in "${PKGREPOS[@]}"; do
 done
 
 # Cleanup old source packages
-cat "${WORKDIR}/expected-src-pkgs" | sort -u > "${WORKDIR}/expected-src-pkgs.sort"
-cat "${WORKDIR}/available-src-pkgs" | sort -u > "${WORKDIR}/available-src-pkgs.sort"
+find "${WORKDIR}" -maxdepth 1 -type f -name 'expected-src-pkgs' -exec cat {} \; | sort -u > "${WORKDIR}/expected-src-pkgs.sort"
+find "${WORKDIR}" -maxdepth 1 -type f -name 'available-src-pkgs' -exec cat {} \; | sort -u > "${WORKDIR}/available-src-pkgs.sort"
 old_pkgs=($(comm -23 "${WORKDIR}/available-src-pkgs.sort" "${WORKDIR}/expected-src-pkgs.sort"))
 
 if [ ${#old_pkgs[@]} -ge 1 ]; then
