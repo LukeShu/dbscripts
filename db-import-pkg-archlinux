@@ -190,9 +190,14 @@ trap_exit() {
 	kill "-$signal" "$$"
 }
 
+fatal_error() {
+	error "$@"
+	exit 1
+}
+
 source "$(dirname "$(readlink -e "$0")")/config"
 source "$(dirname "$(readlink -e "$0")")/db-import-pkg-archlinux.conf"
-source "$(dirname "$(readlink -e "$0")")/db-libremessages"
+source "$(librelib messages)"
 
 # Check variables presence
 for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do

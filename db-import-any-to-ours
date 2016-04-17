@@ -8,7 +8,7 @@ trap_exit() {
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
-source "$(dirname "$(readlink -e "$0")")/db-libremessages"
+source "$(librelib messages)"
 
 # From makepkg
 set -E
