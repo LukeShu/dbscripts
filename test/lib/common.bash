@@ -277,7 +277,9 @@ checkRemovedPackageDB() {
 		for tarch in "${tarches[@]}"; do
 			if [ -r "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" ]; then
 				for pkgname in ${pkgnames[@]}; do
-					! bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep "${pkgname}" &>/dev/null
+					if bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep "${pkgname}" &>/dev/null; then
+						return 1
+					fi
 				done
 			fi
 		done
