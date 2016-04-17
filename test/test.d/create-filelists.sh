@@ -17,7 +17,7 @@ testCreateSimpleFileLists() {
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
-			if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep -q "usr/bin/${pkgbase}"; then
+			if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/${pkgbase}" &>/dev/null; then
 				fail "usr/bin/${pkgbase} not found in ${arch}/extra${FILESEXT}"
 			fi
 		done
@@ -36,7 +36,7 @@ testCreateAnyFileLists() {
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
-			if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep -q "usr/share/${pkgbase}/test"; then
+			if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/share/${pkgbase}/test" &>/dev/null; then
 				fail "usr/share/${pkgbase}/test not found in ${arch}/extra${FILESEXT}"
 			fi
 		done
@@ -62,7 +62,7 @@ testCreateSplitFileLists() {
 		pkgnames=($(source "${TMP}/svn-packages-copy/${pkgbase}/trunk/PKGBUILD"; echo ${pkgname[@]}))
 		for pkgname in "${pkgnames[@]}"; do
 			for arch in "${ARCH_BUILD[@]}"; do
-				if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep -q "usr/bin/${pkgname}"; then
+				if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/${pkgname}" &>/dev/null; then
 					fail "usr/bin/${pkgname} not found in ${arch}/extra${FILESEXT}"
 				fi
 			done
@@ -88,10 +88,10 @@ testCleanupFileLists() {
 	done
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep -q "usr/bin/pkg-simple-b"; then
+		if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/pkg-simple-b" &>/dev/null; then
 			fail "usr/bin/pkg-simple-b not found in ${arch}/extra${FILESEXT}"
 		fi
-		if bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep -q "usr/bin/pkg-simple-a"; then
+		if bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/pkg-simple-a" &>/dev/null; then
 			fail "usr/bin/pkg-simple-a still found in ${arch}/extra${FILESEXT}"
 		fi
 	done

@@ -35,7 +35,7 @@ oneTimeSetUp() {
 		pushd "$d" >/dev/null
 		pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 		pkgarch=($(. PKGBUILD; echo "${arch[@]}"))
-		pkgversion=$(. PKGBUILD; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
+		pkgversion=$(. PKGBUILD; get_full_version)
 
 		build=true
 		for a in "${pkgarch[@]}"; do
@@ -140,7 +140,7 @@ releasePackage() {
 
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
 	archrelease "${repo}-${arch}" >/dev/null 2>&1
-	pkgver=$(. PKGBUILD; get_full_version "${epoch:-0}" "${pkgver}" "${pkgrel}")
+	pkgver=$(. PKGBUILD; get_full_version)
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 	popd >/dev/null
 	cp "${pkgdir}/${pkgbase}"/*-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"

@@ -132,7 +132,7 @@ testUpdateSameAnyPackageToDifferentRepositories() {
 	local arch
 	for arch in i686 x86_64; do
 		( [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ] \
-			&& bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep -q "${pkgbase}") \
+			&& bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null) \
 			&& fail "${pkgbase} should not be in testing/os/${arch}/testing${DBEXT%.tar.*}"
 	done
 }
@@ -154,7 +154,7 @@ testAddIncompleteSplitPackage() {
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q "${pkgbase}") \
+		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null) \
 		&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
 	done
 }
