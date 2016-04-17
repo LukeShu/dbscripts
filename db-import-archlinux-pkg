@@ -196,7 +196,7 @@ fatal_error() {
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
-source "$(dirname "$(readlink -e "$0")")/db-import-pkg-archlinux.conf"
+source "$(dirname "$(readlink -e "$0")")/db-import-archlinux.conf"
 source "$(librelib messages)"
 
 # Check variables presence
