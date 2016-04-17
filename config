@@ -1,33 +1,30 @@
 #!/hint/bash
+# Please try to refrain from adding new variables to this file.
+# Instead, create separate ${toolname}.conf files.  Only add a
+# variable here if multiple tools start needing the option.
 
 FTP_BASE="/srv/repo/main"
 
-# Repos from Arch
-ARCHREPOS=('core' 'testing' 'extra' 'community' 'multilib' 'multilib-testing')
-ARMREPOS=('core' 'extra' 'community')
-# Official Parabola repos
-OURREPOS=('libre' 'libre-testing' 'libre-multilib' 'libre-multilib-testing')
-# User repos
-USERREPOS=('~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde' '~drtan')
-# Community project repos
-PROJREPOS=('nonsystemd' 'nonsystemd-testing' 'nonprism' 'nonprism-testing' 'pcr' 'kernels' 'cross' 'java')
-# Remote repos
-PKGREPOS=("${ARCHREPOS[@]}" "${OURREPOS[@]}" "${USERREPOS[@]}" "${PROJREPOS[@]}")
+PKGREPOS=(
+	'core' 'testing' 'extra' 'community' 'multilib' 'multilib-testing'
+	'libre' 'libre-testing' 'libre-multilib' 'libre-multilib-testing'
+	'~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde' '~drtan'
+	'nonsystemd' 'nonsystemd-testing' 'nonprism' 'nonprism-testing' 'pcr' 'kernels' 'cross' 'java')
 PKGPOOL='pool/parabola_gnu+linux'
-PKGPOOLARM='pool/arch_gnu+linux_arm'
 SRCPOOL='src/parabola_gnu+linux'
 
 # Directories where packages are shared between repos
 # *relative to FTP_BASE*
-ARCHPKGPOOLS=(pool/{packages,community})
-ARMPKGPOOLS=(pool/arch_gnu+linux_arm)
-OURPKGPOOLS=(pool/parabola_gnu+linux)
-PKGPOOLS=(${OURPKGPOOLS[@]} ${ARMPKGPOOLS[@]} ${ARCHPKGPOOLS[@]})
+PKGPOOLS=(pool/parabola_gnu+linux # Parabola GNU/Linux-libre
+	  pool/arch_gnu+linux_arm # Arch Linux ARM
+	  pool/{packages,community} # Arch Linux
+	 )
 # Directories where sources are stored
-ARCHSRCPOOLS=(sources/{packages,community})
-ARMSRCPOOLS=(src/arch_gnu+linux_arm)
-OURPKGPOOLS=(src/parabola_gnu+linux)
-SRCPOOLS=(${OURSRCPOOLS[@]} ${ARMSRCPOOLS[@]} ${ARCHSRCPOOLS[@]})
+OURPKGPOOLS=(
+SRCPOOLS=(src/parabola_gnu+linux # Parabola GNU/Linux-libre
+	  src/arch_gnu+linux_arm # Arch Linux ARM
+	  sources/{packages,community} # Arch Linux
+	 )
 
 CLEANUP_DESTDIR="$FTP_BASE/old/pkg"
 CLEANUP_DRYRUN=false
@@ -42,20 +39,11 @@ SOURCE_CLEANUP_KEEP=30
 REQUIRE_SIGNATURE=true
 
 LOCK_DELAY=10
-LOCK_TIMEOUT=300
 
 [ -n "${STAGING:-}" ] || STAGING="$HOME/staging/unknown/staging"
 TMPDIR="/tmp"
-ARCHARCHES=(i686 x86_64)
-OURARCHES=(armv7h)
-ARCHES=(${ARCHARCHES[@]} ${OURARCHES[@]})
+ARCHES=(i686 x86_64 armv7h)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.?z"
 SRCEXT=".src.tar.gz"
-
-MAKEPKGCONF="~/.makepkg.conf"
-BLACKLIST_FILE="$HOME/blacklist/blacklist.txt"
-
-# parabolaweb root
-WEB_DIR=/srv/http/parabola.nu/web

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . "$(dirname "$(readlink -e "$0")")/config"
+. "$(dirname "$(readlink -e "$0")")/db-check-nonfree.conf"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -ge 1 ]; then

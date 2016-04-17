@@ -8,6 +8,7 @@ trap_exit() {
 }
 
 source "$(dirname "$(readlink -e "$0")")/config"
+source "$(dirname "$(readlink -e "$0")")/db-import-pkg-archlinux.conf"
 source "$(librelib messages)"
 
 # From makepkg

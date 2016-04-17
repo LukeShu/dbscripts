@@ -189,7 +189,7 @@ source "$(dirname "$(readlink -e "$0")")/db-import-pkg-archlinuxarm.conf"
 source "$(librelib messages)"
 
 # Check variables presence
-for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
+for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE; do
 	test -z "${!var}" && fatal_error "Empty %s" "${var}"
 done
 
