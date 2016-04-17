@@ -12,11 +12,11 @@ md5sums=('c6cb8dcc86253355fed559416d0c8dcf'
          '3c1e4279feb678fd9cabaccdb28e40d0')
 
 build() {
-	cd ${srcdir}
+	cd "${srcdir}"
 	make
 }
 
 package() {
-	cd ${srcdir}
-	make install DESTDIR=${pkgdir} DESTBIN=${pkgname}
+	cd "${srcdir}"
+	make install DESTDIR="${pkgdir}" DESTBIN="${pkgname}"
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-curdir=$(readlink -e $(dirname $0))
+curdir="$(dirname "$(readlink -e "$0")")"
 . "${curdir}/../lib/common.inc"
 
 testPackages() {

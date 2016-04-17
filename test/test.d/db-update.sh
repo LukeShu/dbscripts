@@ -1,25 +1,24 @@
 #!/bin/bash
 
-curdir=$(readlink -e $(dirname $0))
+curdir="$(dirname "$(readlink -e "$0")")"
 . "${curdir}/../lib/common.inc"
 
 testAddSimplePackages() {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		for arch in ${arches[@]}; do
-			releasePackage extra ${pkgbase} ${arch}
+	for pkgbase in "${pkgs[@]}"; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			releasePackage extra "${pkgbase}" "${arch}"
 		done
 	done
 
 	../db-update
 
-	for pkgbase in ${pkgs[@]}; do
-		for arch in ${arches[@]}; do
-			checkPackage extra ${pkgbase}-1-1-${arch}.pkg.tar.xz ${arch}
+	for pkgbase in "${pkgs[@]}"; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			checkPackage extra "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
 		done
 	done
 }
@@ -40,36 +39,35 @@ testAddAnyPackages() {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase} any
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}" any
 	done
 
 	../db-update
 
-	for pkgbase in ${pkgs[@]}; do
-		checkAnyPackage extra ${pkgbase}-1-1-any.pkg.tar.xz
+	for pkgbase in "${pkgs[@]}"; do
+		checkAnyPackage extra "${pkgbase}-1-1-any.pkg.tar.xz"
 	done
 }
 
 testAddSplitPackages() {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		for arch in ${arches[@]}; do
-			releasePackage extra ${pkgbase} ${arch}
+	for pkgbase in "${pkgs[@]}"; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			releasePackage extra "${pkgbase}" "${arch}"
 		done
 	done
 
 	../db-update
 
-	for pkgbase in ${pkgs[@]}; do
-		for arch in ${arches[@]}; do
-			for pkg in "${pkgdir}/${pkgbase}"/*-${arch}${PKGEXT}; do
-				checkPackage extra $(basename ${pkg}) ${arch}
+	for pkgbase in "${pkgs[@]}"; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			for pkg in "${pkgdir}/${pkgbase}"/*-"${arch}"${PKGEXT}; do
+				checkPackage extra "${pkg##*/}" "${arch}"
 			done
 		done
 	done
@@ -81,8 +79,8 @@ testUpdateAnyPackage() {
 
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo extra-i686-build >/dev/null 2>&1
+	arch_svn commit -q -m"update pkg to pkgrel=2" >/dev/null
+	sudo extra-i686-build
 	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
 	popd >/dev/null
 
@@ -99,8 +97,8 @@ testUpdateAnyPackageToDifferentRepositoriesAtOnce() {
 
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo extra-i686-build >/dev/null 2>&1
+	arch_svn commit -q -m"update pkg to pkgrel=2" >/dev/null
+	sudo extra-i686-build
 	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
 	popd >/dev/null
 
@@ -134,32 +132,41 @@ testUpdateSameAnyPackageToDifferentRepositories() {
 	local arch
 	for arch in i686 x86_64; do
 		( [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ] \
-			&& bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep -q ${pkgbase}) \
+			&& bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep -q "${pkgbase}") \
 			&& fail "${pkgbase} should not be in testing/os/${arch}/testing${DBEXT%.tar.*}"
 	done
 }
 
 
 testAddIncompleteSplitPackage() {
-	local arches=('i686' 'x86_64')
 	local repo='extra'
 	local pkgbase='pkg-split-a'
 	local arch
 
-	for arch in ${arches[@]}; do
-		releasePackage ${repo} ${pkgbase} ${arch}
+	for arch in "${ARCH_BUILD[@]}"; do
+		releasePackage "${repo}" "${pkgbase}" "${arch}"
 	done
 
 	# remove a split package to make db-update fail
-	rm "${STAGING}"/extra/${pkgbase}1-*
+	rm "${STAGING}/extra/${pkgbase}1-"*
 
 	../db-update >/dev/null 2>&1 && fail "db-update should fail when a split package is missing!"
 
-	for arch in ${arches[@]}; do
+	for arch in "${ARCH_BUILD[@]}"; do
 		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q ${pkgbase}) \
+		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep -q "${pkgbase}") \
 		&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
 	done
+}
+
+testUnknownRepo() {
+	mkdir "${STAGING}/unknown/"
+	releasePackage extra 'pkg-simple-a' 'i686'
+	releasePackage unknown 'pkg-simple-b' 'i686'
+	../db-update
+	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
+	[ -e "${FTP_BASE}/unknown" ] && fail "db-update pushed a package into an unknown repository"
+	rm -rf "${STAGING}/unknown/"
 }
 
 . "${curdir}/../lib/shunit2"
