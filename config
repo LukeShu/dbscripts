@@ -20,7 +20,6 @@ PKGPOOLS=(pool/parabola_gnu+linux # Parabola GNU/Linux-libre
 	  pool/{packages,community} # Arch Linux
 	 )
 # Directories where sources are stored
-OURPKGPOOLS=(
 SRCPOOLS=(src/parabola_gnu+linux # Parabola GNU/Linux-libre
 	  src/arch_gnu+linux_arm # Arch Linux ARM
 	  sources/{packages,community} # Arch Linux
