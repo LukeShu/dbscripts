@@ -34,11 +34,6 @@ for pkgbase in "${args[@]:2}"; do
 				die "Could not read pkgname"
 			fi
 
-			pkgver=$(. "${xbsrepo_from}/PKGBUILD"; get_full_version)
-			if [ -z "${pkgver}" ]; then
-				die "Could not read pkgver"
-			fi
-
 			if [ "${pkgarch}" == 'any' ]; then
 				tarches=("${ARCHES[@]}")
 			else
@@ -46,6 +41,10 @@ for pkgbase in "${args[@]:2}"; do
 			fi
 
 			for pkgname in "${pkgnames[@]}"; do
+				pkgver=$(. "${xbsrepo_from}/PKGBUILD"; get_full_version "${pkgname}")
+				if [ -z "${pkgver}" ]; then
+					die "Could not read pkgver"
+				fi
 				for tarch in "${tarches[@]}"; do
 					getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} >/dev/null
 				done
@@ -74,9 +73,9 @@ for pkgbase in "${args[@]:2}"; do
 			fi
 			msg2 '%s (%s)' "${pkgbase}" "${tarches[*]}"
 			pkgnames=($(. "${xbsrepo_to}/PKGBUILD"; echo "${pkgname[@]}"))
-			pkgver=$(. "${xbsrepo_to}/PKGBUILD"; get_full_version)
 
 			for pkgname in "${pkgnames[@]}"; do
+				pkgver=$(. "${xbsrepo_to}/PKGBUILD"; get_full_version "${pkgname}")
 				for tarch in "${tarches[@]}"; do
 					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT})
 					pkgfile="${pkgpath##*/}"
