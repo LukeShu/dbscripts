@@ -59,7 +59,7 @@ testCreateSplitFileLists() {
 	../db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		pkgnames=($(source "${TMP}/svn-packages-copy/${pkgbase}/trunk/PKGBUILD"; echo ${pkgname[@]}))
+		pkgnames=($(source "${TMP}/svn-packages-copy/${pkgbase}/trunk/PKGBUILD"; echo "${pkgname[@]}"))
 		for pkgname in "${pkgnames[@]}"; do
 			for arch in "${ARCH_BUILD[@]}"; do
 				if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/${pkgname}" &>/dev/null; then

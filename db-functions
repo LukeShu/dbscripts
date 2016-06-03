@@ -449,3 +449,11 @@ arch_repo_remove() {
 
 	REPO_MODIFIED=1
 }
+
+arch_svn() {
+	if [ -z "${SVNUSER}" ]; then
+		/usr/bin/svn "${@}"
+	else
+		sudo -u "${SVNUSER}" -- /usr/bin/svn --username "${USER}" "${@}"
+	fi
+}

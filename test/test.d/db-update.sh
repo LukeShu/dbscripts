@@ -80,7 +80,7 @@ testUpdateAnyPackage() {
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
 	arch_svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo extra-i686-build
+	sudo libremakepkg
 	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
 	popd >/dev/null
 
@@ -98,7 +98,7 @@ testUpdateAnyPackageToDifferentRepositoriesAtOnce() {
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
 	arch_svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo extra-i686-build
+	sudo libremakepkg
 	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
 	popd >/dev/null
 
@@ -130,7 +130,7 @@ testUpdateSameAnyPackageToDifferentRepositories() {
 	../db-update >/dev/null 2>&1 && (fail 'Adding an existing package to another repository should fail'; return 1)
 
 	local arch
-	for arch in i686 x86_64; do
+	for arch in "${ARCH_BUILD[@]}"; do
 		( [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ] \
 			&& bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null) \
 			&& fail "${pkgbase} should not be in testing/os/${arch}/testing${DBEXT%.tar.*}"

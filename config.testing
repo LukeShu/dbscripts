@@ -1,0 +1,10 @@
+#!/hint/bash
+
+# The host architecture
+ARCH_HOST=$(uname -m)
+# Which architectures should we test building for?
+ARCH_BUILD=("$ARCH_HOST"); if [[ $ARCH_HOST == x86_64 ]]; then ARCH_BUILD+=("i686"); fi
+
+# override the default TMPDIR
+[[ -n $MASTER_TMPDIR ]] || export MASTER_TMPDIR="$(mktemp -dt "${0##*/}.XXXXXXXXXX")"
+TMPDIR=$MASTER_TMPDIR

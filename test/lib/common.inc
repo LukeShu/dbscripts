@@ -46,21 +46,19 @@ oneTimeSetUp() {
 
 		if ! "${build}"; then
 			if [ "${pkgarch[0]}" == 'any' ]; then
-				sudo extra-x86_64-build || die 'extra-x86_64-build failed'
+				sudo libremakepkg || die 'libremakepkg failed'
 			else
 				for a in "${pkgarch[@]}"; do
 					if in_array "$a" "${ARCH_BUILD[@]}"; then
-						sudo "extra-${a}-build" || die "extra-${a}-build failed"
+						sudo setarch "$a" libremakepkg -n "$a" || die "setarch ${a} libremakepkg -n ${a} failed"
+						for p in "${pkgname[@]}"; do
+							cp "${p}-${pkgversion}-${a}"${PKGEXT} "$(dirname "${BASH_SOURCE[0]})/../packages/${d##*/}")"
+						done
+					else
+						warning "skipping arch %s" "$a"
 					fi
 				done
 			fi
-			for a in "${pkgarch[@]}"; do
-				if in_array "$a" "${ARCH_BUILD[@]}"; then
-					for p in "${pkgname[@]}"; do
-						cp "${p}-${pkgversion}-${a}"${PKGEXT} "$(dirname "${BASH_SOURCE[0]}")/../packages/${d##*/}"
-					done
-				fi
-			done
 		fi
 		popd >/dev/null
 	done
@@ -82,6 +80,7 @@ setUp() {
 
 	PKGREPOS=('core' 'extra' 'testing')
 	PKGPOOL='pool/packages'
+	SRCPOOL='pool/sources'
 	mkdir -p "${TMP}/"{ftp,tmp,staging,{package,source}-cleanup,svn-packages-{copy,repo}}
 
 	for r in "${PKGREPOS[@]}"; do
@@ -105,11 +104,21 @@ setUp() {
 		arch_svn commit -q -m"initial commit of ${pkg}" "${TMP}/svn-packages-copy"
 	done
 
+	mkdir -p "${TMP}/home/.config/libretools"
+	export XDG_CONFIG_HOME="${TMP}/home/.config"
+	printf '%s\n' \
+		'SVNURL=foo' \
+		"SVNREPO=\"${TMP}/svn-packages-copy\"" \
+		"ARCHES=($(printf '%q ' "${BUILD_ARCHES[@]}"))" \
+		> "$XDG_CONFIG_HOME/libretools/xbs-abs.conf"
+	printf '%s\n' 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs.conf"
+
 	cat <<eot > "$(dirname "${BASH_SOURCE[0]}")/../../config.local"
 	FTP_BASE="${TMP}/ftp"
 	SVNREPO="file://${TMP}/svn-packages-repo"
 	PKGREPOS=("${PKGREPOS[@]}")
 	PKGPOOL="${PKGPOOL}"
+	SRCPOOL="${SRCPOOL}"
 	TESTING_REPO='testing'
 	STABLE_REPOS=('core' 'extra')
 	CLEANUP_DESTDIR="${TMP}/package-cleanup"
@@ -139,7 +148,7 @@ releasePackage() {
 	local pkgname
 
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
-	archrelease "${repo}-${arch}" >/dev/null 2>&1
+	xbs release "${repo}" "${arch}" >/dev/null 2>&1
 	pkgver=$(. PKGBUILD; get_full_version)
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 	popd >/dev/null
@@ -167,12 +176,12 @@ checkAnyPackageDB() {
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ] || fail "${repo}/os/${arch}/${pkg} is not a symlink"
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "${FTP_BASE}/${PKGPOOL}/${pkg}" ] \
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ] \
 			|| fail "${repo}/os/${arch}/${pkg} does not link to ${PKGPOOL}/${pkg}"
 
 		if "${REQUIRE_SIGNATURE}"; then
 			[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ] || fail "${repo}/os/${arch}/${pkg}.sig is not a symlink"
-			[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ] \
+			[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ] \
 				|| fail "${repo}/os/${arch}/${pkg}.sig does not link to ${PKGPOOL}/${pkg}.sig"
 		fi
 
@@ -208,7 +217,7 @@ checkPackageDB() {
 	[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ] || fail "${repo}/os/${arch}/${pkg} not a symlink"
 	[ -r "${STAGING}/${repo}/${pkg}" ] && fail "${repo}/${pkg} found in staging dir"
 
-	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "${FTP_BASE}/${PKGPOOL}/${pkg}" ] \
+	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ] \
 		|| fail "${repo}/os/${arch}/${pkg} does not link to ${PKGPOOL}/${pkg}"
 
 	if "${REQUIRE_SIGNATURE}"; then
@@ -216,7 +225,7 @@ checkPackageDB() {
 		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ] || fail "${repo}/os/${arch}/${pkg}.sig is not a symlink"
 		[ -r "${STAGING}/${repo}/${pkg}.sig" ] && fail "${repo}/${pkg}.sig found in staging dir"
 
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ] \
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ] \
 			|| fail "${repo}/os/${arch}/${pkg}.sig does not link to ${PKGPOOL}/${pkg}.sig"
 	fi
 
