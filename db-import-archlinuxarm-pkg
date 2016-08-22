@@ -6,10 +6,9 @@
 # * Get repo.db from an Arch-like repo
 # * Generate a list of available packages
 # * Create sync whitelist (based on package blacklist)
-# * Get packages
-# * Check package signatures
-# * Check database signatures
-# * Sync repo => repo
+# * Get packages and signatures
+# * Create new repo.db with them
+# * Sync repo.db => repo.db
 
 # TODO
 # * make a tarball of files used for forensics
@@ -121,6 +120,16 @@ init() {
 				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
 				"${FTP_BASE}/${PKGPOOLARM}/"
 
+			# Avoid sloppy upstream databases with corrupt package descriptions,
+			# exclude .sig files from consideration.
+			msg2 "Adding whitelisted packages to clean %s and %s databases..." .db .files
+			# Optional, repo-add overwrites entries by default
+			rm "$db_file" "$files_file"
+			LC_ALL=C repo-add "$db_file" \
+				$(sed "s|^|${FTP_BASE}/${PKGPOOLARM}/|; s|$|${PKGEXT}|" \
+					"/tmp/${_repo}-${_arch}.whitelist") \
+			|& sed -n 's/==> Adding/	-> Adding/p'
+
 			msg "Putting databases back in place"
 			rsync "${extra[@]}" --no-motd -rtlH \
 				--delay-updates \
@@ -129,7 +138,7 @@ init() {
 				"${FTP_BASE}/${_repo}/os/${_arch}/"
 
 			# Cleanup
-			unset db 
+			unset db
 		done
 	done
 
