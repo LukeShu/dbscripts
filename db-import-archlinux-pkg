@@ -89,11 +89,8 @@ init() {
 
 			# Remove blacklisted packages and count them
 			# TODO capture all removed packages for printing on debug mode
-			msg2 "Removing blacklisted packages from %s database..." .db
+			msg2 "Removing blacklisted packages from %s and %s databases..." .db .files
 			LC_ALL=C repo-remove "${db_file}" "${blacklist[@]}" \
-			|& sed -n 's/-> Removing/	&/p'
-			msg2 "Removing blacklisted packages from %s database..." .files
-			LC_ALL=C repo-remove "${files_file}" "${blacklist[@]}" \
 			|& sed -n 's/-> Removing/	&/p'
 			# Get db contents
 			db=($(get_repo_content "${db_file}"))
