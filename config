@@ -9,7 +9,8 @@ PKGREPOS=(
 	'core' 'testing' 'extra' 'community' 'multilib' 'multilib-testing'
 	'libre' 'libre-testing' 'libre-multilib' 'libre-multilib-testing'
 	'~smv' '~xihh' '~brendan' '~lukeshu' '~emulatorman' '~aurelien' '~jorginho' '~coadde' '~drtan'
-	'nonsystemd' 'nonsystemd-testing' 'nonprism' 'nonprism-testing' 'pcr' 'pcr-testing' 'kernels'
+	'nonsystemd' 'nonsystemd-testing' 'nonprism' 'nonprism-testing' 'pcr' 'pcr-testing'
+	'pcr-multilib' 'pcr-multilib-testing' 'pcr-testing' 'kernels' 'kernels-testing'
 	'cross' 'java' 'unmaintained')
 PKGPOOL='pool/parabola_gnu+linux'
 SRCPOOL='src/parabola_gnu+linux'
