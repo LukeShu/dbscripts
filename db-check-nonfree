@@ -1,7 +1,6 @@
 #!/bin/bash
 
 . "$(dirname "$(readlink -e "$0")")/config"
-. "$(dirname "$(readlink -e "$0")")/db-check-nonfree.conf"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
 if [ $# -ge 1 ]; then
@@ -17,7 +16,8 @@ for repo in "${repos[@]}"; do
 done
 
 msg "Check nonfree in repo:"
-nonfree=($(cut -d: -f1 "${BLACKLIST_FILE}" | sort -u))
+libreblacklist update
+nonfree=($(libreblacklist get-pkg | sort -u))
 for repo in "${ARCHREPOS[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
 		msg2 "%s %s" "$repo" "$pkgarch"

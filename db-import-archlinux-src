@@ -7,7 +7,6 @@ ABSLIBRE=/srv/abslibre
 ABSGIT=/srv/git/abslibre/abslibre.git
 # Remote
 # ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
-BLACKLIST=/home/repo/blacklist/blacklist.txt
 SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g --quiet'
 BLFILE=/tmp/blacklist.txt
 
@@ -36,8 +35,8 @@ function sync_abs() {
 }
 
 function get_blacklist() {
-	printf ":: Updating blacklist...\t"
-	cat "${BLACKLIST}" | cut -d':' -f1 | sort -u | \
+	libreblacklist update
+	libreblacklist get-pkg | sort -u | \
 		sed "s/^/**\//" > ${BLFILE} || {
 		printf "[FAILED]\n"
 		return 1

@@ -44,11 +44,6 @@ get_repo_content() {
 		sort -u
 }
 
-# Prints blacklisted packages
-get_blacklist() {
-	cut -d ':' -f 1 "${BLACKLIST_FILE}"
-}
-
 # repo
 # arch
 get_repo_file() {
@@ -59,7 +54,8 @@ get_repo_file() {
 init() {
 
 	# Get the blacklisted packages
-	blacklist=($(get_blacklist))
+	libreblacklist update
+	blacklist=($(libreblacklist get-pkg))
 	# Store all the whitelist files
 	whitelists=()
 
@@ -197,7 +193,7 @@ source "$(dirname "$(readlink -e "$0")")/db-import-archlinux.conf"
 source "$(librelib messages)"
 
 # Check variables presence
-for var in DBEXT FILESEXT mirror mirrorpath WORKDIR BLACKLIST_FILE FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
+for var in DBEXT FILESEXT mirror mirrorpath WORKDIR FTP_BASE ARCHSRCPOOLS ARCHPKGPOOLS; do
 	test -z "${!var}" && fatal_error "Empty %s" "${var}"
 done
 
