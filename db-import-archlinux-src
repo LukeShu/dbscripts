@@ -23,7 +23,7 @@ function sync_abs() {
 
 function get_blacklist() {
 	libreblacklist update
-	libreblacklist get-pkg | sort -u | \
+	libreblacklist cat | libreblacklist get-pkg | sort -u | \ss
 		sed "s/^/**\//" > ${BLFILE} || {
 		printf "[FAILED]\n"
 		return 1

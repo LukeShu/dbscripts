@@ -17,7 +17,7 @@ done
 
 msg "Check nonfree in repo:"
 libreblacklist update
-nonfree=($(libreblacklist get-pkg | sort -u))
+nonfree=($(libreblacklist cat | libreblacklist get-pkg | sort -u))
 for repo in "${ARCHREPOS[@]}"; do
 	for pkgarch in "${ARCHES[@]}"; do
 		msg2 "%s %s" "$repo" "$pkgarch"

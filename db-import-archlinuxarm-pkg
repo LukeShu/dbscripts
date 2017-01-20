@@ -55,7 +55,7 @@ init() {
 
 	# Get the blacklisted packages
 	libreblacklist update
-	blacklist=($(libreblacklist get-pkg))
+	blacklist=($(libreblacklist cat | libreblacklist get-pkg))
 	# Store all the whitelist files
 	whitelists=()
 
