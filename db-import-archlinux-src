@@ -8,7 +8,6 @@ ABSGIT=/srv/git/abslibre/abslibre.git
 # Remote
 # ABSGIT=http://projects.parabolagnulinux.org/abslibre.git
 SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g --quiet'
-BLFILE=/tmp/blacklist.txt
 
 # Variables from abs.conf
 ABSROOT="/srv/abs/"
@@ -51,8 +50,8 @@ function get_blacklist() {
 function sync_abs_libre() {
 
 	# Clone ABSLibre git repo
-	rm -rf /tmp/abslibre
-	git clone "$ABSGIT" /tmp/abslibre
+	rm -rf -- "$tmpdir/abslibre"
+	git clone "$ABSGIT" "$tmpdir/abslibre"
 
 	# Sync from ABS and then sync from ABSLibre
 	printf ":: Syncing ABSLibre...\t"
@@ -61,7 +60,7 @@ function sync_abs_libre() {
 		return 1
 	fi
 	for ARCH in i686 x86_64; do
-		if ! rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ /tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; then
+		if ! rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ "$tmpdir/abslibre/" ${ABSLIBRE}/${ARCH}/; then
 			printf "[FAILED]\n"
 			return 1
 		fi
@@ -92,7 +91,15 @@ create_tarballs() {
 	done
 }
 
-sync_abs
-get_blacklist
-sync_abs_libre
-create_tarballs
+main() {
+	trap 'rm -rf -- "$tmpdir"' EXIT
+	tmpdir=$(mktemp --tmpdir -d "${0##*/}.XXXXXXXXXX")
+
+	BLFILE=${tmpdir}/blacklist.txt
+	sync_abs
+	get_blacklist
+	sync_abs_libre
+	create_tarballs
+}
+
+main "$@"
