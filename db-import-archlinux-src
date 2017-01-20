@@ -2,14 +2,8 @@
 
 set -e
 
-FTP_BASE=/srv/repo/main
-SYNCARGS='-mrtv --no-motd --delete-after --no-p --no-o --no-g --quiet'
-
-ABSLIBRE_ROOT=/srv/abslibre
-ABSLIBRE_GIT=https://git.parabola.nu/abslibre.git/
-
-ABS_ROOT="/srv/abs/"
-ABS_SERVER="rsync.archlinux.org"
+source "$(dirname "$(readlink -e "$0")")/config"
+source "$(dirname "$(readlink -e "$0")")/db-import-archlinux.conf"
 
 # Steps
 # * Sync abs
