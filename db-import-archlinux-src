@@ -73,31 +73,6 @@ function sync_abs_libre() {
 	printf "[OK]\n"
 }
 
-# This part is very hacky and particular to the current setup :P
-sync_pre_mips64el() {
-	pushd /home/fauno/Repos/abslibre-pre-mips64el >/dev/null
-
-	sudo -u fauno sh -c "
-		rsync ${SYNCARGS} \
-			--exclude=.git* \
-			--exclude=community-staging \
-			--exclude=community-testing \
-			--exclude=gnome-unstable \
-			--exclude=kde-unstable \
-			--exclude=multilib \
-			--exclude=multilib-testing \
-			--exclude=multilib-staging \
-			--exclude=staging \
-			--exclude=testing \
-			${ABSLIBRE}/x86_64/ \
-			/home/fauno/Repos/abslibre-pre-mips64el/ &&
-			git add . &&
-			git commit -m \"$(date)\" -a
-		git push origin master
-		git gc
-		"
-}
-
 # Create .abs.tar.gz tarballs
 create_tarballs() {
 	for repo in ${ABSLIBRE}/{i686,x86_64}/*; do
@@ -119,5 +94,4 @@ create_tarballs() {
 sync_abs
 get_blacklist
 sync_abs_libre
-#sync_pre_mips64el
 create_tarballs
