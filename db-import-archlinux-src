@@ -56,15 +56,16 @@ function sync_abs_libre() {
 
 	# Sync from ABS and then sync from ABSLibre
 	printf ":: Syncing ABSLibre...\t"
-	(rsync ${SYNCARGS} --delete-excluded \
-		--exclude-from=${BLFILE} \
-		${ABSROOT} \
-		${ABSLIBRE} \
-		&&
-		for ARCH in i686 x86_64; do rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ /tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; done) || {
+	if ! rsync ${SYNCARGS} --delete-excluded --exclude-from=${BLFILE} ${ABSROOT} ${ABSLIBRE}; then
 		printf "[FAILED]\n"
 		return 1
-	}
+	fi
+	for ARCH in i686 x86_64; do
+		if ! rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ /tmp/abslibre/ ${ABSLIBRE}/${ARCH}/; then
+			printf "[FAILED]\n"
+			return 1
+		fi
+	done
 
 	# fix some permissions
 	find "${ABSLIBRE}" -type d -print0 | xargs -0 chmod 755
