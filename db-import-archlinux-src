@@ -23,11 +23,10 @@ function sync_abs() {
 
 function get_blacklist() {
 	libreblacklist update
-	libreblacklist cat | libreblacklist get-pkg | sort -u | \ss
-		sed "s/^/**\//" > ${BLFILE} || {
+	if ! libreblacklist cat | libreblacklist get-pkg | sort -u | sed "s/^/**\//" > ${BLFILE}; then
 		printf "[FAILED]\n"
 		return 1
-	}
+	fi
 
 	# Prevent using an empty blacklist
 	[ $(wc -l ${BLFILE} | cut -d " " -f1) -eq 0 ] && return 1
@@ -72,10 +71,13 @@ create_tarballs() {
 		rm -fv $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz
 		# Create a new one joining arch and any
 		# Remove the first part of the path (it could be $repo but any isn't hit)
+		include=($repo/*)
+		if [[ -d ${ABSLIBRE_ROOT}/any/${baserepo}/ ]]; then
+			include+=(${ABSLIBRE_ROOT}/any/${baserepo}/*)
+		fi
 		bsdtar -czf $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz \
 			-s ":${ABSLIBRE_ROOT}/[a-z0-9_]\+/[a-z]\+::" \
-			$repo/* ${ABSLIBRE_ROOT}/any/${baserepo}/*
-
+			"${include[@]}"
 	done
 }
 
@@ -84,6 +86,8 @@ main() {
 	tmpdir=$(mktemp --tmpdir -d "${0##*/}.XXXXXXXXXX")
 
 	BLFILE=${tmpdir}/blacklist.txt
+	mkdir -p -- "$ABSLIBRE_ROOT" "$ABS_ROOT"
+
 	sync_abs
 	get_blacklist
 	sync_abs_libre
