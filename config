@@ -41,4 +41,4 @@ SRCEXT=".src.tar.gz"
 
 # Where to send error emails, and who they are from
 LIST="maintenance@lists.parabola.nu"
-FROM="repo@parabola.nu"
+FROM="repo@repo.parabola.nu"
