@@ -14,15 +14,15 @@ PKGREPOS=(
 	'nonprism-multilib-testing' 'pcr' 'pcr-testing' 'pcr-multilib'
 	'pcr-multilib-testing' 'pcr-testing' 'kernels' 'kernels-testing'
 	'cross' 'java' 'unmaintained')
-PKGPOOL='pool/parabola_gnu+linux'
-SRCPOOL='src/parabola_gnu+linux'
+PKGPOOL='pool/parabola'
+SRCPOOL='sources/parabola'
 
-CLEANUP_DESTDIR="$FTP_BASE/old/pkg"
+CLEANUP_DESTDIR="/srv/repo/package-cleanup"
 CLEANUP_DRYRUN=false
 # Time in days to keep moved packages
 CLEANUP_KEEP=30
 
-SOURCE_CLEANUP_DESTDIR="$FTP_BASE/old/src"
+SOURCE_CLEANUP_DESTDIR="/srv/repo/source-cleanup"
 SOURCE_CLEANUP_DRYRUN=true
 # Time in days to keep moved sourcepackages
 SOURCE_CLEANUP_KEEP=30
