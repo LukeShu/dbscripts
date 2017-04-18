@@ -67,7 +67,6 @@ load ../lib/common
 	done
 }
 
-
 @test "cleanup file lists" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
