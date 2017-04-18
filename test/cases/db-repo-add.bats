@@ -45,3 +45,25 @@ load ../lib/common
 		done
 	done
 }
+
+@test "add any packages" {
+	local pkgs=('pkg-any-a' 'pkg-any-b')
+	local pkgbase
+	local arch
+
+	for pkgbase in ${pkgs[@]}; do
+		releasePackage extra ${pkgbase} any
+		mv "${STAGING}"/extra/* "${FTP_BASE}/${PKGPOOL}/"
+		for arch in "${ARCH_BUILD[@]}"; do
+			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-any.pkg.tar.xz" "${FTP_BASE}/extra/os/${arch}/"
+			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-any.pkg.tar.xz.sig" "${FTP_BASE}/extra/os/${arch}/"
+		done
+		db-repo-add extra any ${pkgbase}-1-1-any.pkg.tar.xz
+	done
+
+	for pkgbase in ${pkgs[@]}; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			checkPackageDB extra ${pkgbase}-1-1-any.pkg.tar.xz ${arch}
+		done
+	done
+}
