@@ -111,3 +111,36 @@ load ../lib/common
 		done
 	done
 }
+
+@test "cleanup old packages" {
+	local pkgs=('pkg-simple-a' 'pkg-simple-b')
+	local pkgbase
+	local arch
+
+	for pkgbase in ${pkgs[@]}; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			releasePackage extra ${pkgbase} ${arch}
+		done
+	done
+
+	db-update
+
+	for pkgbase in ${pkgs[@]}; do
+		for arch in "${ARCH_BUILD[@]}"; do
+			db-remove extra ${arch} ${pkgbase}
+		done
+	done
+
+	ftpdir-cleanup >/dev/null
+
+	local pkgfilea="pkg-simple-a-1-1-${arch}.pkg.tar.xz"
+	local pkgfileb="pkg-simple-b-1-1-${arch}.pkg.tar.xz"
+	for arch in "${ARCH_BUILD[@]}"; do
+		touch -d "-$(expr ${CLEANUP_KEEP} + 1)days" ${CLEANUP_DESTDIR}/${pkgfilea}{,.sig}
+	done
+
+	ftpdir-cleanup >/dev/null
+
+	[ ! -f ${CLEANUP_DESTDIR}/${pkgfilea} ]
+	[ -f ${CLEANUP_DESTDIR}/${pkgfileb} ]
+}
