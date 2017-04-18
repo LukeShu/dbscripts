@@ -149,6 +149,34 @@ __buildPackage() {
 	done
 }
 
+__updatePKGBUILD() {
+	local pkgrel
+
+	pkgrel=$(. PKGBUILD; expr ${pkgrel} + 1)
+	sed "s/pkgrel=.*/pkgrel=${pkgrel}/" -i PKGBUILD
+	svn commit -q -m"update pkg to pkgrel=${pkgrel}" >/dev/null
+}
+
+updatePackage() {
+	local pkgbase=$1
+	local arch=$2
+
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
+	__updatePKGBUILD
+	__buildPackage ${arch}
+	popd >/dev/null
+}
+
+updateRepoPKGBUILD() {
+	local pkgbase=$1
+	local repo=$2
+	local arch=$3
+
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}/" >/dev/null
+	__updatePKGBUILD
+	popd >/dev/null
+}
+
 getPackageNamesFromPackageBase() {
 	local pkgbase=$1
 

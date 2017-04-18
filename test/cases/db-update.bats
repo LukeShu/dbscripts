@@ -74,11 +74,7 @@ load ../lib/common
 	releasePackage extra pkg-any-a any
 	db-update
 
-	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
-	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	__buildPackage any
-	popd >/dev/null
+	updatePackage pkg-any-a any
 
 	releasePackage extra pkg-any-a any
 	db-update
@@ -89,11 +85,7 @@ load ../lib/common
 @test "update any package to different repositories at once" {
 	releasePackage extra pkg-any-a any
 
-	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
-	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	__buildPackage any
-	popd >/dev/null
+	updatePackage pkg-any-a any
 
 	releasePackage testing pkg-any-a any
 
@@ -215,14 +207,11 @@ load ../lib/common
 	checkRemovedPackage extra 'foo-pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 }
 
-@test "add package with inconsistent svn fails" {
+@test "add package with inconsistent pkgbuild fails" {
 	skip # abslibre is broken
 	releasePackage extra 'pkg-simple-a' 'i686'
 
-	pushd "${TMP}/svn-packages-copy/pkg-simple-a/repos/extra-i686" >/dev/null
-	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	popd >/dev/null
+	updateRepoPKGBUILD 'pkg-simple-a' extra i686
 
 	! db-update >/dev/null 2>&1
 	checkRemovedPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
