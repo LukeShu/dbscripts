@@ -3,11 +3,6 @@
 . /usr/share/makepkg/util.sh
 . "$(dirname "${BASH_SOURCE[0]}")"/../test.conf
 
-die() {
-	echo "$*" >&2
-	exit 1
-}
-
 __getCheckSum() {
 	local result
 	result="$(sha1sum "$1")"
