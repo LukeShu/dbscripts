@@ -3,6 +3,31 @@
 . /usr/share/makepkg/util.sh
 . "$(dirname "${BASH_SOURCE[0]}")"/../test.conf
 
+__getPackageBaseFromPackage() {
+	local _base
+	_grep_pkginfo() {
+		local _ret
+
+		_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
+		echo "${_ret#${2} = }"
+	}
+
+	_base="$(_grep_pkginfo "$1" "pkgbase")"
+	if [ -z "$_base" ]; then
+		_grep_pkginfo "$1" "pkgname"
+	else
+		echo "$_base"
+	fi
+}
+
+__updatePKGBUILD() {
+	local pkgrel
+
+	pkgrel=$(. PKGBUILD; expr ${pkgrel} + 1)
+	sed "s/pkgrel=.*/pkgrel=${pkgrel}/" -i PKGBUILD
+	svn commit -q -m"update pkg to pkgrel=${pkgrel}" >/dev/null
+}
+
 __getCheckSum() {
 	local result
 	result="$(sha1sum "$1")"
@@ -66,23 +91,6 @@ teardown() {
 	rm -rf "${TMP}"
 }
 
-getpkgbase() {
-	local _base
-	_grep_pkginfo() {
-		local _ret
-
-		_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
-		echo "${_ret#${2} = }"
-	}
-
-	_base="$(_grep_pkginfo "$1" "pkgbase")"
-	if [ -z "$_base" ]; then
-		_grep_pkginfo "$1" "pkgname"
-	else
-		echo "$_base"
-	fi
-}
-
 releasePackage() {
 	local repo=$1
 	local pkgbase=$2
@@ -144,14 +152,6 @@ __buildPackage() {
 	done
 }
 
-__updatePKGBUILD() {
-	local pkgrel
-
-	pkgrel=$(. PKGBUILD; expr ${pkgrel} + 1)
-	sed "s/pkgrel=.*/pkgrel=${pkgrel}/" -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=${pkgrel}" >/dev/null
-}
-
 updatePackage() {
 	local pkgbase=$1
 	local arch=$2
@@ -209,7 +209,7 @@ checkAnyPackage() {
 
 	checkAnyPackageDB "$repo" "$pkg"
 
-	local pkgbase=$(getpkgbase "${FTP_BASE}/${PKGPOOL}/${pkg}")
+	local pkgbase=$(__getPackageBaseFromPackage "${FTP_BASE}/${PKGPOOL}/${pkg}")
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
 	[ -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-any" ]
 }
@@ -246,7 +246,7 @@ checkPackage() {
 
 	checkPackageDB "$repo" "$pkg" "$arch"
 
-	local pkgbase=$(getpkgbase "${FTP_BASE}/${PKGPOOL}/${pkg}")
+	local pkgbase=$(__getPackageBaseFromPackage "${FTP_BASE}/${PKGPOOL}/${pkg}")
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
 	[ -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}" ]
 }
