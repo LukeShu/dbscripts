@@ -225,5 +225,36 @@ load ../lib/common
 	popd >/dev/null
 
 	! db-update >/dev/null 2>&1
-	checkRemovedPackage extra 'foo-pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
+	checkRemovedPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
+}
+
+@test "add package with insufficient permissions fails" {
+	releasePackage core 'pkg-simple-a' 'i686'
+	releasePackage extra 'pkg-simple-b' 'i686'
+
+	chmod -xwr ${FTP_BASE}/core/os/i686
+	! db-update >/dev/null 2>&1
+	chmod +xwr ${FTP_BASE}/core/os/i686
+
+	checkRemovedPackage core 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
+	checkRemovedPackage extra 'pkg-simple-b-1-1-i686.pkg.tar.xz' 'i686'
+}
+
+@test "package has to be a regular file" {
+	local p
+	local target=$(mktemp -d)
+
+	for arch in "${ARCH_BUILD[@]}"; do
+		releasePackage extra 'pkg-simple-a' $arch
+	done
+
+	for p in "${STAGING}"/extra/*i686*; do
+		mv "${p}" "${target}"
+		ln -s "${target}/${p##*/}" "${p}"
+	done
+
+	! db-update >/dev/null 2>&1
+	for arch in "${ARCH_BUILD[@]}"; do
+		checkRemovedPackage extra "pkg-simple-a-1-1-${arch}.pkg.tar.xz" $arch
+	done
 }
