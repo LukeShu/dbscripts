@@ -128,7 +128,6 @@ load ../lib/common
 	done
 }
 
-
 @test "add incomplete split package" {
 	skip # commented out with "This is fucking obnoxious" -- abslibre is broken
 	local repo='extra'
@@ -190,4 +189,28 @@ load ../lib/common
 	! db-update >/dev/null 2>&1
 
 	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
+}
+
+@test "add package with inconsistent version fails" {
+	local p
+	releasePackage extra 'pkg-simple-a' 'i686'
+
+	for p in "${STAGING}"/extra/*; do
+		mv "${p}" "${p/1/2}"
+	done
+
+	! db-update >/dev/null 2>&1
+	checkRemovedPackage extra 'pkg-simple-a-2-1-i686.pkg.tar.xz' 'i686'
+}
+
+@test "add package with inconsistent name fails" {
+	local p
+	releasePackage extra 'pkg-simple-a' 'i686'
+
+	for p in "${STAGING}"/extra/*; do
+		mv "${p}" "${p/pkg-/foo-pkg-}"
+	done
+
+	! db-update >/dev/null 2>&1
+	checkRemovedPackage extra 'foo-pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 }
