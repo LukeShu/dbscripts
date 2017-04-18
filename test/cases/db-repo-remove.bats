@@ -49,3 +49,22 @@ load ../lib/common
 		done
 	done
 }
+
+@test "remove any packages" {
+	local pkgs=('pkg-any-a' 'pkg-any-b')
+	local pkgbase
+
+	for pkgbase in ${pkgs[@]}; do
+		releasePackage extra ${pkgbase} any
+	done
+
+	db-update
+
+	for pkgbase in ${pkgs[@]}; do
+		db-repo-remove extra any ${pkgbase}
+	done
+
+	for pkgbase in ${pkgs[@]}; do
+		checkRemovedAnyPackageDB extra ${pkgbase}
+	done
+}
