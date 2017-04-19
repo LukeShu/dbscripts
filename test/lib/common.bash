@@ -8,21 +8,29 @@ die() {
 	exit 1
 }
 
+__getCheckSum() {
+	local result=($(sha1sum $1))
+	echo ${result[0]}
+}
+
 __buildPackage() {
 	local arch=$1
 	local pkgver
 	local pkgname
 	local a
 	local p
+	local checkSum
+
+	if [[ -n ${PACKAGE_CACHE} ]]; then
+		checkSum=$(__getCheckSum PKGBUILD)
+			# TODO: Be more specific
+			if cp -av ${PACKAGE_CACHE}/${checkSum}/*-${arch}${PKGEXT}{,.sig} .; then
+				return 0
+			fi
+	fi
 
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 	pkgver=$(. PKGBUILD; get_full_version)
-
-	for p in "${pkgname[@]}"; do
-		if [ -f "${p}-${pkgver}-${arch}"${PKGEXT} ]; then
-			return 0
-		fi
-	done
 
 	if [ "${arch}" == 'any' ]; then
 		sudo librechroot -n "dbscripts@${arch}" make
@@ -36,6 +44,11 @@ __buildPackage() {
 			gpg --detach-sign --no-armor --use-agent "$file"
 		done
 	done
+
+	if [[ -n ${PACKAGE_CACHE} ]]; then
+		mkdir -p ${PACKAGE_CACHE}/${checkSum}
+		cp -av *-${arch}${PKGEXT}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
+	fi
 }
 
 setup() {
