@@ -78,9 +78,9 @@ load ../lib/common
 	db-update
 	db-move testing extra pkg-any-a
 
-	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz
-	checkRemovedAnyPackage testing pkg-any-a
-	checkAnyPackage testing pkg-any-b-1-1-any.pkg.tar.xz
+	checkPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkRemovedPackage testing pkg-any-a any
+	checkPackage testing pkg-any-b-1-1-any.pkg.tar.xz any
 }
 
 @test "move split packages" {
@@ -109,5 +109,6 @@ load ../lib/common
 		done
 	done
 
-	checkRemovedAnyPackage testing pkg-split-a
+	# FIXME: Why any?
+	checkRemovedPackage testing pkg-split-a any
 }
