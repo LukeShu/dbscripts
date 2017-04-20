@@ -1,5 +1,15 @@
 load ../lib/common
 
+__checkRepoRemovedPackage() {
+	local repo=$1
+	local pkgbase=$2
+	local arch=$3
+
+	# FIXME: pkgbase might not be part of the package filename
+	[[ ! -f ${FTP_BASE}/${PKGPOOL}/${pkgbase}*${PKGEXT} ]]
+	[[ ! -f ${FTP_BASE}/${repo}/os/${arch}/${pkgbase}*${PKGEXT} ]]
+}
+
 @test "cleanup simple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
@@ -20,10 +30,8 @@ load ../lib/common
 	ftpdir-cleanup
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		local pkg1="pkg-simple-a-1-1-${arch}.pkg.tar.xz"
 		checkRemovedPackage extra 'pkg-simple-a' "${arch}"
-		[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ]
-		[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ]
+		__checkRepoRemovedPackage extra 'pkg-simple-a' ${arch}
 
 		local pkg2="pkg-simple-b-1-1-${arch}.pkg.tar.xz"
 		checkPackage extra "${pkg2}" "${arch}"
@@ -50,10 +58,8 @@ load ../lib/common
 	ftpdir-cleanup
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		local pkg1="pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz"
 		checkRemovedPackage extra 'pkg-simple-epoch' "${arch}"
-		[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ]
-		[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ]
+		__checkRepoRemovedPackage extra 'pkg-simple-epoch' ${arch}
 	done
 }
 
@@ -72,8 +78,7 @@ load ../lib/common
 
 	local pkg1='pkg-any-a-1-1-any.pkg.tar.xz'
 	checkRemovedPackage extra 'pkg-any-a' any
-	[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ]
-	[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ]
+	__checkRepoRemovedPackage extra 'pkg-any-a' any
 
 	local pkg2="pkg-any-b-1-1-${arch}.pkg.tar.xz"
 	checkPackage extra "${pkg2}" any
@@ -102,8 +107,7 @@ load ../lib/common
 	for arch in "${ARCH_BUILD[@]}"; do
 		for pkg in $(getPackageNamesFromPackageBase "${pkgs[0]}"); do
 			checkRemovedPackage extra "${pkg}" "${arch}"
-			[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
-			[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
+			__checkRepoRemovedPackage extra ${pkg} ${arch}
 		done
 
 		for pkg in $(getPackageNamesFromPackageBase "${pkgs[1]}"); do

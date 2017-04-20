@@ -183,6 +183,7 @@ checkPackageDB() {
 	local pkg=$2
 	local arch=$3
 	local db
+	local tarch
 	local tarches
 
 	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
@@ -196,16 +197,16 @@ checkPackageDB() {
 		tarches=("${arch}")
 	fi
 
-	for arch in "${tarches[@]}"; do
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
+	for tarch in "${tarches[@]}"; do
+		[ -L "${FTP_BASE}/${repo}/os/${tarch}/${pkg}" ]
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${tarch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
 
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
+		[ -L "${FTP_BASE}/${repo}/os/${tarch}/${pkg}.sig" ]
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${tarch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
 
 		for db in "${DBEXT}" "${FILESEXT}"; do
-			[ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]
-			bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkg}" &>/dev/null
+			[ -r "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" ]
+			bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep "${pkg}" &>/dev/null
 		done
 	done
 }
@@ -238,6 +239,7 @@ checkRemovedPackageDB() {
 	local pkgbase=$2
 	local arch=$3
 	local db
+	local tarch
 	local tarches
 
 	if [[ $arch == any ]]; then
@@ -247,9 +249,9 @@ checkRemovedPackageDB() {
 	fi
 
 	for db in "${DBEXT}" "${FILESEXT}"; do
-		for arch in "${tarches[@]}"; do
-			if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
-				! bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
+		for tarch in "${tarches[@]}"; do
+			if [ -r "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" ]; then
+				! bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
 			fi
 		done
 	done

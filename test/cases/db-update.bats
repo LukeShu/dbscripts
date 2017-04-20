@@ -114,12 +114,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	local arch
-	for arch in "${ARCH_BUILD[@]}"; do
-		if [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ]; then
-			! bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
-		fi
-	done
+	checkRemovedPackageDB testing pkg-any-a any
 }
 
 @test "add incomplete split package" {
@@ -139,9 +134,7 @@ load ../lib/common
 	[ "$status" -ne 0 ]
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ]; then
-			! bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
-		fi
+		checkRemovedPackageDB ${repo} ${pkgbase} ${arch}
 	done
 }
 

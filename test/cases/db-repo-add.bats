@@ -1,5 +1,26 @@
 load ../lib/common
 
+__movePackageToRepo() {
+	local repo=$1
+	local pkgbase=$2
+	local arch=$3
+	local tarch
+	local tarches
+
+	if [[ $arch == any ]]; then
+		tarches=(${ARCHES[@]})
+	else
+		tarches=(${arch})
+	fi
+
+	# FIXME: pkgbase might not be part of the package filename
+	mv -v "${STAGING}"/${repo}/${pkgbase}-*-*-${arch}${PKGEXT}{,.sig} "${FTP_BASE}/${PKGPOOL}/"
+	for tarch in ${tarches[@]}; do
+		ln -sv ${FTP_BASE}/${PKGPOOL}/${pkgbase}-*-*-${arch}${PKGEXT} "${FTP_BASE}/${repo}/os/${tarch}/"
+		ln -sv ${FTP_BASE}/${PKGPOOL}/${pkgbase}-*-*-${arch}${PKGEXT}.sig "${FTP_BASE}/${repo}/os/${tarch}/"
+	done
+}
+
 @test "add simple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
@@ -8,9 +29,7 @@ load ../lib/common
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
 			releasePackage extra "$pkgbase" "$arch"
-			mv "${STAGING}"/extra/* "${FTP_BASE}/${PKGPOOL}/"
-			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz" "${FTP_BASE}/extra/os/${arch}/"
-			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz.sig" "${FTP_BASE}/extra/os/${arch}/"
+			__movePackageToRepo extra ${pkgbase} ${arch}
 			db-repo-add extra "${arch}" "${pkgbase}-1-1-${arch}.pkg.tar.xz"
 		done
 	done
@@ -31,9 +50,7 @@ load ../lib/common
 		add_pkgs=()
 		for pkgbase in "${pkgs[@]}"; do
 			releasePackage extra "$pkgbase" "$arch"
-			mv "${STAGING}"/extra/* "${FTP_BASE}/${PKGPOOL}/"
-			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz" "${FTP_BASE}/extra/os/${arch}/"
-			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz.sig" "${FTP_BASE}/extra/os/${arch}/"
+			__movePackageToRepo extra ${pkgbase} ${arch}
 			add_pkgs+=("${pkgbase}-1-1-${arch}.pkg.tar.xz")
 		done
 		db-repo-add extra "${arch}" "${add_pkgs[@]}"
@@ -53,11 +70,7 @@ load ../lib/common
 
 	for pkgbase in ${pkgs[@]}; do
 		releasePackage extra ${pkgbase} any
-		mv "${STAGING}"/extra/* "${FTP_BASE}/${PKGPOOL}/"
-		for arch in "${ARCH_BUILD[@]}"; do
-			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-any.pkg.tar.xz" "${FTP_BASE}/extra/os/${arch}/"
-			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-any.pkg.tar.xz.sig" "${FTP_BASE}/extra/os/${arch}/"
-		done
+		__movePackageToRepo extra ${pkgbase} any
 		db-repo-add extra any ${pkgbase}-1-1-any.pkg.tar.xz
 	done
 
