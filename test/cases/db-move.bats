@@ -102,13 +102,8 @@ load ../lib/common
 		for pkg in $(getPackageNamesFromPackageBase pkg-split-a); do
 			checkPackage extra "${pkg##*/}" "${arch}"
 		done
-	done
-	for arch in "${ARCH_BUILD[@]}"; do
 		for pkg in $(getPackageNamesFromPackageBase pkg-split-b); do
 			checkPackage testing "${pkg##*/}" "${arch}"
 		done
 	done
-
-	# FIXME: Why any?
-	checkRemovedPackage testing pkg-split-a any
 }
