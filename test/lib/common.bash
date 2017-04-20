@@ -35,37 +35,44 @@ __getCheckSum() {
 }
 
 __buildPackage() {
-	local arch=$1
+	local pkgdest=${1:-.}
 	local p
-	local checkSum
+	local cache
+	local pkgarches
+	local tarch
 	local pkgnames
 
-	if [[ -n ${PACKAGE_CACHE} ]]; then
-		checkSum=$(__getCheckSum PKGBUILD)
-			# TODO: Be more specific
-			if cp -av ${PACKAGE_CACHE}/${checkSum}/*-${arch}${PKGEXT}{,.sig} .; then
-				return 0
-			fi
+	if [[ -n ${BUILDDIR} ]]; then
+		cache=${BUILDDIR}/$(__getCheckSum PKGBUILD)
+		if [[ -d ${cache} ]]; then
+			cp -Lv ${cache}/*${PKGEXT}{,.sig} ${pkgdest}
+			return 0
+		else
+			mkdir -p ${cache}
+		fi
 	fi
 
-	if [ "${arch}" == 'any' ]; then
-		sudo librechroot -n "dbscripts@${arch}" make
-	else
-		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
-	fi
-	sudo libremakepkg -n "dbscripts@${arch}"
+	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
+	for tarch in ${pkgarches[@]}; do
+		if [ "${tarch}" == 'any' ]; then
+			sudo librechroot -n "dbscripts@${tarch}" make
+		else
+			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" make
+		fi
+		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
+	done
 
 	pkgnames=($(. PKGBUILD; print_all_package_names))
+	pushd ${pkgdest}
 	for p in ${pkgnames[@]/%/${PKGEXT}}; do
-		[[ ${p} = *-${arch}${PKGEXT} ]] || continue
 		# Manually sign packages as "makepkg --sign" is buggy
 		gpg -v --detach-sign --no-armor --use-agent ${p}
 
-		if [[ -n ${PACKAGE_CACHE} ]]; then
-			mkdir -p ${PACKAGE_CACHE}/${checkSum}
-			cp -Lv ${p}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
+		if [[ -n ${BUILDDIR} ]]; then
+			cp -Lv ${p}{,.sig} ${cache}/
 		fi
 	done
+	popd
 }
 
 setup() {
@@ -128,11 +135,8 @@ teardown() {
 releasePackage() {
 	local repo=$1
 	local pkgbase=$2
-	local arch=$3
-	local a
-	local p
-	local pkgver
-	local pkgname
+	local pkgarches
+	local tarch
 
 	if [ ! -d "${TMP}/svn-packages-copy/${pkgbase}/trunk" ]; then
 		mkdir -p "${TMP}/svn-packages-copy/${pkgbase}"/{trunk,repos}
@@ -142,23 +146,21 @@ releasePackage() {
 	fi
 
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
-	__buildPackage ${arch}
-	xbs release-client "${repo}" "${arch}"
-	pkgver=$(. PKGBUILD; get_full_version)
-	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
-	for p in "${pkgname[@]}"; do
-		cp "${p}-${pkgver}-${arch}"${PKGEXT}{,.sig} "${STAGING}/${repo}/"
+
+	__buildPackage "${STAGING}"/${repo}
+	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
+	for tarch in "${pkgarches[@]}"; do
+		xbs release-client "${repo}" "${tarch}"
 	done
 	popd
 }
 
 updatePackage() {
 	local pkgbase=$1
-	local arch=$2
 
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
 	__updatePKGBUILD
-	__buildPackage ${arch}
+	__buildPackage
 	popd
 }
 

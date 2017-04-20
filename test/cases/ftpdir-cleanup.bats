@@ -16,9 +16,7 @@ __checkRepoRemovedPackage() {
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -44,9 +42,7 @@ __checkRepoRemovedPackage() {
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -69,7 +65,7 @@ __checkRepoRemovedPackage() {
 	local arch='any'
 
 	for pkgbase in "${pkgs[@]}"; do
-		releasePackage extra "${pkgbase}" any
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -91,9 +87,7 @@ __checkRepoRemovedPackage() {
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -122,9 +116,7 @@ __checkRepoRemovedPackage() {
 	local arch
 
 	for pkgbase in ${pkgs[@]}; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra ${pkgbase} ${arch}
-		done
+		releasePackage extra ${pkgbase}
 	done
 
 	db-update

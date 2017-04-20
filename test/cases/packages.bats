@@ -15,16 +15,16 @@ load ../lib/common
 
 	for pkgbase in "${tmp}"/*; do
 		pushd "${pkgbase}"
+		run namcap -e pkgnameindesc,tags PKGBUILD
+		[ -z "$output" ]
+
+		__buildPackage
+
 		# FIXME: Is overriding IFS a bats bug?
 		IFS=' '
 		pkgarchs=($(. PKGBUILD; echo ${arch[@]}))
 		for pkgarch in "${pkgarchs[@]}"; do
 			echo "Building ${pkgbase} on ${pkgarch}"
-			run namcap -e pkgnameindesc,tags PKGBUILD
-			[ -z "$output" ]
-
-			__buildPackage "$pkgarch"
-
 			if [[ $pkgarch != "$ARCH_HOST" && $pkgarch != any ]]; then
 				# Cross-arch namcap is silly:
 				#

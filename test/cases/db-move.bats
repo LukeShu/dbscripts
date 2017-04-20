@@ -6,9 +6,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -29,9 +27,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -52,9 +48,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -72,7 +66,7 @@ load ../lib/common
 	local pkgbase
 
 	for pkgbase in "${pkgs[@]}"; do
-		releasePackage testing "${pkgbase}" any
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -90,9 +84,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
