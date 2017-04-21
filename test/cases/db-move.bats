@@ -15,7 +15,7 @@ load ../lib/common
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		checkPackage extra "pkg-simple-a-1-1-${arch}.pkg.tar.xz" "${arch}"
-		checkRemovedPackage testing "pkg-simple-a-1-1-${arch}.pkg.tar.xz" "${arch}"
+		checkRemovedPackage testing pkg-simple-a "${arch}"
 
 		checkPackage testing "pkg-simple-b-1-1-${arch}.pkg.tar.xz" "${arch}"
 	done
@@ -37,7 +37,7 @@ load ../lib/common
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
 			checkPackage extra "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
-			checkRemovedPackage testing "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
+			checkRemovedPackage testing "${pkgbase}" "${arch}"
 		done
 	done
 }
@@ -57,7 +57,7 @@ load ../lib/common
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		checkPackage extra "pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz" "${arch}"
-		checkRemovedPackage testing "pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz" "${arch}"
+		checkRemovedPackage testing pkg-simple-epoch "${arch}"
 	done
 }
 

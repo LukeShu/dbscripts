@@ -148,7 +148,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkRemovedPackageDB extra pkg-any-a any
 }
 
 @test "add invalid signed package fails" {
@@ -161,7 +161,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkRemovedPackageDB extra pkg-any-a any
 }
 
 @test "add broken signature fails" {
@@ -173,7 +173,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkRemovedPackageDB extra pkg-any-a any
 }
 
 @test "add package with inconsistent version fails" {
@@ -186,7 +186,7 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	checkRemovedPackage extra 'pkg-any-a-2-1-any.pkg.tar.xz' 'any'
+	checkRemovedPackageDB extra 'pkg-any-a' 'any'
 }
 
 @test "add package with inconsistent name fails" {
@@ -199,7 +199,7 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	checkRemovedPackage extra 'foo-pkg-any-a-1-1-any.pkg.tar.xz' 'any'
+	checkRemovedPackage extra 'foo-pkg-any-a' 'any'
 }
 
 @test "add package with inconsistent pkgbuild fails" {
@@ -210,7 +210,7 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	checkRemovedPackage extra 'pkg-any-a-1-1-any.pkg.tar.xz' 'any'
+	checkRemovedPackageDB extra 'pkg-any-a' 'any'
 }
 
 @test "add package with insufficient permissions fails" {
@@ -222,8 +222,8 @@ load ../lib/common
 	[ "$status" -ne 0 ]
 	chmod +xwr ${FTP_BASE}/core/os/i686
 
-	checkRemovedPackage core 'pkg-any-a-1-1-any.pkg.tar.xz' 'any'
-	checkRemovedPackage extra 'pkg-any-b-1-1-any.pkg.tar.xz' 'any'
+	checkRemovedPackageDB core 'pkg-any-a' 'any'
+	checkRemovedPackageDB extra 'pkg-any-b' 'any'
 }
 
 @test "package has to be a regular file" {
@@ -240,6 +240,6 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 	for arch in "${ARCH_BUILD[@]}"; do
-		checkRemovedPackage extra "pkg-simple-a-1-1-${arch}.pkg.tar.xz" $arch
+		checkRemovedPackageDB extra "pkg-simple-a" $arch
 	done
 }
