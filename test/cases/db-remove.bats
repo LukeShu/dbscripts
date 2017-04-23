@@ -18,9 +18,7 @@ load ../lib/common
 	done
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkRemovedPackage extra "${pkgbase}" "${arch}"
-		done
+		checkRemovedPackage extra "${pkgbase}"
 	done
 }
 
@@ -40,9 +38,7 @@ load ../lib/common
 	done
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkRemovedPackage extra "${pkgbase}" "${arch}"
-		done
+		checkRemovedPackage extra "${pkgbase}"
 	done
 }
 
@@ -61,6 +57,6 @@ load ../lib/common
 	done
 
 	for pkgbase in "${pkgs[@]}"; do
-		checkRemovedPackage extra "${pkgbase}" any
+		checkRemovedPackage extra "${pkgbase}"
 	done
 }

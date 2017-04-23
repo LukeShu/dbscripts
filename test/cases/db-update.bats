@@ -12,22 +12,20 @@ load ../lib/common
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkPackage extra "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
-		done
+		checkPackage extra "${pkgbase}"
 	done
 }
 
 @test "add single simple package" {
 	releasePackage extra 'pkg-single-arch'
 	db-update
-	checkPackage extra 'pkg-single-arch-1-1-x86_64.pkg.tar.xz' 'x86_64'
+	checkPackage extra 'pkg-single-arch'
 }
 
 @test "add single epoch package" {
 	releasePackage extra 'pkg-single-epoch'
 	db-update
-	checkPackage extra 'pkg-single-epoch-1:1-1-x86_64.pkg.tar.xz' 'x86_64'
+	checkPackage extra 'pkg-single-epoch'
 }
 
 @test "add any packages" {
@@ -41,7 +39,7 @@ load ../lib/common
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		checkPackage extra "${pkgbase}-1-1-any.pkg.tar.xz" any
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -58,11 +56,7 @@ load ../lib/common
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			for pkg in $(getPackageNamesFromPackageBase ${pkgbase}); do
-				checkPackage extra "${pkg##*/}" "${arch}"
-			done
-		done
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -75,7 +69,7 @@ load ../lib/common
 	releasePackage extra pkg-any-a
 	db-update
 
-	checkPackage extra pkg-any-a-1-2-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
 }
 
 @test "update any package to different repositories at once" {
@@ -87,14 +81,14 @@ load ../lib/common
 
 	db-update
 
-	checkPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
-	checkPackage testing pkg-any-a-1-2-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
+	checkPackage testing pkg-any-a
 }
 
 @test "update same any package to same repository" {
 	releasePackage extra pkg-any-a
 	db-update
-	checkPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
 
 	releasePackage extra pkg-any-a
 	run db-update
@@ -104,13 +98,13 @@ load ../lib/common
 @test "update same any package to different repositories" {
 	releasePackage extra pkg-any-a
 	db-update
-	checkPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
 
 	releasePackage testing pkg-any-a
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackageDB testing pkg-any-a any
+	checkRemovedPackageDB testing pkg-any-a
 }
 
 @test "add incomplete split package" {
@@ -127,9 +121,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	for arch in "${ARCH_BUILD[@]}"; do
-		checkRemovedPackageDB ${repo} ${pkgbase} ${arch}
-	done
+	checkRemovedPackageDB ${repo} ${pkgbase}
 }
 
 @test "unknown repo" {
@@ -137,7 +129,7 @@ load ../lib/common
 	releasePackage extra 'pkg-any-a'
 	releasePackage unknown 'pkg-any-b'
 	db-update
-	checkPackage extra 'pkg-any-a-1-1-any.pkg.tar.xz' any
+	checkPackage extra 'pkg-any-a'
 	[ ! -e "${FTP_BASE}/unknown" ]
 	rm -rf "${STAGING}/unknown/"
 }
@@ -148,7 +140,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackageDB extra pkg-any-a any
+	checkRemovedPackageDB extra pkg-any-a
 }
 
 @test "add invalid signed package fails" {
@@ -161,7 +153,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackageDB extra pkg-any-a any
+	checkRemovedPackageDB extra pkg-any-a
 }
 
 @test "add broken signature fails" {
@@ -173,7 +165,7 @@ load ../lib/common
 	run db-update
 	[ "$status" -ne 0 ]
 
-	checkRemovedPackageDB extra pkg-any-a any
+	checkRemovedPackageDB extra pkg-any-a
 }
 
 @test "add package with inconsistent version fails" {
@@ -186,7 +178,7 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	checkRemovedPackageDB extra 'pkg-any-a' 'any'
+	checkRemovedPackageDB extra 'pkg-any-a'
 }
 
 @test "add package with inconsistent name fails" {
@@ -199,7 +191,7 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	checkRemovedPackage extra 'foo-pkg-any-a' 'any'
+	checkRemovedPackage extra 'pkg-any-a'
 }
 
 @test "add package with inconsistent pkgbuild fails" {
@@ -210,7 +202,7 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	checkRemovedPackageDB extra 'pkg-any-a' 'any'
+	checkRemovedPackageDB extra 'pkg-any-a'
 }
 
 @test "add package with insufficient permissions fails" {
@@ -222,8 +214,8 @@ load ../lib/common
 	[ "$status" -ne 0 ]
 	chmod +xwr ${FTP_BASE}/core/os/i686
 
-	checkRemovedPackageDB core 'pkg-any-a' 'any'
-	checkRemovedPackageDB extra 'pkg-any-b' 'any'
+	checkRemovedPackageDB core 'pkg-any-a'
+	checkRemovedPackageDB extra 'pkg-any-b'
 }
 
 @test "package has to be a regular file" {
@@ -239,7 +231,5 @@ load ../lib/common
 
 	run db-update
 	[ "$status" -ne 0 ]
-	for arch in "${ARCH_BUILD[@]}"; do
-		checkRemovedPackageDB extra "pkg-simple-a" $arch
-	done
+	checkRemovedPackageDB extra "pkg-simple-a"
 }
