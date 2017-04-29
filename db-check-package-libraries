@@ -89,9 +89,17 @@ def add_package(con, package):
     # Extract to a temporary directory.  This could be done more
     # efficiently, since there is no need to store more than one file
     # at once.
-    with tempfile.TemporaryDirectory() as temp:
-        tar = subprocess.Popen(("bsdtar", "xf", package, "-C", temp))
-        tar.communicate()
+    print("adding package:", package)
+    with tempfile.TemporaryDirectory(None, "db-check-package-libraries."+os.path.basename(package)+".") as temp:
+        subprocess.Popen(("bsdtar", "xf", package, "-C", temp)).communicate()
+        subprocess.Popen(('find', temp,
+                          '-type', 'd',
+                          '(', '-not', '-readable', '-o', '-not', '-executable', ')',
+                          '-exec', 'chmod', '755', '--', '{}', ';')).communicate()
+        subprocess.Popen(('find', temp,
+                          '-type', 'f',
+                          '-not', '-readable',
+                          '-exec', 'chmod', '644', '--', '{}', ';')).communicate()
         with open(os.path.join(temp, ".PKGINFO")) as pkginfo:
             for line in pkginfo:
                 if line.startswith("pkgname ="):
@@ -106,6 +114,8 @@ def add_package(con, package):
             assert dirnames is not None  # unused, avoid pylint warning
             for file_name in filenames:
                 path = os.path.join(dirname, file_name)
+                if os.path.islink(path) or not os.path.isfile(path):
+                    continue
                 with open(path, "rb") as file_object:
                     if file_object.read(4) != b"\177ELF":
                         continue
