@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (C) 2014 Joseph Graham <joseph@t67.eu>
+# Copyright (C) 2014, 2017 Joseph Graham <joseph@xylon.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 # $2 - public location
 
 # Comma seperated list of trackers, no spaces
-# t67.eu is run by Xylon, hackcoop by fauno & friends
-trackers='http://t67.eu:6969/announce,http://tracker.hackcoop.com.ar/announce'  
+# taskenizer.crabdance.com is run by Xylon
+trackers='http://taskenizer.crabdance.com:6969/announce'  
 
 # This mirror is put as a webseed. Which mirror we use for a webseed
 # doesn't really matter since it's re-written on the client machine by
