@@ -20,8 +20,8 @@
 # $2 - public location
 
 # Comma seperated list of trackers, no spaces
-# taskenizer.crabdance.com is run by Xylon
-trackers='http://taskenizer.crabdance.com:6969/announce'  
+# taskenizer.crabdance.com is run by Xylon. the others come from https://github.com/ngosang/trackerslist
+trackers='http://taskenizer.crabdance.com:6969/announce,http://tracker.opentrackr.org:1337/announce,udp://tracker.pirateparty.gr:6969/announce'
 
 # This mirror is put as a webseed. Which mirror we use for a webseed
 # doesn't really matter since it's re-written on the client machine by
