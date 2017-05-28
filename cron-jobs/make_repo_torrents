@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (C) 2014 Joseph Graham <joseph@t67.eu>
+# Copyright (C) 2014, 2017 Joseph Graham <joseph@xylon.me.uk>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,32 +39,47 @@ torrent_location="$FTP_BASE/torrents/"
 
 cd "${torrent_location}"
 
-# Find any directories that might have packages in then
+pkgfilelist=$(mktemp)
+
+# Find any directories that might have packages in them
 find "${public_location}" -name 'os' -type 'd' |
-while read dir
-do
-    # Find any packages
-    find "${dir}" -name '*\.pkg\.tar\.xz' |
-    while read pkg
+    while read dir
     do
-	pkg_name="${pkg##*/}"
+        # Find any packages
+        find "${dir}" -name '*.pkg.tar.xz' -print0
+    done > "${pkgfilelist}"
 
-        if [[ -h "${pkg}" ]]  # check if it's a symbolic link
-        then
-            # We get the target of the symlink
-            pkg=$( readlink -f "${pkg}" )
-        fi
+while read pkg
+do
+    pkg_name="${pkg##*/}"
 
-        # If a .torrent file does not already exist for this package, we call
-        # `make_individual_torrent' to make it.
-	if ! [[ -f "${torrent_location}${pkg_name}.torrent" ]]
-	then
-            "$script_directory/make_individual_torrent" "${pkg}" "${public_location}"
-	fi
+    if [[ -h "${pkg}" ]]  # check if it's a symbolic link
+    then
+        # We get the target of the symlink
+        pkg=$( readlink -f "${pkg}" )
+    fi
+
+    # If a .torrent file does not already exist for this package, we call
+    # `make_individual_torrent' to make it.
+    if ! [[ -f "${torrent_location}${pkg_name}.torrent" ]]
+    then
+        "$script_directory/make_individual_torrent" "${pkg}" "${public_location}"
+    fi
+done < "${pkgfilelist}"
+
+# For torrents older than 1 year, we check if it's package still exists, else clean it up
+find -H "${torrent_location}" -mtime +365 -name '*.torrent' -type f |
+    while read oldtorrent
+    do
+        oldtorrentnm="${oldtorrent##*/}"
+        correspackagenm="${oldtorrentnm%.torrent}"
+        
+        grep "${correspackagenm}" "${pkgfilelist}" &> /dev/null || rm "${oldtorrent}"
     done
-done
 
 if [[ "${username}" == root ]]
 then
     chown repo *
 fi
+
+rm -f "${pkgfilelist}"
