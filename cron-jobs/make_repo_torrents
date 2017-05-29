@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This script finds any updated packages and calls
-# `make_indivudual_torrent' for each of them.
+# `make_indivudual_torrent' for each of them. Run every hour from cron.
 
 username=$( id -un )
 
@@ -67,15 +67,22 @@ do
     fi
 done < "${pkgfilelist}"
 
-# For torrents older than 1 year, we check if it's package still exists, else clean it up
-find -H "${torrent_location}" -mtime +365 -name '*.torrent' -type f |
-    while read oldtorrent
-    do
-        oldtorrentnm="${oldtorrent##*/}"
-        correspackagenm="${oldtorrentnm%.torrent}"
+# For torrents older than 1 year, we check if it's package still
+# exists, else clean it up This shouldn't be done every hour, but it
+# is good for it to be in this cronjob so it can re-use the
+# $pkgfilelist we made earlier. So we do it with a 1-in-30
+# probability.
+if ! (( $(shuf -e {0..29} | head -1) ))
+then
+    find -H "${torrent_location}" -mtime +365 -name '*.torrent' -type f |
+        while read oldtorrent
+        do
+            oldtorrentnm="${oldtorrent##*/}"
+            correspackagenm="${oldtorrentnm%.torrent}"
         
-        grep "${correspackagenm}" "${pkgfilelist}" &> /dev/null || rm "${oldtorrent}"
-    done
+            grep "${correspackagenm}" "${pkgfilelist}" &> /dev/null || rm "${oldtorrent}"
+        done
+fi
 
 if [[ "${username}" == root ]]
 then
