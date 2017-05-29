@@ -68,7 +68,7 @@ do
 done < "${pkgfilelist}"
 
 # For torrents older than 1 year, we check if it's package still
-# exists, else clean it up This shouldn't be done every hour, but it
+# exists, else clean it up. This shouldn't be done every hour, but it
 # is good for it to be in this cronjob so it can re-use the
 # $pkgfilelist we made earlier. So we do it with a 1-in-30
 # probability.
