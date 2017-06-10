@@ -46,7 +46,7 @@ find "${public_location}" -name 'os' -type 'd' |
     while read dir
     do
         # Find any packages
-        find "${dir}" -name '*.pkg.tar.xz' -print0
+        find "${dir}" -regex '[^ ]+\.pkg\.tar\.xz'
     done > "${pkgfilelist}"
 
 while read pkg
