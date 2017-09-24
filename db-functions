@@ -1,7 +1,7 @@
 #!/hint/bash
 
 # Some PKGBUILDs need CARCH to be set
-CARCH=$(. "$(librelib conf.sh)"; load_files makepkg; echo "$CARCH")
+CARCH=$(. "$(librelib conf.sh)"; load_conf makepkg.conf; echo "$CARCH")
 
 # Useful functions
 UMASK=""
