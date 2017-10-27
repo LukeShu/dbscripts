@@ -17,7 +17,7 @@ function sync_abs() {
 	rm -rf -- "$TMP_SUBDIR" "$ABS_ROOT"
 	mkdir -- "$TMP_SUBDIR"
 	for ARCH in armv7h; do
-		for REPO in "${ARMREPOS[@]}"; do
+		for REPO in "${ARCHREPOS[@]}"; do
 			rsync ${SYNCARGS} \
 			      rsync://${ABS_SERVER}/${ARCH}/${REPO}/${REPO}.abs.tar.gz \
 			      "$TMP_SUBDIR" || return $?
@@ -37,7 +37,7 @@ function sync_abs() {
 	fi
 	# FIXME: $ALARM_ROOT doesn't separate packages by architecture
 	for ARCH in armv7h; do
-		for REPO in "${ARMREPOS[@]}"; do
+		for REPO in "${ARCHREPOS[@]}"; do
 			rsync -mrtq --no-p --no-o --no-g --exclude='README' \
 			      "${ALARM_ROOT}/${REPO}/" \
 			      "${ABS_ROOT}/${ARCH}/${REPO}"

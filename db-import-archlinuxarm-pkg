@@ -43,7 +43,6 @@ get_repo_content() {
 		sort -u
 }
 
-
 # repo
 # arch
 get_repo_file() {
@@ -56,8 +55,6 @@ init() {
 	# Get the blacklisted packages
 	libreblacklist update
 	blacklist=($(libreblacklist cat | libreblacklist get-pkg))
-	# Store all the whitelist files
-	whitelists=()
 
 	msg "%d packages in blacklist" ${#blacklist[@]}
 
@@ -67,8 +64,8 @@ init() {
 	get_repos
 
 	# Traverse all repo-arch pairs
-	for _arch in "${OURARCHES[@]}"; do
-		for _repo in "${ARMREPOS[@]}"; do
+	for _arch in "${ARCHARCHES[@]}"; do
+		for _repo in "${ARCHREPOS[@]}"; do
 			msg "Processing %s-%s" "${_repo}" "${_arch}"
 
 			db_file=$(get_repo_file "${_repo}" "${_arch}")${DBEXT}
@@ -112,7 +109,7 @@ init() {
 				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
 				--exclude="*" \
 				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
-				"${FTP_BASE}/${PKGPOOLARM}/"
+				"${FTP_BASE}/${ARCHPKGPOOLS}/"
 
 			# Avoid sloppy upstream databases with corrupt package descriptions,
 			# exclude .sig files from consideration.
@@ -120,11 +117,12 @@ init() {
 			# Optional, repo-add overwrites entries by default
 			rm "$db_file" "$files_file"
 			LC_ALL=C repo-add "$db_file" \
-				$(sed "s|^|${FTP_BASE}/${PKGPOOLARM}/|; s|$|${PKGEXT}|" \
+				$(sed "s|^|${FTP_BASE}/${ARCHPKGPOOLS}/|; s|$|${PKGEXT}|" \
 					"/tmp/${_repo}-${_arch}.whitelist") \
 			|& sed -n 's/==> Adding/	-> Adding/p'
 
 			msg "Putting databases back in place"
+			mkdir -p -- "${FTP_BASE}/${_repo}/os/${_arch}/"
 			rsync "${extra[@]}" --no-motd -rtlH \
 				--delay-updates \
 				--safe-links \
@@ -136,11 +134,10 @@ init() {
 		done
 	done
 
-
 	msg "Generating symbolic links to pool"
 
-	for _arch in "${OURARCHES[@]}"; do
-		for _repo in "${ARMREPOS[@]}"; do
+	for _arch in "${ARCHARCHES[@]}"; do
+		for _repo in "${ARCHREPOS[@]}"; do
 			# Modify whitelist to search packages and create symlinks
 			sed -i "s/*/-${_arch}.pkg.tar.xz/g" "/tmp/${_repo}-${_arch}.whitelist"
 
@@ -148,20 +145,20 @@ init() {
 
 			while read _pkgfile; do
 				# Symlink to package
-				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}" ]; then
-					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}" \
+				if [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile}" ]; then
+					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
-				elif [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile/${_arch}/any}" ]; then
-					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile/${_arch}/any}" \
+				elif [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}" ]; then
+					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile/${_arch}/any}"
 				fi
 
 				# Symlink to signature
-				if [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile}.sig" ]; then
-					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile}.sig" \
+				if [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile}.sig" ]; then
+					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile}.sig" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
-				elif [ -f "${FTP_BASE}/${PKGPOOLARM}/${_pkgfile/${_arch}/any}.sig" ]; then
-					ln -sfv "../../../${PKGPOOLARM}/${_pkgfile/${_arch}/any}.sig" \
+				elif [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}.sig" ]; then
+					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}.sig" \
 					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile/${_arch}/any}.sig"
 				fi
 			done < "/tmp/${_repo}-${_arch}.whitelist"
@@ -171,7 +168,7 @@ init() {
 	date -u +%s > "${FTP_BASE}/lastsync"
 
 	# Cleanup
-	unset blacklist whitelists _arch _repo repo_file _pkgfile
+	unset blacklist _arch _repo repo_file _pkgfile
 }
 
 trap_exit() {

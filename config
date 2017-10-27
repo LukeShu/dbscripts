@@ -13,7 +13,7 @@ PKGREPOS=(
 	'nonprism' 'nonprism-testing' 'nonprism-multilib'
 	'nonprism-multilib-testing' 'pcr' 'pcr-testing' 'pcr-multilib'
 	'pcr-multilib-testing' 'pcr-testing' 'kernels' 'kernels-testing'
-	'cross' 'java' 'unmaintained')
+	'cross' 'java' 'unmaintained' 'build-support')
 PKGPOOL='pool/parabola'
 SRCPOOL='sources/parabola'
 
@@ -33,7 +33,7 @@ LOCK_DELAY=10
 
 [ -n "${STAGING:-}" ] || STAGING="$HOME/staging/unknown/staging"
 TMPDIR="/tmp"
-ARCHES=(i686 x86_64 armv7h)
+ARCHES=(x86_64 i686 armv7h)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 PKGEXT=".pkg.tar.?z"
