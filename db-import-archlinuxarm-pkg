@@ -164,8 +164,8 @@ init() {
 			      --safe-links \
 			      "${WORKDIR}/${_arch}/${_repo}/" \
 			      "${FTP_BASE}/${_repo}/os/${_arch}/"
-			done
 		done
+	done
 
 	date -u +%s > "${FTP_BASE}/lastsync"
 
