@@ -100,27 +100,22 @@ init() {
 
 			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
+			# FIXME: number might be lower, because of next line
 			msg2 "Retrieving %d packages to pool" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
-			# Sync excluding everything but whitelist
-			rsync "${extra[@]}" --no-motd -rtlH \
-				--delay-updates \
-				--safe-links \
-				--include-from="/tmp/${_repo}-${_arch}.whitelist" \
-				--exclude="*" \
-				"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
-				"${FTP_BASE}/${ARCHPKGPOOLS}/"
+			mkdir -p -- "${FTP_BASE}/${ARCHPKGPOOLS}"
+			# Don't import arch=(any) packages present elsewhere
+			grep -vf <(find "${FTP_BASE}/pool/" -name "*-any${PKGEXT}" -printf "%f\n" | sed  's/-any\.pkg.*/*/') \
+				-- "/tmp/${_repo}-${_arch}.whitelist" |
+				# Sync excluding everything but stdin
+				rsync "${extra[@]}" --no-motd -rtlH \
+					--delay-updates \
+					--safe-links \
+					--include-from=- \
+					--exclude="*" \
+					"rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
+					"${FTP_BASE}/${ARCHPKGPOOLS}/"
 
-
-			msg "Putting databases back in place"
-			mkdir -p -- "${FTP_BASE}/${_repo}/os/${_arch}/"
-			rsync "${extra[@]}" --no-motd -rtlH \
-				--delay-updates \
-				--safe-links \
-				"${WORKDIR}/${_arch}/${_repo}/" \
-				"${FTP_BASE}/${_repo}/os/${_arch}/"
-
-			# Cleanup
 			unset db
 		done
 	done
@@ -129,32 +124,48 @@ init() {
 
 	for _arch in "${ARCHARCHES[@]}"; do
 		for _repo in "${ARCHREPOS[@]}"; do
-			# Modify whitelist to search packages and create symlinks
-			sed -i "s/*/-${_arch}.pkg.tar.xz/g" "/tmp/${_repo}-${_arch}.whitelist"
-
 			msg "Putting symlinks in ${_repo}/os/${_arch}"
+			mkdir -p -- "${FTP_BASE}/${_repo}/os/${_arch}"
 
+			local _pkgfile
 			while read _pkgfile; do
-				# Symlink to package
-				if [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile}" ]; then
-					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile}" \
-					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}"
-				elif [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}" ]; then
-					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}" \
-					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile/${_arch}/any}"
+				local _path="${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile}"
+				if [[ ! -f "$_path" ]]; then
+					# pkg was an `any.pkg.tar.?z`, find which pool it's in.
+					local _any_pkgs=(${FTP_BASE}/pool/*/${_pkgfile/${_arch}/any})
+					_path="${_any_pkgs[0]}"
 				fi
+				# give up
+				[[ ! (-f "$_path" && -f "${_path}.sig") ]] && continue
 
-				# Symlink to signature
-				if [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile}.sig" ]; then
-					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile}.sig" \
-					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile}.sig"
-				elif [ -f "${FTP_BASE}/${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}.sig" ]; then
-					ln -sfv "../../../${ARCHPKGPOOLS}/${_pkgfile/${_arch}/any}.sig" \
-					"${FTP_BASE}/${_repo}/os/${_arch}/${_pkgfile/${_arch}/any}.sig"
-				fi
-			done < "/tmp/${_repo}-${_arch}.whitelist"
+				ln -sfv "../../../pool/${_path##*/pool/}" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_path##*/}"
+				ln -sfv "../../../pool/${_path##*/pool/}.sig" \
+					"${FTP_BASE}/${_repo}/os/${_arch}/${_path##*/}.sig"
+			done < <(sed "s/*/-${_arch}.pkg.tar.xz/g" "/tmp/${_repo}-${_arch}.whitelist")
 		done
 	done
+
+	# create fresh databases to reflect actual `any.pkg.tar.xz` packages.
+	# this also avoids corrupt upstream metadata (ALARM)
+	for _arch in "${ARCHARCHES[@]}"; do
+		for _repo in "${ARCHREPOS[@]}"; do
+			msg2 "Adding whitelisted packages to clean %s and %s databases..." .db .files
+			rm "$db_file" "$files_file"
+			LC_ALL=C repo-add "$db_file" \
+				$(sed "s|^|${FTP_BASE}/${_repo}/os/${_arch}/|; s|$|${PKGEXT}|" \
+				      "/tmp/${_repo}-${_arch}.whitelist") |&
+				sed -n 's/==> Adding/	-> Adding/p'
+
+			msg "Putting databases back in place"
+			# TODO: all repos should be updated at once (per architecture)
+			rsync "${extra[@]}" --no-motd -rtlH \
+			      --delay-updates \
+			      --safe-links \
+			      "${WORKDIR}/${_arch}/${_repo}/" \
+			      "${FTP_BASE}/${_repo}/os/${_arch}/"
+			done
+		done
 
 	date -u +%s > "${FTP_BASE}/lastsync"
 

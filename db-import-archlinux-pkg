@@ -101,6 +101,7 @@ init() {
 
 			msg2 "%d packages in whitelist" "$(wc -l /tmp/${_repo}-${_arch}.whitelist | cut -d' ' -f1)"
 
+			mkdir -p -- "${FTP_BASE}/${_repo}/os/${_arch}/"
 			# Sync excluding everything but whitelist
 			# We delete here for cleanup
 			rsync "${extra[@]}" --no-motd -rtlH \
@@ -140,6 +141,7 @@ init() {
 	# packages too
 	local pkgpool
 	for pkgpool in "${ARCHPKGPOOLS[@]}"; do
+		# FIXME:  whitelist wildcards should be narrowed down to respect ${ARCHARCHES[@]}
 		rsync "${extra[@]}" --no-motd -rtlH \
 			--delay-updates \
 			--safe-links \
