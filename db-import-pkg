@@ -186,9 +186,17 @@ fatal_error() {
 	exit 1
 }
 
-source "$(dirname "$(readlink -e "$0")")/config"
-source "$(dirname "$(readlink -e "$0")")/db-import-archlinuxarm.conf"
 source "$(librelib messages)"
+source "$(dirname "$(readlink -e "$0")")/config"
+
+readonly -a remotes=(archlinux{32,arm})
+
+if [[ $# -ne 1 ]] || ! in_array "$1" "${remotes[@]}" ; then
+	msg 'usage: %s {%s\b}' "${0##*/}" "$(printf -- '%s |' "${remotes[@]}")"
+	exit 1
+fi
+
+source "$(dirname "$(readlink -e "$0")")/db-import-${1}.conf"
 
 # Check variables presence
 for var in DBEXT FILESEXT mirror mirrorpath WORKDIR FTP_BASE; do
