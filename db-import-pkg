@@ -79,8 +79,8 @@ make_whitelist() {
 	msg2 "%d packages in whitelist" ${#db[@]}
 
 	# Create a whitelist, add * wildcard to end.
-	# FIXME: due to lack of -arch suffix, the pool sync retrieves every arch even if
-	# we aren't syncing them.
+	# FIXME: due to lack of -arch suffix, the pool sync retrieves
+	# every arch even if we aren't syncing them.
 	# IMPORTANT: the . in the sed command is needed because an empty
 	# whitelist would consist of a single * allowing any package to
 	# pass through.
@@ -104,7 +104,9 @@ sync_pool() {
 	local -r _from=$1 _whitelist=$2 _into=$3
 
 	mkdir -p -- "$_into"
-	msg2 "Retrieving %d packages from %s pool" "$(wc -l "$_whitelist" | cut -d' ' -f1)" "$(basename "$_from")"
+	msg2 "Retrieving %d packages from %s pool" \
+	     "$(wc -l "$_whitelist" | cut -d' ' -f1)" \
+	     "$(basename "$_from")"
 
 	# *Don't delete-after*, this is the job of
 	# cleanup scripts. It will remove our packages too
@@ -124,7 +126,8 @@ sync_pool() {
 sync_repo() {
 	local -r _from=$1 _whitelist=$2 _into=$3
 	mkdir -p -- "$_into"
-	msg2 "Retrieving %d files from repo" "$(wc -l "$_whitelist" | cut -d' ' -f1)"
+	msg2 "Retrieving %d files from repo" \
+	     "$(wc -l "$_whitelist" | cut -d' ' -f1)"
 
 	# We delete here for cleanup
 	rsync "${extra[@]}" --no-motd -rtlH \
@@ -216,25 +219,31 @@ init() {
 			local _file
 			for _file in db_file files_file; do
 				if [ ! -f "${!_file}" ]; then
-					warning "%s doesn't exist, skipping this arch-repo" "${!_file}"
+					warning "%s doesn't exist, skipping this arch-repo" \
+					        "${!_file}"
 					continue
 				fi
 			done
 
-			make_whitelist "/tmp/${_repo}-${_arch}.whitelist" "$db_file" "${blacklist[@]}"
+			make_whitelist "/tmp/${_repo}-${_arch}.whitelist" \
+			               "$db_file" \
+			               "${blacklist[@]}"
 			case "$UPSTREAM" in
 			    archlinux)
 				# Append to whitelists array so that we can
                                 # later sync_pool() all packages
 				local -a whitelists+=(/tmp/${_repo}-${_arch}.whitelist)
 				# Get repo packages (symlinks)
-				sync_repo "rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/" \
-				          "/tmp/${_repo}-${_arch}.whitelist" \
-				          "${FTP_BASE}/${_repo}/os/${_arch}/"
+				sync_repo \
+				    "rsync://${mirror}/${mirrorpath}/${_repo}/os/${_arch}/" \
+				    "/tmp/${_repo}-${_arch}.whitelist" \
+				    "${FTP_BASE}/${_repo}/os/${_arch}/"
 				;;
 			    archlinux32|archlinuxarm)
 				# Upstream doesn't use an $ARCHPKGPOOL
-				filter_duplicates < "/tmp/${_repo}-${_arch}.whitelist" > "/tmp/${_repo}-${_arch}-nodups.whitelist"
+				filter_duplicates \
+				    < "/tmp/${_repo}-${_arch}.whitelist" \
+				    > "/tmp/${_repo}-${_arch}-nodups.whitelist"
 				sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${_repo}/" \
 				          "/tmp/${_repo}-${_arch}-nodups.whitelist" \
 				          "${FTP_BASE}/${ARCHPKGPOOLS}/"
@@ -246,19 +255,27 @@ init() {
 	case "$UPSTREAM" in
 	    archlinux)
 		# Concatenate all whitelists, check for single *s just in case
-		cat "${whitelists[@]}" | grep -v "^\*$" | sort -u > "/tmp/${UPSTREAM}-all.whitelist"
-		# FIXME:  make_whitelist() wildcards should be narrowed down to respect ${ARCHARCHES[@]}
+		cat "${whitelists[@]}" | grep -v "^\*$" |
+			sort -u > "/tmp/${UPSTREAM}-all.whitelist"
+		# FIXME: make_whitelist() wildcards should be narrowed
+		#        down to respect ${ARCHARCHES[@]}
 
 		msg "Syncing package pools"
 		local pkgpool
 		for pkgpool in "${ARCHPKGPOOLS[@]}"; do
-		    sync_pool "rsync://${mirror}/${mirrorpath}/${pkgpool}/" "/tmp/${UPSTREAM}-all.whitelist" "${FTP_BASE}/${pkgpool}/"
+			sync_pool \
+			    "rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
+			    "/tmp/${UPSTREAM}-all.whitelist" \
+			    "${FTP_BASE}/${pkgpool}/"
 		done
 
 		msg "Syncing source pool"
 		local srcpool
 		for srcpool in "${ARCHSRCPOOLS[@]}"; do
-		    sync_pool "rsync://${mirror}/${mirrorpath}/${srcpool}/" "/tmp/${UPSTREAM}-all.whitelist" "${FTP_BASE}/${srcpool}/"
+			sync_pool \
+			        "rsync://${mirror}/${mirrorpath}/${srcpool}/" \
+			        "/tmp/${UPSTREAM}-all.whitelist" \
+			        "${FTP_BASE}/${srcpool}/"
 		done
 		;;
 	    archlinux32|archlinuxarm)
@@ -281,7 +298,7 @@ init() {
 
 	msg "Putting databases back in place"
 
-	# FIXME: all repo databases should be replaced at once (per architecture)
+	# FIXME: all repo DBs should be replaced at once (per architecture)
 	for _arch in "${ARCHARCHES[@]}"; do
 		for _repo in "${ARCHREPOS[@]}"; do
                         make_repo_dbs "$_repo" "$_arch"
@@ -310,11 +327,13 @@ source "$(dirname "$(readlink -e "$0")")/config"
 readonly -a UPSTREAMS=(archlinux{,32,arm})
 
 if [[ $# -ne 1 ]] || ! in_array "$1" "${UPSTREAMS[@]}" ; then
-	msg 'usage: %s {%s\b}' "${0##*/}" "$(printf -- ' %s |' "${UPSTREAMS[@]}")"
-	exit 1
+	fatal_error 'usage: %s {%s\b}' \
+	            "${0##*/}" \
+	            "$(printf -- ' %s |' "${UPSTREAMS[@]}")"
 fi
 
 readonly UPSTREAM=$1
+
 source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
 
 # Check variables presence
@@ -327,7 +346,8 @@ done
 # From makepkg
 set -E
 for signal in TERM HUP QUIT; do
-	trap "trap_exit $signal '%s signal caught. Exiting...' $signal" "$signal"
+	trap "trap_exit $signal '%s signal caught. Exiting...' $signal" \
+	     "$signal"
 done
 trap 'trap_exit INT "Aborted by user! Exiting..."' INT
 trap 'trap_exit USR1 "An unknown error has occurred. Exiting..."' ERR
