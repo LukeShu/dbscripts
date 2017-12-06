@@ -31,6 +31,7 @@ for signal in TERM HUP QUIT; do
     trap "trap_exit $signal '%s signal caught. Exiting...' $signal" \
 	 "$signal"
 done
+unset signal
 trap 'trap_exit INT "Aborted by user! Exiting..."' INT
 trap 'trap_exit USR1 "An unknown error has occurred. Exiting..."' ERR
 
