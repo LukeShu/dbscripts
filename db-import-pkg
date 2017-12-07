@@ -182,27 +182,37 @@ sync_repo() {
 # Use this after `sync_pool`ing from an upstream with no pool(s) and
 # therefore no symlinks inside <repo>/os/<arch>.
 make_repo_symlinks() {
-	local -r _pool=$1 _whitelist=$2 _repo=$3 _arch=$4
+	local -r pool=$1 whitelist=$2 repo=$3 arch=$4
 
-	msg2 "Putting symlinks in ${_repo}/os/${_arch}"
-	mkdir -p -- "${FTP_BASE}/${_repo}/os/${_arch}"
+	msg2 "Putting symlinks in ${repo}/os/${arch}"
+	mkdir -p -- "${FTP_BASE}/${repo}/os/${arch}"
 
-	local _pkgfile
-	while read _pkgfile; do
-		local _path="${FTP_BASE}/${_pool}/${_pkgfile}"
-		if [[ ! -f "$_path" ]]; then
+	local pkgfile
+	while read pkgfile; do
+		local path="${FTP_BASE}/${pool}/${pkgfile}"
+		if [[ ! -f "$path" ]]; then
 			# pkg was an `any.pkg.tar.?z`, find which pool it's in.
-			local _any_pkgs=(${FTP_BASE}/pool/*/${_pkgfile/${_arch}/any})
-			_path="${_any_pkgs[0]}"
+			pkgfile=${pkgfile/${arch}/any}
+			# HACK: Arch32 appends '.digits' to pkgrels. That
+			# prevents us from finding the corresponding package.
+			shopt -s extglob &&
+				pkgfile=${pkgfile/.+([0-9])-any/-any} || :
+			shopt -u extglob || :
+			local any_pkgs=(${FTP_BASE}/pool/*/${pkgfile})
+			path="${any_pkgs[0]}"
 		fi
 		# give up
-		[[ ! (-f "$_path" && -f "${_path}.sig") ]] && continue
-
-		ln -sfv "../../../pool/${_path##*/pool/}" \
-			"${FTP_BASE}/${_repo}/os/${_arch}/${_path##*/}"
-		ln -sfv "../../../pool/${_path##*/pool/}.sig" \
-			"${FTP_BASE}/${_repo}/os/${_arch}/${_path##*/}.sig"
-	done < <(sed "s/*/-${_arch}.pkg.tar.xz/" "$_whitelist")
+		if [[ ! (-f "$path" && -f "${path}.sig") ]]; then
+			warning "No file was found for %s, skipping" \
+			        "${pkgfile%-*}"
+			continue
+		fi
+		local symlink="${FTP_BASE}/${repo}/os/${arch}/${path##*/}"
+		ln -sfv "../../../pool/${path##*/pool/}" "$symlink"
+		ln -sfv "../../../pool/${path##*/pool/}.sig" "${symlink}.sig"
+		local -a new_whitelist+=($symlink)
+	done < <(sed "s/*/-${arch}.pkg.tar.xz/" "$whitelist")
+	printf -- '%s\n' "${new_whitelist[@]}" > "$whitelist"
 }
 
 # usage: make_repo_dbs <repo> <arch>
@@ -218,9 +228,17 @@ make_repo_dbs() {
 	msg2 "Adding whitelisted packages to clean %s and %s ..." \
 	     "${db_file##*/}" "${files_file##*/}"
 	rm "$db_file" "$files_file"
-	LC_ALL=C repo-add "$db_file" \
-	      $(sed "s|^|${into}|; s|$|${PKGEXT}|" "$whitelist") |&
-		sed -n 's/==> Adding/	-> Adding/p'
+	case "$UPSTREAM" in
+	    archlinux)
+		LC_ALL=C repo-add "$db_file" \
+		         $(sed "s|^|${into}|; s|$|${PKGEXT}|" "$whitelist") |&
+			sed -n 's/==> Adding/   -> Adding/p'
+		;;
+	    archlinux32|archlinuxarm)
+		LC_ALL=C repo-add "$db_file" $(cat "$whitelist") |&
+			sed -n 's/==> Adding/   -> Adding/p'
+		;;
+	esac
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
 	mkdir -p -- "$into"
