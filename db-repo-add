@@ -3,7 +3,7 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
-if [ $# -lt 3 ]; then
+if (( $# < 3 )); then
 	msg "usage: %s <repo> <arch> <pkgfile> ..." "${0##*/}"
 	exit 1
 fi
@@ -18,7 +18,7 @@ if ! check_repo_permission "$repo"; then
 	die "You don't have permission to add packages to %s" "$repo"
 fi
 
-if [ "$arch" == "any" ]; then
+if [[ $arch = any ]]; then
 	tarches=("${ARCHES[@]}")
 else
 	tarches=("$arch")

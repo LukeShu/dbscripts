@@ -6,8 +6,7 @@ CARCH=$(. "$(librelib conf.sh)"; load_conf makepkg.conf; echo "$CARCH")
 # Useful functions
 UMASK=""
 set_umask () {
-	[ "$UMASK" == "" ] && UMASK="$(umask)"
-	export UMASK
+	export UMASK="${UMASK:-$(umask)}"
 	umask 002
 }
 
@@ -26,7 +25,7 @@ mv_acl() {
 
 # set up general environment
 WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
-if [ -n "${SVNUSER}" ]; then
+if [[ -n ${SVNUSER} ]]; then
 	setfacl -m u:"${SVNUSER}":rwx "${WORKDIR}"
 	setfacl -m d:u:"${USER}":rwx "${WORKDIR}"
 	setfacl -m d:u:"${SVNUSER}":rwx "${WORKDIR}"
@@ -56,7 +55,7 @@ script_lock() {
 
 script_unlock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.${0##*/}"
-	if [ ! -d "$LOCKDIR" ]; then
+	if [[ ! -d $LOCKDIR ]]; then
 		warning "Script %s was not locked!" "${0##*/}"
 		restore_umask
 		return 1
@@ -76,12 +75,12 @@ cleanup() {
 	for l in "${LOCKS[@]}"; do
 		repo=${l%.*}
 		arch=${l#*.}
-		if [ -d "$TMPDIR/.repolock.$repo.$arch" ]; then
+		if [[ -d $TMPDIR/.repolock.$repo.$arch ]]; then
 			msg "Removing left over lock from [%s] (%s)" "$repo" "$arch"
 			repo_unlock "$repo" "$arch"
 		fi
 	done
-	if [ -d "$TMPDIR/.scriptlock.${0##*/}" ]; then
+	if [[ -d $TMPDIR/.scriptlock.${0##*/} ]]; then
 		msg "Removing left over lock from %s" "${0##*/}"
 		script_unlock
 	fi
@@ -91,7 +90,7 @@ cleanup() {
 		date +%s > "${FTP_BASE}/lastupdate"
 	fi
 
-	[ "$1" ] && exit "$1"
+	[[ -n $1 ]] && exit "$1"
 }
 
 trap abort INT QUIT TERM HUP
@@ -109,22 +108,22 @@ repo_lock () {
 	local _owner
 
 	# This is the lock file used by repo-add and repo-remove
-	if [ -f "${DBLOCKFILE}" ]; then
+	if [[ -f ${DBLOCKFILE} ]]; then
 		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(<"$DBLOCKFILE")"
 		return 1
 	fi
 
-	if [ $# -eq 2 ]; then
+	if (( $# == 2 )); then
 		_lockblock=true
 		_trial=0
-	elif [ $# -eq 3 ]; then
+	elif (( $# == 3 )); then
 		_lockblock=false
 		_timeout=$3
 		let _trial=$_timeout/$LOCK_DELAY
 	fi
 
 	_count=0
-	while [ "$_count" -le "$_trial" ] || "$_lockblock" ; do
+	while (( _count <= _trial )) || "$_lockblock" ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
 			warning "Repo [%s] (%s) is already locked by %s." "$1" "$2" "$_owner"
@@ -144,7 +143,7 @@ repo_lock () {
 
 repo_unlock () { #repo_unlock <repo-name> <arch>
 	local LOCKDIR="$TMPDIR/.repolock.$1.$2"
-	if [ ! -d "$LOCKDIR" ]; then
+	if [[ ! -d $LOCKDIR ]]; then
 		warning "Repo lock [%s] (%s) was not locked!" "$1" "$2"
 		restore_umask
 		return 1
@@ -176,7 +175,7 @@ getpkgbase() {
 	local _base
 
 	_base="$(_grep_pkginfo "$1" "pkgbase")"
-	if [ -z "$_base" ]; then
+	if [[ -z $_base ]]; then
 		getpkgname "$1"
 	else
 		echo "$_base"
@@ -187,7 +186,7 @@ issplitpkg() {
 	local _base
 
 	_base="$(_grep_pkginfo "$1" "pkgbase")"
-	if [ -z "$_base" ]; then
+	if [[ -z $_base ]]; then
 		return 1
 	else
 		return 0
@@ -199,7 +198,7 @@ getpkgname() {
 	local _name
 
 	_name="$(_grep_pkginfo "$1" "pkgname")"
-	if [ -z "$_name" ]; then
+	if [[ -z $_name ]]; then
 		error "Package '%s' has no pkgname in the PKGINFO. Fail!" "$1"
 		exit 1
 	fi
@@ -212,7 +211,7 @@ getpkgver() {
 	local _ver
 
 	_ver="$(_grep_pkginfo "$1" "pkgver")"
-	if [ -z "$_ver" ]; then
+	if [[ -z $_ver ]]; then
 		error "Package '%s' has no pkgver in the PKGINFO. Fail!" "$1"
 		exit 1
 	fi
@@ -224,7 +223,7 @@ getpkgarch() {
 	local _ver
 
 	_ver="$(_grep_pkginfo "$1" "arch")"
-	if [ -z "$_ver" ]; then
+	if [[ -z $_ver ]]; then
 		error "Package '%s' has no arch in the PKGINFO. Fail!" "$1"
 		exit 1
 	fi
@@ -236,7 +235,7 @@ check_packager() {
 	local _packager
 
 	_packager=$(_grep_pkginfo "$1" "packager")
-	[[ $_packager && $_packager != 'Unknown Packager' ]]
+	[[ -n $_packager && $_packager != 'Unknown Packager' ]]
 }
 
 check_buildinfo() {
@@ -247,17 +246,17 @@ check_builddir() {
 	local _builddir
 
 	_builddir=$(_grep_buildinfo "$1" "builddir")
-	[[ $_builddir && $_builddir = '/build' ]]
+	[[ -n $_builddir && $_builddir = '/build' ]]
 }
 
 getpkgfile() {
-	if [[ ${#} -ne 1 ]]; then
+	if  (( $# != 1 )); then
 		error 'No canonical package found!'
 		exit 1
-	elif [ ! -f "${1}" ]; then
+	elif [[ ! -f ${1} ]]; then
 		error "Package %s not found!" "$1"
 		exit 1
-	elif [ ! -f "${1}.sig" ]; then
+	elif [[ ! -f ${1}.sig ]]; then
 		error "Package signature %s not found!" "$1.sig"
 		exit 1
 	fi
@@ -266,8 +265,8 @@ getpkgfile() {
 }
 
 getpkgfiles() {
-	local f
-	if [ ! -z "$(printf '%s\n' "${@%\.*}" | sort | uniq -D)" ]; then
+	local f files
+	if [[ ! -z "$(printf '%s\n' "${@%\.*}" | sort | uniq -D)" ]]; then
 		error 'Duplicate packages found!'
 		exit 1
 	fi
@@ -312,7 +311,7 @@ check_pkgxbs() {
 	in_array "${repo}" "${PKGREPOS[@]}" || return 1
 
 	local xbsver="$(. "$(xbs releasepath "${_pkgbase}" "${repo}" "${_pkgarch}")/PKGBUILD"; get_full_version "${_pkgname}")"
-	[ "${xbsver}" == "${_pkgver}" ] || return 1
+	[[ "${xbsver}" = "${_pkgver}" ]] || return 1
 
 	local xbsnames=($(. "$(xbs releasepath "${_pkgbase}" "${repo}" "${_pkgarch}")/PKGBUILD"; echo "${pkgname[@]}"))
 	in_array "${_pkgname}" "${xbsnames[@]}" || return 1
@@ -345,10 +344,10 @@ check_splitpkgs() {
 	popd >/dev/null
 
 	for pkgdir in "${WORKDIR}/check_splitpkgs/${repo}"/*/*; do
-		[ ! -d "${pkgdir}" ] && continue
+		[[ ! -d ${pkgdir} ]] && continue
 		sort -u "${pkgdir}/staging" -o "${pkgdir}/staging"
 		sort -u "${pkgdir}/xbs" -o "${pkgdir}/xbs"
-		if [ ! -z "$(comm -13 "${pkgdir}/staging" "${pkgdir}/xbs")" ]; then
+		if [[ ! -z "$(comm -13 "${pkgdir}/staging" "${pkgdir}/xbs")" ]]; then
 			return 1
 		fi
 	done
@@ -365,8 +364,8 @@ check_pkgrepos() {
 
 	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} ] && return 1
 	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT}.sig ] && return 1
-	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgfile##*/}" ] && return 1
-	[ -f "${FTP_BASE}/${PKGPOOL}/${pkgfile##*/}.sig" ] && return 1
+	[[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile##*/} ]] && return 1
+	[[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile##*/}.sig ]] && return 1
 
 	return 0
 }
@@ -384,19 +383,19 @@ chk_license() {
 check_repo_permission() {
 	local repo=$1
 
-	[ ${#PKGREPOS[@]} -eq 0 ] && return 1
-	[ -z "${PKGPOOL}" ] && return 1
+	(( ${#PKGREPOS[@]} == 0 )) && return 1
+	[[ -z "${PKGPOOL}" ]] && return 1
 
 	in_array "${repo}" "${PKGREPOS[@]}" || return 1
 
-	[ -w "$FTP_BASE/${PKGPOOL}" ] || return 1
+	[[ -w $FTP_BASE/${PKGPOOL} ]] || return 1
 
 	local arch
 	for arch in "${ARCHES[@]}"; do
 		local dir="${FTP_BASE}/${repo}/os/${arch}/"
-		[ -w "${dir}" ] || return 1
-		[ -f "${dir}${repo}"${DBEXT} -a ! -w "${dir}${repo}"${DBEXT} ] && return 1
-		[ -f "${dir}${repo}"${FILESEXT} -a ! -w "${dir}${repo}"${FILESEXT} ] && return 1
+		[[ -w ${dir} ]] || return 1
+		[[ -f ${dir}${repo}${DBEXT} && ! -w ${dir}${repo}${DBEXT} ]] && return 1
+		[[ -f ${dir}${repo}${FILESEXT} && ! -w ${dir}${repo}${FILESEXT} ]] && return 1
 	done
 
 	return 0
@@ -408,7 +407,7 @@ set_repo_permission() {
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
 	local filesfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${FILESEXT}"
 
-	if [ -w "${dbfile}" ]; then
+	if [[ -w ${dbfile} ]]; then
 		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
 		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "$dbfile"    "$group"
 		chgrp "$group" "${filesfile}" || error "Could not change group of %s to %s" "$filesfile" "$group"
@@ -440,7 +439,7 @@ arch_repo_remove() {
 	local pkgs=("${@:3}")
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
 
-	if [ ! -f "${dbfile}" ]; then
+	if [[ ! -f ${dbfile} ]]; then
 		error "No database found at '%s'" "$dbfile"
 		return 1
 	fi
@@ -452,7 +451,7 @@ arch_repo_remove() {
 }
 
 arch_svn() {
-	if [ -z "${SVNUSER}" ]; then
+	if [[ -z ${SVNUSER} ]]; then
 		/usr/bin/svn "${@}"
 	else
 		sudo -u "${SVNUSER}" -- /usr/bin/svn --username "${USER}" "${@}"

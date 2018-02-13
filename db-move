@@ -3,7 +3,7 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
-if [ $# -lt 3 ]; then
+if (( $# < 3 )); then
 	msg "usage: %s <repo-from> <repo-to> <pkgname|pkgbase> ..." "${0##*/}"
 	exit 1
 fi
@@ -28,13 +28,13 @@ done
 for pkgbase in "${args[@]:2}"; do
 	for pkgarch in "${ARCHES[@]}" 'any'; do
 		xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
-		if [ -r "${xbsrepo_from}/PKGBUILD" ]; then
+		if [[ -r ${xbsrepo_from}/PKGBUILD ]]; then
 			pkgnames=($(. "${xbsrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
-			if [ ${#pkgnames[@]} -lt 1 ]; then
+			if (( ${#pkgnames[@]} < 1 )); then
 				die "Could not read pkgname"
 			fi
 
-			if [ "${pkgarch}" == 'any' ]; then
+			if [[ ${pkgarch} = any ]]; then
 				tarches=("${ARCHES[@]}")
 			else
 				tarches=("${pkgarch}")
@@ -42,7 +42,7 @@ for pkgbase in "${args[@]:2}"; do
 
 			for pkgname in "${pkgnames[@]}"; do
 				pkgver=$(. "${xbsrepo_from}/PKGBUILD"; get_full_version "${pkgname}")
-				if [ -z "${pkgver}" ]; then
+				if [[ -z ${pkgver} ]]; then
 					die "Could not read pkgver"
 				fi
 				for tarch in "${tarches[@]}"; do
@@ -67,7 +67,7 @@ for pkgbase in "${args[@]:2}"; do
 	for pkgarch in "${arches[@]}"; do
 		xbsrepo_to="$(xbs releasepath "$pkgbase" "$repo_to" "$pkgarch")"
 		if true; then # to add an indent level to make merging easier
-			if [ "${pkgarch}" == 'any' ]; then
+			if [[ ${pkgarch} = any ]]; then
 				tarches=("${ARCHES[@]}")
 			else
 				tarches=("${pkgarch}")
@@ -82,7 +82,7 @@ for pkgbase in "${args[@]:2}"; do
 					pkgfile="${pkgpath##*/}"
 
 					ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
-					if [ -f "${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig" ]; then
+					if [[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]]; then
 						ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "${ftppath_to}/${tarch}/"
 					fi
 					add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
@@ -94,7 +94,7 @@ for pkgbase in "${args[@]:2}"; do
 done
 
 for tarch in "${ARCHES[@]}"; do
-	if [ -n "${add_pkgs[${tarch}]}" ]; then
+	if [[ -n ${add_pkgs[${tarch}]} ]]; then
 		arch_repo_add "${repo_to}" "${tarch}" ${add_pkgs[${tarch}]}
 		arch_repo_remove "${repo_from}" "${tarch}" ${remove_pkgs[${tarch}]}
 	fi
