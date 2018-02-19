@@ -79,7 +79,7 @@ __checkRepoRemovedPackage() {
 	db-remove extra any pkg-any-a
 	ftpdir-cleanup
 
-	local pkg1='pkg-any-a-1-1-any.pkg.tar.xz'
+	local pkg1="pkg-any-a-1-1-any${PKGEXT}"
 	checkRemovedPackage extra 'pkg-any-a'
 	for arch in ${ARCH_BUILD[@]}; do
 		__checkRepoRemovedPackage extra 'pkg-any-a' ${arch}
@@ -133,8 +133,8 @@ __checkRepoRemovedPackage() {
 
 	ftpdir-cleanup
 
-	local pkgfilea="pkg-simple-a-1-1-${arch}.pkg.tar.xz"
-	local pkgfileb="pkg-simple-b-1-1-${arch}.pkg.tar.xz"
+	local pkgfilea="pkg-simple-a-1-1-${arch}${PKGEXT}"
+	local pkgfileb="pkg-simple-b-1-1-${arch}${PKGEXT}"
 	for arch in "${ARCH_BUILD[@]}"; do
 		touch -d "-$(expr ${CLEANUP_KEEP} + 1)days" ${CLEANUP_DESTDIR}/${pkgfilea}{,.sig}
 	done

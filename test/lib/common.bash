@@ -38,10 +38,11 @@ __buildPackage() {
 	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
 	for tarch in ${pkgarches[@]}; do
 		if [ "${tarch}" == 'any' ]; then
-			sudo librechroot -n "dbscripts@${tarch}" make
+			sudo librechroot -n "dbscripts@${tarch}" sync
 		else
-			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" make
+			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" sync
 		fi
+		sudo librechroot -n "dbscripts@${tarch}" run bash -c "$(printf '%q ' echo "PKGEXT=${PKGEXT@Q}") >> /etc/makepkg.conf"
 		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
 	done
 
