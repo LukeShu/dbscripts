@@ -27,16 +27,16 @@ __movePackageToRepo() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "$pkgbase"
 		for arch in ${arches[@]}; do
 			__movePackageToRepo extra ${pkgbase} ${arch}
-			db-repo-add extra ${arch} ${pkgbase}-1-1-${arch}${PKGEXT}
+			db-repo-add extra "${arch}" "${pkgbase}-1-1-${arch}${PKGEXT}"
 		done
 	done
 
-	for pkgbase in ${pkgs[@]}; do
-		checkPackageDB extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkPackageDB extra "${pkgbase}"
 	done
 }
 
@@ -46,21 +46,21 @@ __movePackageToRepo() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "$pkgbase"
 	done
 
 	for arch in ${arches[@]}; do
 		add_pkgs=()
-		for pkgbase in ${pkgs[@]}; do
+		for pkgbase in "${pkgs[@]}"; do
 			__movePackageToRepo extra ${pkgbase} ${arch}
 			add_pkgs+=("${pkgbase}-1-1-${arch}${PKGEXT}")
 		done
-		db-repo-add extra ${arch} ${add_pkgs[@]}
+		db-repo-add extra "${arch}" "${add_pkgs[@]}"
 	done
 
-	for pkgbase in ${pkgs[@]}; do
-		checkPackageDB extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkPackageDB extra "${pkgbase}"
 	done
 }
 

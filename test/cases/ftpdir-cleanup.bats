@@ -24,14 +24,14 @@ __checkRepoRemovedPackage() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for arch in ${arches[@]}; do
-		db-remove extra ${arch} pkg-simple-a
+		db-remove extra "${arch}" pkg-simple-a
 	done
 
 	ftpdir-cleanup
@@ -50,14 +50,14 @@ __checkRepoRemovedPackage() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for arch in ${arches[@]}; do
-		db-remove extra ${arch} pkg-simple-epoch
+		db-remove extra "${arch}" pkg-simple-epoch
 	done
 
 	ftpdir-cleanup
@@ -74,8 +74,8 @@ __checkRepoRemovedPackage() {
 	local pkgbase
 	local arch='any'
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -98,14 +98,14 @@ __checkRepoRemovedPackage() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for arch in ${arches[@]}; do
-		db-remove extra ${arch} ${pkgs[0]}
+		db-remove extra "${arch}" "${pkgs[0]}"
 	done
 
 	ftpdir-cleanup
@@ -114,8 +114,8 @@ __checkRepoRemovedPackage() {
 		__checkRepoRemovedPackage extra ${pkgs[0]} ${arch}
 	done
 
-	checkRemovedPackage extra ${pkgs[0]}
-	checkPackage extra ${pkgs[1]}
+	checkRemovedPackage extra "${pkgs[0]}"
+	checkPackage extra "${pkgs[1]}"
 }
 
 @test "cleanup old packages" {

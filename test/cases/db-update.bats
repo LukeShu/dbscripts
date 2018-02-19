@@ -6,14 +6,14 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
-	for pkgbase in ${pkgs[@]}; do
-		checkPackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -33,14 +33,14 @@ load ../lib/common
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
-	for pkgbase in ${pkgs[@]}; do
-		checkPackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -51,14 +51,14 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
-	for pkgbase in ${pkgs[@]}; do
-		checkPackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -124,10 +124,10 @@ load ../lib/common
 	local pkgbase='pkg-split-a'
 	local arch
 
-	releasePackage ${repo} ${pkgbase}
+	releasePackage "${repo}" "${pkgbase}"
 
 	# remove a split package to make db-update fail
-	rm "${STAGING}"/extra/${pkgbase}1-*
+	rm "${STAGING}/extra/${pkgbase}1-"*
 
 	run db-update
 	[ "$status" -ne 0 ]
@@ -170,7 +170,7 @@ load ../lib/common
 	local s
 	releasePackage extra 'pkg-any-a'
 	for s in "${STAGING}"/extra/*.sig; do
-		echo 0 > $s
+		echo 0 > "$s"
 	done
 	run db-update
 	[ "$status" -ne 0 ]

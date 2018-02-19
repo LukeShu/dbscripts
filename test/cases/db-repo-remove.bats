@@ -6,20 +6,20 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
-	for pkgbase in ${pkgs[@]}; do
+	for pkgbase in "${pkgs[@]}"; do
 		for arch in ${arches[@]}; do
-			db-repo-remove extra ${arch} ${pkgbase}
+			db-repo-remove extra "${arch}" "${pkgbase}"
 		done
 	done
 
-	for pkgbase in ${pkgs[@]}; do
-		checkRemovedPackageDB extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkRemovedPackageDB extra "${pkgbase}"
 	done
 }
 
@@ -29,18 +29,18 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for arch in ${arches[@]}; do
-		db-repo-remove extra ${arch} ${pkgs[@]}
+		db-repo-remove extra "${arch}" "${pkgs[@]}"
 	done
 
-	for pkgbase in ${pkgs[@]}; do
-		checkRemovedPackageDB extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkRemovedPackageDB extra "${pkgbase}"
 	done
 }
 

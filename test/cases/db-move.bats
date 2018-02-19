@@ -6,8 +6,8 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage testing ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -25,17 +25,17 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage testing ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
 
 	db-move testing extra pkg-simple-a pkg-simple-b
 
-	for pkgbase in ${pkgs[@]}; do
-		checkRemovedPackage testing ${pkgbase}
-		checkPackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		checkRemovedPackage testing "${pkgbase}"
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -64,8 +64,8 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage testing ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -80,8 +80,8 @@ load ../lib/common
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage testing ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -99,8 +99,8 @@ load ../lib/common
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage testing ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update

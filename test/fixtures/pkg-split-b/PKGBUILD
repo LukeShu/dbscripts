@@ -10,9 +10,9 @@ depends=('glibc')
 options=(!strip)
 
 package_pkg-split-b1() {
-	install -D -m755 /bin/true ${pkgdir}/usr/bin/${pkgname}
+	install -D -m755 /bin/true "${pkgdir}"/usr/bin/${pkgname}
 }
 
 package_pkg-split-b2() {
-	install -D -m755 /bin/true ${pkgdir}/usr/bin/${pkgname}
+	install -D -m755 /bin/true "${pkgdir}"/usr/bin/${pkgname}
 }

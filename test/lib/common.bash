@@ -116,9 +116,9 @@ eot
 
 	mkdir -p "${TMP}/"{ftp,tmp,staging,{package,source}-cleanup,svn-packages-{copy,repo}}
 
-	for r in ${PKGREPOS[@]}; do
+	for r in "${PKGREPOS[@]}"; do
 		mkdir -p "${TMP}/staging/${r}"
-		for a in ${ARCHES[@]}; do
+		for a in "${ARCHES[@]}"; do
 			mkdir -p "${TMP}/ftp/${r}/os/${a}"
 		done
 	done
@@ -144,7 +144,7 @@ releasePackage() {
 		svn commit -q -m"initial commit of ${pkgbase}" "${TMP}/svn-packages-copy"
 	fi
 
-	pushd "${TMP}/svn-packages-copy"/${pkgbase}/trunk/
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
 	__buildPackage "${STAGING}"/${repo}
 	__archrelease ${repo}
 	popd
@@ -195,35 +195,35 @@ checkPackageDB() {
 	local pkgver=$(. "${pkgbuildPath}/PKGBUILD"; get_full_version)
 
 	if [[ ${pkgarches[@]} == any ]]; then
-		repoarches=(${ARCHES[@]})
+		repoarches=("${ARCHES[@]}")
 	else
-		repoarches=(${pkgarches[@]})
+		repoarches=("${pkgarches[@]}")
 	fi
 
 	for pkgarch in ${pkgarches[@]}; do
 		for pkgname in ${pkgnames[@]}; do
 			pkgfile="${pkgname}-${pkgver}-${pkgarch}${PKGEXT}"
 
-			[ -r ${FTP_BASE}/${PKGPOOL}/${pkgfile} ]
-			[ -r ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]
-			[ ! -r ${STAGING}/${repo}/${pkgfile} ]
-			[ ! -r ${STAGING}/${repo}/${pkgfile}.sig ]
+			[ -r "${FTP_BASE}/${PKGPOOL}/${pkgfile}" ]
+			[ -r "${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig" ]
+			[ ! -r "${STAGING}/${repo}/${pkgfile}" ]
+			[ ! -r "${STAGING}/${repo}/${pkgfile}.sig" ]
 
-			for repoarch in ${repoarches[@]}; do
+			for repoarch in "${repoarches[@]}"; do
 				# Only 'any' packages can be found in repos of both arches
 				if [[ $pkgarch != any ]]; then
-					if [[ $pkgarch != ${repoarch} ]]; then
+					if [[ $pkgarch != "$repoarch" ]]; then
 						continue
 					fi
 				fi
 
-				[ -L ${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile} ]
-				[ "$(readlink -e ${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile})" == ${FTP_BASE}/${PKGPOOL}/${pkgfile} ]
+				[ -L "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}" ]
+				[ "$(readlink -e "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkgfile}")" ]
 
-				[ -L ${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}.sig ]
-				[ "$(readlink -e ${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}.sig)" == ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]
+				[ -L "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}.sig" ]
+				[ "$(readlink -e "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig")" ]
 
-				for db in ${DBEXT} ${FILESEXT}; do
+				for db in "${DBEXT}" "${FILESEXT}"; do
 					[ -r "${FTP_BASE}/${repo}/os/${repoarch}/${repo}${db%.tar.*}" ]
 					bsdtar -xf "${FTP_BASE}/${repo}/os/${repoarch}/${repo}${db%.tar.*}" -O | grep "${pkgfile%${PKGEXT}}" &>/dev/null
 				done
@@ -240,7 +240,7 @@ checkPackage() {
 	# TODO: Does not fail if one arch is missing
 	compgen -G "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-*" >/dev/null
 
-	checkPackageDB $repo $pkgbase
+	checkPackageDB "$repo" "$pkgbase"
 }
 
 checkRemovedPackage() {
@@ -250,7 +250,7 @@ checkRemovedPackage() {
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
 	! compgen -G "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-*" >/dev/null
 
-	checkRemovedPackageDB $repo $pkgbase
+	checkRemovedPackageDB "$repo" "$pkgbase"
 }
 
 checkRemovedPackageDB() {
@@ -275,11 +275,11 @@ checkRemovedPackageDB() {
 		tarches=(${pkgarches[@]})
 	fi
 
-	for db in ${DBEXT} ${FILESEXT}; do
-		for tarch in ${tarches[@]}; do
+	for db in "${DBEXT}" "${FILESEXT}"; do
+		for tarch in "${tarches[@]}"; do
 			if [ -r "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" ]; then
 				for pkgname in ${pkgnames[@]}; do
-					if bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep ${pkgname} &>/dev/null; then
+					if bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep "${pkgname}" &>/dev/null; then
 						return 1
 					fi
 				done

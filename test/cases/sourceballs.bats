@@ -16,13 +16,13 @@ __checkRemovedSourcePackage() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 	db-update
 
 	sourceballs
-	for pkgbase in ${pkgs[@]}; do
+	for pkgbase in "${pkgs[@]}"; do
 		__checkSourcePackage ${pkgbase}
 	done
 }
@@ -31,13 +31,13 @@ __checkRemovedSourcePackage() {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 	db-update
 
 	sourceballs
-	for pkgbase in ${pkgs[@]}; do
+	for pkgbase in "${pkgs[@]}"; do
 		__checkSourcePackage ${pkgbase}
 	done
 }
@@ -49,14 +49,14 @@ __checkRemovedSourcePackage() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	sourceballs
-	for pkgbase in ${pkgs[@]}; do
+	for pkgbase in "${pkgs[@]}"; do
 		__checkSourcePackage ${pkgbase}
 	done
 }
@@ -67,14 +67,14 @@ __checkRemovedSourcePackage() {
 	local pkgbase
 	local arch
 
-	for pkgbase in ${pkgs[@]}; do
-		releasePackage extra ${pkgbase}
+	for pkgbase in "${pkgs[@]}"; do
+		releasePackage extra "${pkgbase}"
 	done
 	db-update
 	sourceballs
 
 	for arch in ${arches[@]}; do
-		db-remove extra ${arch} pkg-simple-a
+		db-remove extra "${arch}" pkg-simple-a
 	done
 
 	sourceballs

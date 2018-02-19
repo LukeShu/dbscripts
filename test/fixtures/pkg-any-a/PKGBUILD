@@ -8,6 +8,6 @@ license=('GPL')
 options=(!strip)
 
 package() {
-	install -d ${pkgdir}/usr/share/${pkgname}
-	:>${pkgdir}/usr/share/${pkgname}/test
+	install -d "${pkgdir}"/usr/share/${pkgname}
+	:>"${pkgdir}"/usr/share/${pkgname}/test
 }
