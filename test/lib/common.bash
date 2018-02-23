@@ -9,8 +9,9 @@ die() {
 }
 
 __getCheckSum() {
-	local result=($(sha1sum $1))
-	echo ${result[0]}
+	local result
+	result="$(sha1sum "$1")"
+	echo "${result%% *}"
 }
 
 __buildPackage() {
