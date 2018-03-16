@@ -1,10 +1,11 @@
 *~
-*.pyc
-/config.local
-test/packages/*/*.pkg.tar.?z
 \#*#
 .#*
+*.pyc
+/config.local
+/.idea
 /coverage
+
 yftime
 src*
 pkg*
