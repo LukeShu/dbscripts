@@ -1,15 +1,11 @@
-IMAGE:=dbscripts/test
-RUN_OPTIONS:=--rm --network=none -v $(PWD):/dbscripts:ro --tmpfs=/tmp:exec -w /dbscripts/test
+all:
+.PHONY: all
 
-test-image:
-	docker build --pull -t $(IMAGE) test
+test:
+	$(MAKE) -C test test
 
-test: test-image
-	docker run $(RUN_OPTIONS) $(IMAGE) make test
-
-test-coverage: test-image
+test-coverage:
 	rm -rf ${PWD}/coverage
-	mkdir -m 777 ${PWD}/coverage
-	docker run  $(RUN_OPTIONS) -v ${PWD}/coverage:/coverage -e COVERAGE_DIR=/coverage $(IMAGE) make test-coverage
+	$(MAKE) -C test test-coverage
 
-.PHONY: test-image test test-coverage
+.PHONY: test test-coverage

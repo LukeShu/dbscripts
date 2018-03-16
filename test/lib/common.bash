@@ -46,12 +46,12 @@ __buildPackage() {
 	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
 	for tarch in ${pkgarches[@]}; do
 		if [ "${tarch}" == 'any' ]; then
-			PKGDEST=${pkgdest} PKGEXT=${PKGEXT} makepkg -c
-			mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} makepkg --packagelist)
-		else
-			PKGDEST=${pkgdest} PKGEXT=${PKGEXT} CARCH=${tarch} makepkg -c
-			mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} CARCH=${tarch} makepkg --packagelist)
+			tarch=$(source "$(librelib conf)" && load_conf makepkg.conf CARCH && printf '%s\n' "$CARCH")
 		fi
+		sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" sync
+		mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} CARCH=${tarch} makepkg --packagelist)
+		sudo librechroot -n "dbscripts@${tarch}" run bash -c "$(printf '%q ' echo "PKGEXT=${PKGEXT@Q}") >> /etc/makepkg.conf"
+		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
 	done
 
 	for p in ${pkgfiles[@]}; do
