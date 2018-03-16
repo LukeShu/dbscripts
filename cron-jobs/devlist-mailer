@@ -23,6 +23,6 @@ echo "Subject: $SUBJECT
 To: $LIST
 From: $FROM
 
-$stdin" | /usr/sbin/sendmail -F$FROM "$LIST"
+$stdin" | /usr/sbin/sendmail -F"$FROM" "$LIST"
 
 fi
