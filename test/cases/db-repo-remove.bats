@@ -11,11 +11,11 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
-			../db-repo-remove extra "${arch}" "${pkgbase}"
+			db-repo-remove extra "${arch}" "${pkgbase}"
 		done
 	done
 
@@ -37,10 +37,10 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		../db-repo-remove extra "${arch}" "${pkgs[@]}"
+		db-repo-remove extra "${arch}" "${pkgs[@]}"
 	done
 
 	for pkgbase in "${pkgs[@]}"; do

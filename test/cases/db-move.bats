@@ -11,9 +11,9 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
-	../db-move testing extra pkg-simple-a
+	db-move testing extra pkg-simple-a
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		checkPackage extra "pkg-simple-a-1-1-${arch}.pkg.tar.xz" "${arch}"
@@ -34,9 +34,9 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
-	../db-move testing extra pkg-simple-a pkg-simple-b
+	db-move testing extra pkg-simple-a pkg-simple-b
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
@@ -57,9 +57,9 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
-	../db-move testing extra pkg-simple-epoch
+	db-move testing extra pkg-simple-epoch
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		checkPackage extra "pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz" "${arch}"
@@ -75,8 +75,8 @@ load ../lib/common
 		releasePackage testing "${pkgbase}" any
 	done
 
-	../db-update
-	../db-move testing extra pkg-any-a
+	db-update
+	db-move testing extra pkg-any-a
 
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz
 	checkRemovedAnyPackage testing pkg-any-a
@@ -95,8 +95,8 @@ load ../lib/common
 		done
 	done
 
-	../db-update
-	../db-move testing extra pkg-split-a
+	db-update
+	db-move testing extra pkg-split-a
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		for pkg in "${pkgdir}/pkg-split-a"/*-"${arch}"${PKGEXT}; do

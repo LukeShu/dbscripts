@@ -10,7 +10,7 @@ load ../lib/common
 			releasePackage extra "${pkgbase}" "${arch}"
 		done
 	done
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
@@ -29,7 +29,7 @@ load ../lib/common
 	for pkgbase in "${pkgs[@]}"; do
 		releasePackage extra "${pkgbase}" any
 	done
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
@@ -53,7 +53,7 @@ load ../lib/common
 			releasePackage extra "${pkgbase}" "${arch}"
 		done
 	done
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		pkgnames=($(source "${TMP}/svn-packages-copy/${pkgbase}/trunk/PKGBUILD"; echo "${pkgname[@]}"))
@@ -78,10 +78,10 @@ load ../lib/common
 			releasePackage extra "${pkgbase}" "${arch}"
 		done
 	done
-	../db-update
+	db-update
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		../db-remove extra "${arch}" pkg-simple-a
+		db-remove extra "${arch}" pkg-simple-a
 	done
 
 	for arch in "${ARCH_BUILD[@]}"; do

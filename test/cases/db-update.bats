@@ -11,7 +11,7 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
@@ -22,13 +22,13 @@ load ../lib/common
 
 @test "add single simple package" {
 	releasePackage extra 'pkg-simple-a' 'i686'
-	../db-update
+	db-update
 	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 }
 
 @test "add single epoch package" {
 	releasePackage extra 'pkg-simple-epoch' 'i686'
-	../db-update
+	db-update
 	checkPackage extra 'pkg-simple-epoch-1:1-1-i686.pkg.tar.xz' 'i686'
 }
 
@@ -40,7 +40,7 @@ load ../lib/common
 		releasePackage extra "${pkgbase}" any
 	done
 
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		checkAnyPackage extra "${pkgbase}-1-1-any.pkg.tar.xz"
@@ -59,7 +59,7 @@ load ../lib/common
 		done
 	done
 
-	../db-update
+	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
@@ -72,7 +72,7 @@ load ../lib/common
 
 @test "update any package" {
 	releasePackage extra pkg-any-a any
-	../db-update
+	db-update
 
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
@@ -82,7 +82,7 @@ load ../lib/common
 	popd >/dev/null
 
 	releasePackage extra pkg-any-a any
-	../db-update
+	db-update
 
 	checkAnyPackage extra pkg-any-a-1-2-any.pkg.tar.xz any
 
@@ -101,7 +101,7 @@ load ../lib/common
 
 	releasePackage testing pkg-any-a any
 
-	../db-update
+	db-update
 
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 	checkAnyPackage testing pkg-any-a-1-2-any.pkg.tar.xz any
@@ -111,20 +111,20 @@ load ../lib/common
 
 @test "update same any package to same repository" {
 	releasePackage extra pkg-any-a any
-	../db-update
+	db-update
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 
 	releasePackage extra pkg-any-a any
-	../db-update >/dev/null 2>&1 && (fail 'Adding an existing package to the same repository should fail'; return 1)
+	db-update >/dev/null 2>&1 && (fail 'Adding an existing package to the same repository should fail'; return 1)
 }
 
 @test "update same any package to different repositories" {
 	releasePackage extra pkg-any-a any
-	../db-update
+	db-update
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 
 	releasePackage testing pkg-any-a any
-	../db-update >/dev/null 2>&1 && (fail 'Adding an existing package to another repository should fail'; return 1)
+	db-update >/dev/null 2>&1 && (fail 'Adding an existing package to another repository should fail'; return 1)
 
 	local arch
 	for arch in "${ARCH_BUILD[@]}"; do
@@ -147,7 +147,7 @@ load ../lib/common
 	# remove a split package to make db-update fail
 	rm "${STAGING}/extra/${pkgbase}1-"*
 
-	../db-update >/dev/null 2>&1 && fail "db-update should fail when a split package is missing!"
+	db-update >/dev/null 2>&1 && fail "db-update should fail when a split package is missing!"
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
@@ -160,7 +160,7 @@ load ../lib/common
 	mkdir "${STAGING}/unknown/"
 	releasePackage extra 'pkg-simple-a' 'i686'
 	releasePackage unknown 'pkg-simple-b' 'i686'
-	../db-update
+	db-update
 	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 	[ -e "${FTP_BASE}/unknown" ] && fail "db-update pushed a package into an unknown repository"
 	rm -rf "${STAGING}/unknown/"
