@@ -70,7 +70,6 @@ setup() {
 	TMPDIR="${TMP}/tmp"
 	CLEANUP_DRYRUN=false
 	SOURCE_CLEANUP_DRYRUN=false
-	REQUIRE_SIGNATURE=true
 eot
 	. config
 
@@ -145,13 +144,11 @@ releasePackage() {
 	cp *-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"
 	popd >/dev/null
 
-	if "${REQUIRE_SIGNATURE}"; then
-		for a in "${arch[@]}"; do
-			for p in "${pkgname[@]}"; do
-				signpkg "${STAGING}/${repo}/${p}-${pkgver}-${a}"${PKGEXT}
-			done
+	for a in "${arch[@]}"; do
+		for p in "${pkgname[@]}"; do
+			signpkg "${STAGING}/${repo}/${p}-${pkgver}-${a}"${PKGEXT}
 		done
-	fi
+	done
 }
 
 getPackageNamesFromPackageBase() {
@@ -167,18 +164,14 @@ checkAnyPackageDB() {
 	local db
 
 	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
-	if "${REQUIRE_SIGNATURE}"; then
-		[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
-	fi
+	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
 		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
 
-		if "${REQUIRE_SIGNATURE}"; then
-			[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-			[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
-		fi
+		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
 
 		for db in "${DBEXT}" "${FILESEXT}"; do
 			if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
@@ -213,13 +206,11 @@ checkPackageDB() {
 
 	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
 
-	if "${REQUIRE_SIGNATURE}"; then
-		[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-		[ ! -r "${STAGING}/${repo}/${pkg}.sig" ]
+	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
+	[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
+	[ ! -r "${STAGING}/${repo}/${pkg}.sig" ]
 
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
-	fi
+	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
 
 	for db in "${DBEXT}" "${FILESEXT}"; do
 		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then

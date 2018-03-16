@@ -257,7 +257,7 @@ getpkgfile() {
 	elif [ ! -f "${1}" ]; then
 		error "Package %s not found!" "$1"
 		exit 1
-	elif "${REQUIRE_SIGNATURE}" && [ ! -f "${1}.sig" ]; then
+	elif [ ! -f "${1}.sig" ]; then
 		error "Package signature %s not found!" "$1.sig"
 		exit 1
 	fi
@@ -276,7 +276,7 @@ getpkgfiles() {
 		if  [ ! -f "${f}" ]; then
 			error "Package %s not found!" "$f"
 			exit 1
-		elif "${REQUIRE_SIGNATURE}" && [ ! -f "${f}.sig" ]; then
+		elif [ ! -f "${f}.sig" ]; then
 			error "Package signature %s not found!" "$f.sig"
 			exit 1
 		fi
