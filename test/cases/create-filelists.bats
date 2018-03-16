@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testCreateSimpleFileLists() {
+@test "create simple file lists" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -24,7 +21,7 @@ testCreateSimpleFileLists() {
 	done
 }
 
-testCreateAnyFileLists() {
+@test "create any file lists" {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 	local arch
@@ -43,7 +40,7 @@ testCreateAnyFileLists() {
 	done
 }
 
-testCreateSplitFileLists() {
+@test "create split file lists" {
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -71,7 +68,7 @@ testCreateSplitFileLists() {
 }
 
 
-testCleanupFileLists() {
+@test "cleanup file lists" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -97,5 +94,3 @@ testCleanupFileLists() {
 	done
 
 }
-
-. "${curdir}/../lib/shunit2"

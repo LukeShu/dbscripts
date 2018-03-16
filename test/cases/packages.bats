@@ -1,11 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testPackages() {
+@test "packages" {
 	# TODO: namcap -r sodepends fails with i686 packages
 	find "${pkgdir}" -name "*${PKGEXT}" -exec namcap -e sodepends,pkgnameindesc {} + || fail 'namcap failed'
 }
-
-. "${curdir}/../lib/shunit2"

@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testCleanupSimplePackages() {
+@test "cleanup simple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -33,7 +30,7 @@ testCleanupSimplePackages() {
 	done
 }
 
-testCleanupEpochPackages() {
+@test "cleanup epoch packages" {
 	local pkgs=('pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -60,7 +57,7 @@ testCleanupEpochPackages() {
 	done
 }
 
-testCleanupAnyPackages() {
+@test "cleanup any packages" {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 	local arch='any'
@@ -82,7 +79,7 @@ testCleanupAnyPackages() {
 	checkAnyPackage extra "${pkg2}"
 }
 
-testCleanupSplitPackages() {
+@test "cleanup split packages" {
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -114,5 +111,3 @@ testCleanupSplitPackages() {
 		done
 	done
 }
-
-. "${curdir}/../lib/shunit2"

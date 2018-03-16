@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testMoveSimplePackages() {
+@test "move simple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -26,7 +23,7 @@ testMoveSimplePackages() {
 	done
 }
 
-testMoveMultiplePackages() {
+@test "move multiple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -49,7 +46,7 @@ testMoveMultiplePackages() {
 	done
 }
 
-testMoveEpochPackages() {
+@test "move epoch packages" {
 	local pkgs=('pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -70,7 +67,7 @@ testMoveEpochPackages() {
 	done
 }
 
-testMoveAnyPackages() {
+@test "move any packages" {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
@@ -86,7 +83,7 @@ testMoveAnyPackages() {
 	checkAnyPackage testing pkg-any-b-1-1-any.pkg.tar.xz
 }
 
-testMoveSplitPackages() {
+@test "move split packages" {
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -114,5 +111,3 @@ testMoveSplitPackages() {
 
 	checkRemovedAnyPackage testing pkg-split-a
 }
-
-. "${curdir}/../lib/shunit2"

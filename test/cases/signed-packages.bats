@@ -1,20 +1,17 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testAddSignedPackage() {
+@test "add signed package" {
 	releasePackage extra 'pkg-simple-a' 'i686'
 	../db-update || fail "db-update failed!"
 }
 
-testAddUnsignedPackage() {
+@test "add unsigned package" {
 	releasePackage extra 'pkg-simple-a' 'i686'
 	rm "${STAGING}"/extra/*.sig
 	../db-update >/dev/null 2>&1 && fail "db-update should fail when a signature is missing!"
 }
 
-testAddInvalidSignedPackage() {
+@test "add invalid signed package" {
 	local p
 	releasePackage extra 'pkg-simple-a' 'i686'
 	for p in "${STAGING}"/extra/*${PKGEXT}; do
@@ -24,7 +21,7 @@ testAddInvalidSignedPackage() {
 	../db-update >/dev/null 2>&1 && fail "db-update should fail when a signature is invalid!"
 }
 
-testAddBrokenSignature() {
+@test "add broken signature" {
 	local s
 	releasePackage extra 'pkg-simple-a' 'i686'
 	for s in "${STAGING}"/extra/*.sig; do
@@ -32,5 +29,3 @@ testAddBrokenSignature() {
 	done
 	../db-update >/dev/null 2>&1 && fail "db-update should fail when a signature is broken!"
 }
-
-. "${curdir}/../lib/shunit2"

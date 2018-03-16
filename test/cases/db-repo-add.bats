@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testAddSimplePackages() {
+@test "add simple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -25,7 +22,7 @@ testAddSimplePackages() {
 	done
 }
 
-testAddMultiplePackages() {
+@test "add multiple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -48,5 +45,3 @@ testAddMultiplePackages() {
 		done
 	done
 }
-
-. "${curdir}/../lib/shunit2"

@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testAddSimplePackages() {
+@test "add simple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -23,19 +20,19 @@ testAddSimplePackages() {
 	done
 }
 
-testAddSingleSimplePackage() {
+@test "add single simple package" {
 	releasePackage extra 'pkg-simple-a' 'i686'
 	../db-update
 	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 }
 
-testAddSingleEpochPackage() {
+@test "add single epoch package" {
 	releasePackage extra 'pkg-simple-epoch' 'i686'
 	../db-update
 	checkPackage extra 'pkg-simple-epoch-1:1-1-i686.pkg.tar.xz' 'i686'
 }
 
-testAddAnyPackages() {
+@test "add any packages" {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
@@ -50,7 +47,7 @@ testAddAnyPackages() {
 	done
 }
 
-testAddSplitPackages() {
+@test "add split packages" {
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -73,7 +70,7 @@ testAddSplitPackages() {
 	done
 }
 
-testUpdateAnyPackage() {
+@test "update any package" {
 	releasePackage extra pkg-any-a any
 	../db-update
 
@@ -92,7 +89,7 @@ testUpdateAnyPackage() {
 	rm -f "${pkgdir}/pkg-any-a/pkg-any-a-1-2-any.pkg.tar.xz"
 }
 
-testUpdateAnyPackageToDifferentRepositoriesAtOnce() {
+@test "update any package to different repositories at once" {
 	releasePackage extra pkg-any-a any
 
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
@@ -112,7 +109,7 @@ testUpdateAnyPackageToDifferentRepositoriesAtOnce() {
 	rm -f "${pkgdir}/pkg-any-a/pkg-any-a-1-2-any.pkg.tar.xz"
 }
 
-testUpdateSameAnyPackageToSameRepository() {
+@test "update same any package to same repository" {
 	releasePackage extra pkg-any-a any
 	../db-update
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
@@ -121,7 +118,7 @@ testUpdateSameAnyPackageToSameRepository() {
 	../db-update >/dev/null 2>&1 && (fail 'Adding an existing package to the same repository should fail'; return 1)
 }
 
-testUpdateSameAnyPackageToDifferentRepositories() {
+@test "update same any package to different repositories" {
 	releasePackage extra pkg-any-a any
 	../db-update
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
@@ -138,7 +135,7 @@ testUpdateSameAnyPackageToDifferentRepositories() {
 }
 
 
-testAddIncompleteSplitPackage() {
+@test "add incomplete split package" {
 	local repo='extra'
 	local pkgbase='pkg-split-a'
 	local arch
@@ -159,7 +156,7 @@ testAddIncompleteSplitPackage() {
 	done
 }
 
-testUnknownRepo() {
+@test "unknown repo" {
 	mkdir "${STAGING}/unknown/"
 	releasePackage extra 'pkg-simple-a' 'i686'
 	releasePackage unknown 'pkg-simple-b' 'i686'
@@ -168,5 +165,3 @@ testUnknownRepo() {
 	[ -e "${FTP_BASE}/unknown" ] && fail "db-update pushed a package into an unknown repository"
 	rm -rf "${STAGING}/unknown/"
 }
-
-. "${curdir}/../lib/shunit2"

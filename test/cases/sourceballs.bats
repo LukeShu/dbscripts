@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testSourceballs() {
+@test "sourceballs" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -21,7 +18,7 @@ testSourceballs() {
 	done
 }
 
-testAnySourceballs() {
+@test "any sourceballs" {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
@@ -36,7 +33,7 @@ testAnySourceballs() {
 	done
 }
 
-testSplitSourceballs() {
+@test "split sourceballs" {
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -56,7 +53,7 @@ testSplitSourceballs() {
 	done
 }
 
-testSourceballsCleanup() {
+@test "sourceballs cleanup" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -77,5 +74,3 @@ testSourceballsCleanup() {
 	[ -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-a"-*"${SRCEXT}" ] && fail "source package was not removed!"
 	[ ! -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-b"-*"${SRCEXT}" ] && fail "source package not found!"
 }
-
-. "${curdir}/../lib/shunit2"

@@ -1,9 +1,6 @@
-#!/bin/bash
+load ../lib/common
 
-curdir="$(dirname "$(readlink -e "$0")")"
-. "${curdir}/../lib/common.inc"
-
-testRemovePackages() {
+@test "remove packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -29,7 +26,7 @@ testRemovePackages() {
 	done
 }
 
-testRemoveMultiplePackages() {
+@test "remove multiple packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -52,5 +49,3 @@ testRemoveMultiplePackages() {
 		done
 	done
 }
-
-. "${curdir}/../lib/shunit2"
