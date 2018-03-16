@@ -1,3 +1,9 @@
+# Parabola GNU/Linux-libre repository management scripts
+## Configuration
+* The default configuration can be found in `config`.
+* An optional `config.local` may override the default configuration.
+* The path and name of the local configuration file can be overridden by setting the `DBSCRIPTS_CONFIG` environment variable.
+## Overview
 The executables that you (might) care about are:
 
     dbscripts/
