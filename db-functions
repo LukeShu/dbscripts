@@ -77,7 +77,7 @@ cleanup() {
 		repo=${l%.*}
 		arch=${l#*.}
 		if [ -d "$TMPDIR/.repolock.$repo.$arch" ]; then
-			msg "Removing left over lock from [%s] (%s)" "${repo}" "${arch}"
+			msg "Removing left over lock from [%s] (%s)" "$repo" "$arch"
 			repo_unlock "$repo" "$arch"
 		fi
 	done
@@ -127,7 +127,7 @@ repo_lock () {
 	while [ "$_count" -le "$_trial" ] || "$_lockblock" ; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
-			warning "Repo [%s] (%s) is already locked by %s." "${1}" "${2}" "$_owner"
+			warning "Repo [%s] (%s) is already locked by %s." "$1" "$2" "$_owner"
 			msg2 "Retrying in %d seconds..." "$LOCK_DELAY"
 		else
 			LOCKS+=("$1.$2")
@@ -138,14 +138,14 @@ repo_lock () {
 		let _count=$_count+1
 	done
 
-	error "Repo [%s] (%s) is already locked by %s. Giving up!" "${1}" "${2}" "$_owner"
+	error "Repo [%s] (%s) is already locked by %s. Giving up!" "$1" "$2" "$_owner"
 	return 1
 }
 
 repo_unlock () { #repo_unlock <repo-name> <arch>
 	local LOCKDIR="$TMPDIR/.repolock.$1.$2"
 	if [ ! -d "$LOCKDIR" ]; then
-		warning "Repo lock [%s] (%s) was not locked!" "${1}" "${2}"
+		warning "Repo lock [%s] (%s) was not locked!" "$1" "$2"
 		restore_umask
 		return 1
 	else
@@ -255,10 +255,10 @@ getpkgfile() {
 		error 'No canonical package found!'
 		exit 1
 	elif [ ! -f "${1}" ]; then
-		error "Package %s not found!" "${1}"
+		error "Package %s not found!" "$1"
 		exit 1
 	elif "${REQUIRE_SIGNATURE}" && [ ! -f "${1}.sig" ]; then
-		error "Package signature %s not found!" "${1}.sig"
+		error "Package signature %s not found!" "$1.sig"
 		exit 1
 	fi
 
@@ -272,12 +272,12 @@ getpkgfiles() {
 		exit 1
 	fi
 
-	for f in "${@}"; do
+	for f in "$@"; do
 		if  [ ! -f "${f}" ]; then
-			error "Package %s not found!" "${f}"
+			error "Package %s not found!" "$f"
 			exit 1
 		elif "${REQUIRE_SIGNATURE}" && [ ! -f "${f}.sig" ]; then
-			error "Package signature %s not found!" "${f}.sig"
+			error "Package signature %s not found!" "$f.sig"
 			exit 1
 		fi
 	done
@@ -420,12 +420,12 @@ set_repo_permission() {
 
 	if [ -w "${dbfile}" ]; then
 		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
-		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "${dbfile}"    "$group"
-		chgrp "$group" "${filesfile}" || error "Could not change group of %s to %s" "${filesfile}" "$group"
-		chmod g+w "${dbfile}"    || error "Could not set write permission for group %s to %s" "$group" "${dbfile}"
-		chmod g+w "${filesfile}" || error "Could not set write permission for group %s to %s" "$group" "${filesfile}"
+		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "$dbfile"    "$group"
+		chgrp "$group" "${filesfile}" || error "Could not change group of %s to %s" "$filesfile" "$group"
+		chmod g+w "${dbfile}"    || error "Could not set write permission for group %s to %s" "$group" "$dbfile"
+		chmod g+w "${filesfile}" || error "Could not set write permission for group %s to %s" "$group" "$filesfile"
 	else
-		error "You don't have permission to change %s" "${dbfile}"
+		error "You don't have permission to change %s" "$dbfile"
 	fi
 }
 
@@ -452,7 +452,7 @@ arch_repo_remove() {
 	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
 
 	if [ ! -f "${dbfile}" ]; then
-		error "No database found at '%s'" "${dbfile}"
+		error "No database found at '%s'" "$dbfile"
 		return 1
 	fi
 	printf -v pkgs_str -- '%q ' "${pkgs[@]}"

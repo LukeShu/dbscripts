@@ -15,7 +15,7 @@ pkgfiles=("${@:3}")
 ftppath="$FTP_BASE/$repo/os"
 
 if ! check_repo_permission "$repo"; then
-	die "You don't have permission to add packages to %s" "${repo}"
+	die "You don't have permission to add packages to %s" "$repo"
 fi
 
 if [ "$arch" == "any" ]; then

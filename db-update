@@ -11,7 +11,7 @@ fi
 # Find repos with packages to release
 staging_repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 3 -type f -name "*${PKGEXT}" -printf '%h\n' | sort -u))
 if [ $? -ge 1 ]; then
-	die "Could not read %s" "${STAGING}"
+	die "Could not read %s" "$STAGING"
 fi
 
 repos=()
@@ -32,22 +32,22 @@ done
 # check if packages are valid
 for repo in "${repos[@]}"; do
 	if ! check_repo_permission "${repo}"; then
-		die "You don't have permission to update packages in %s" "${repo}"
+		die "You don't have permission to update packages in %s" "$repo"
 	fi
 	pkgs=($(getpkgfiles "${STAGING}/${repo}/"*${PKGEXT}))
 	if [ $? -eq 0 ]; then
 		for pkg in "${pkgs[@]}"; do
 			if [ -h "${pkg}" ]; then
-				die "Package %s is a symbolic link" "${repo}/${pkg##*/}"
+				die "Package %s is a symbolic link" "$repo/${pkg##*/}"
 			fi
 			if ! check_pkgfile "${pkg}"; then
-				die "Package %s is not consistent with its meta data" "${repo}/${pkg##*/}"
+				die "Package %s is not consistent with its meta data" "$repo/${pkg##*/}"
 			fi
 			if "${REQUIRE_SIGNATURE}" && ! pacman-key -v "${pkg}.sig" >/dev/null 2>&1; then
-				die "Package %s does not have a valid signature" "${repo}/${pkg##*/}"
+				die "Package %s does not have a valid signature" "$repo/${pkg##*/}"
 			fi
 			if ! check_pkgrepos "${pkg}"; then
-				die "Package %s already exists in another repository" "${repo}/${pkg##*/}"
+				die "Package %s already exists in another repository" "$repo/${pkg##*/}"
 			fi
 			if ! check_packager "${pkg}"; then
 				die "Package ${repo}/${pkg##*/} does not have a valid packager"
@@ -64,12 +64,12 @@ for repo in "${repos[@]}"; do
 		#	die "Missing split packages for %s" "${repo}"
 		#fi
 	else
-		die "Could not read %s" "${STAGING}"
+		die "Could not read %s" "$STAGING"
 	fi
 done
 
 for repo in "${repos[@]}"; do
-	msg "Updating [%s]..." "${repo}"
+	msg "Updating [%s]..." "$repo"
 	any_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-any${PKGEXT} 2>/dev/null))
 	for pkgarch in "${ARCHES[@]}"; do
 		add_pkgs=()
@@ -107,7 +107,7 @@ cd "${STAGING}"
 while read -r file; do
 	pub="${FTP_BASE}/${file}"
 	if [[ -f "$pub" ]]; then
-		warning "file already exists: %s" "${file}"
+		warning "file already exists: %s" "$file"
 	else
 		mkdir -p -- "${pub%/*}"
 		mv -vn "$file" "$pub"

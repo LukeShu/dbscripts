@@ -13,7 +13,7 @@ arch="$2"
 pkgbases=("${@:3}")
 
 if ! check_repo_permission "$repo"; then
-	die "You don't have permission to remove packages from %s" "${repo}"
+	die "You don't have permission to remove packages from %s" "$repo"
 fi
 
 if [ "$arch" == "any" ]; then
