@@ -34,8 +34,8 @@ Ok, now let's talk about what those are.
 There are 3 "main" programs:
 
  - `db-update` : add packages to repositories
- - `db-move`   : move packages from one repository to another
  - `db-remove` : remove packages from repositories
+ - `db-move`   : move packages from one repository to another
 
 Of course, sometimes things go wrong, and you need to drop to a
 lower-level, but you don't want to go all the way down to pacman's
