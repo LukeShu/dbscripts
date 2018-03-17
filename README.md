@@ -12,14 +12,14 @@ The executables that you (might) care about are:
     │   ├── ftpdir-cleanup
     │   ├── integrity-check
     │   ├── sourceballs
-    │   ├── update-web-db
-    │   └── update-web-files-db
+    │   ├── update-web-db               [Arch Linux only]
+    │   └── update-web-files-db         [Arch Linux only]
     ├── db-move
     ├── db-remove
     ├── db-repo-add
     ├── db-repo-remove
     ├── db-update
-    └── testing2x
+    └── testing2x                       [Arch Linux only]
 
 Ok, now let's talk about what those are.
 
@@ -28,11 +28,6 @@ There are 3 "main" programs:
  - `db-update` : add packages to repositories
  - `db-remove` : remove packages from repositories
  - `db-move`   : move packages from one repository to another
-
-Moving packages from testing to stable repositories is such a common
-task that we have a wrapper around `db-move` to make it easier:
-
- - `testing2x`
 
 Of course, sometimes things go wrong, and you need to drop to a
 lower-level, but you don't want to go all the way down to pacman's
@@ -56,8 +51,6 @@ Things that haven't been mentioned yet:
 
  - `cron-jobs/devlist-mailer`
  - `cron-jobs/sourceballs`
- - `cron-jobs/update-web-db`
- - `cron-jobs/update-web-files-db`
 ## Testing
 * Install the `make` and `docker` packages. Start the docker daemon by issuing `systemctl start docker`.
 * The test suite can now be run with `make test`.
