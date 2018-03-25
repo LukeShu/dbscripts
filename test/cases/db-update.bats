@@ -130,6 +130,7 @@ load ../lib/common
 
 
 @test "add incomplete split package" {
+	skip # commented out with "This is fucking obnoxious" -- abslibre is broken
 	local repo='extra'
 	local pkgbase='pkg-split-a'
 	local arch
