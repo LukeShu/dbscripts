@@ -61,7 +61,8 @@ declare -A add_pkgs
 declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
 	# move the package in xbs
-	arches=($(xbs move "${repo_from}" "${repo_to}" "${pkgbase}"))
+	arches="$(xbs move "${repo_from}" "${repo_to}" "${pkgbase}")" || die
+	read -ra arches <<<"$arches"
 	# move the package in ftp
 	for pkgarch in "${arches[@]}"; do
 		xbsrepo_to="$(xbs releasepath "$pkgbase" "$repo_to" "$pkgarch")"
