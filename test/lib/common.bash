@@ -46,32 +46,27 @@ oneTimeSetUp() {
 }
 
 __buildPackage() {
-	local a=$1
+	local arch=$1
+	local pkgver
 	local pkgname
-	local pkgversion
+	local a
 	local p
 
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
-	pkgversion=$(. PKGBUILD; get_full_version)
+	pkgver=$(. PKGBUILD; get_full_version)
 
 	for p in "${pkgname[@]}"; do
-		if [ -f "${p}-${pkgversion}-${a}"${PKGEXT} ]; then
+		if [ -f "${p}-${pkgver}-${arch}"${PKGEXT} ]; then
 			return 0
 		fi
 	done
 
-	if [ "$a" == 'any' ]; then
-		sudo libremakepkg
+	if [ "${arch}" == 'any' ]; then
+		sudo librechroot -n "dbscripts@${arch}" make
 	else
-		if in_array "$a" "${ARCH_BUILD[@]}"; then
-			sudo setarch "$a" libremakepkg -n "$a"
-			for p in "${pkgname[@]}"; do
-				cp "${p}-${pkgversion}-${a}"${PKGEXT} "$(dirname "${BASH_SOURCE[0]})/../packages/${d##*/}")"
-			done
-		else
-			warning "skipping arch %s" "$a"
-		fi
+		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
 	fi
+	sudo libremakepkg -n "dbscripts@${arch}"
 }
 
 oneTimeTearDown() {
