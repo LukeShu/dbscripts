@@ -53,8 +53,7 @@ setup() {
 	local r
 	local a
 
-	TMP="$(mktemp -dt "${0##*/}.XXXXXXXXXX")"
-	#msg "Using ${TMP}"
+	TMP="$(mktemp -d)"
 
 	export DBSCRIPTS_CONFIG=${TMP}/config.local
 	cat <<eot > "${DBSCRIPTS_CONFIG}"
@@ -62,7 +61,7 @@ setup() {
 	SVNREPO="file://${TMP}/svn-packages-repo"
 	PKGREPOS=('core' 'extra' 'testing')
 	PKGPOOL='pool/packages'
-	SRCPOOL='pool/sources'
+	SRCPOOL='sources/packages'
 	TESTING_REPO='testing'
 	STABLE_REPOS=('core' 'extra')
 	CLEANUP_DESTDIR="${TMP}/package-cleanup"
@@ -73,7 +72,7 @@ setup() {
 	SOURCE_CLEANUP_DRYRUN=false
 	REQUIRE_SIGNATURE=true
 eot
-	. "$(dirname "${BASH_SOURCE[0]}")/../../config"
+	. config
 
 	mkdir -p "${TMP}/"{ftp,tmp,staging,{package,source}-cleanup,svn-packages-{copy,repo}}
 
@@ -86,7 +85,6 @@ eot
 	mkdir -p "${TMP}/ftp/${PKGPOOL}"
 	mkdir -p "${TMP}/ftp/${SRCPOOL}"
 
-	msg 'Creating svn repository...'
 	svnadmin create "${TMP}/svn-packages-repo"
 	svn checkout -q "file://${TMP}/svn-packages-repo" "${TMP}/svn-packages-copy"
 
