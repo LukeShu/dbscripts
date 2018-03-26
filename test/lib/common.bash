@@ -37,37 +37,41 @@ oneTimeSetUp() {
 	msg 'Building packages...'
 	for d in "${pkgdir}"/*; do
 		pushd "$d" >/dev/null
-		pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 		pkgarch=($(. PKGBUILD; echo "${arch[@]}"))
-		pkgversion=$(. PKGBUILD; get_full_version)
-
-		build=true
 		for a in "${pkgarch[@]}"; do
-			for p in "${pkgname[@]}"; do
-				if [ -f "${p}-${pkgversion}-${a}"${PKGEXT} ]; then
-					build=false
-				fi
-			done
+			__buildPackage "$a"
 		done
-
-		if ! "${build}"; then
-			if [ "${pkgarch[0]}" == 'any' ]; then
-				sudo libremakepkg
-			else
-				for a in "${pkgarch[@]}"; do
-					if in_array "$a" "${ARCH_BUILD[@]}"; then
-						sudo setarch "$a" libremakepkg -n "$a"
-						for p in "${pkgname[@]}"; do
-							cp "${p}-${pkgversion}-${a}"${PKGEXT} "$(dirname "${BASH_SOURCE[0]})/../packages/${d##*/}")"
-						done
-					else
-						warning "skipping arch %s" "$a"
-					fi
-				done
-			fi
-		fi
 		popd >/dev/null
 	done
+}
+
+__buildPackage() {
+	local a=$1
+	local pkgname
+	local pkgversion
+	local p
+
+	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
+	pkgversion=$(. PKGBUILD; get_full_version)
+
+	for p in "${pkgname[@]}"; do
+		if [ -f "${p}-${pkgversion}-${a}"${PKGEXT} ]; then
+			return 0
+		fi
+	done
+
+	if [ "$a" == 'any' ]; then
+		sudo libremakepkg
+	else
+		if in_array "$a" "${ARCH_BUILD[@]}"; then
+			sudo setarch "$a" libremakepkg -n "$a"
+			for p in "${pkgname[@]}"; do
+				cp "${p}-${pkgversion}-${a}"${PKGEXT} "$(dirname "${BASH_SOURCE[0]})/../packages/${d##*/}")"
+			done
+		else
+			warning "skipping arch %s" "$a"
+		fi
+	fi
 }
 
 oneTimeTearDown() {
