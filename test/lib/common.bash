@@ -1,5 +1,4 @@
 #!/hint/bash
-set -E
 
 . /usr/share/makepkg/util.sh
 . "$(dirname "${BASH_SOURCE[0]}")"/../test.conf
@@ -48,7 +47,7 @@ __buildPackage() {
 	sudo libremakepkg -n "dbscripts@${arch}"
 }
 
-setUp() {
+setup() {
 	local p
 	local pkg
 	local r
@@ -103,7 +102,7 @@ eot
 	echo 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs/xbs.conf"
 }
 
-tearDown() {
+teardown() {
 	rm -rf "${TMP}"
 }
 
