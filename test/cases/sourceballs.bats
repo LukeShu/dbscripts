@@ -14,7 +14,7 @@ load ../lib/common
 
 	sourceballs
 	for pkgbase in "${pkgs[@]}"; do
-		[ ! -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ] && fail "source package not found!"
+		[ -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ]
 	done
 }
 
@@ -29,7 +29,7 @@ load ../lib/common
 
 	sourceballs
 	for pkgbase in "${pkgs[@]}"; do
-		[ ! -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ] && fail "source package not found!"
+		[ -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ]
 	done
 }
 
@@ -49,7 +49,7 @@ load ../lib/common
 
 	sourceballs
 	for pkgbase in "${pkgs[@]}"; do
-		[ ! -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ] && fail "source package not found!"
+		[ -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ]
 	done
 }
 
@@ -71,6 +71,6 @@ load ../lib/common
 	done
 
 	sourceballs
-	[ -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-a"-*"${SRCEXT}" ] && fail "source package was not removed!"
-	[ ! -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-b"-*"${SRCEXT}" ] && fail "source package not found!"
+	[ ! -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-a"-*"${SRCEXT}" ]
+	[ -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-b"-*"${SRCEXT}" ]
 }

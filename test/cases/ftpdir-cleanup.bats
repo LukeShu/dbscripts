@@ -22,8 +22,8 @@ load ../lib/common
 	for arch in "${ARCH_BUILD[@]}"; do
 		local pkg1="pkg-simple-a-1-1-${arch}.pkg.tar.xz"
 		checkRemovedPackage extra 'pkg-simple-a' "${arch}"
-		[ -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ] && fail "${PKGPOOL}/${pkg1} found"
-		[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ] && fail "${repo}/os/${arch}/${pkg1} found"
+		[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ]
+		[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ]
 
 		local pkg2="pkg-simple-b-1-1-${arch}.pkg.tar.xz"
 		checkPackage extra "${pkg2}" "${arch}"
@@ -52,8 +52,8 @@ load ../lib/common
 	for arch in "${ARCH_BUILD[@]}"; do
 		local pkg1="pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz"
 		checkRemovedPackage extra 'pkg-simple-epoch' "${arch}"
-		[ -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ] && fail "${PKGPOOL}/${pkg1} found"
-		[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ] && fail "${repo}/os/${arch}/${pkg1} found"
+		[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ]
+		[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ]
 	done
 }
 
@@ -72,8 +72,8 @@ load ../lib/common
 
 	local pkg1='pkg-any-a-1-1-any.pkg.tar.xz'
 	checkRemovedAnyPackage extra 'pkg-any-a'
-	[ -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ] && fail "${PKGPOOL}/${pkg1} found"
-	[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ] && fail "${repo}/os/${arch}/${pkg1} found"
+	[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg1}" ]
+	[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg1}" ]
 
 	local pkg2="pkg-any-b-1-1-${arch}.pkg.tar.xz"
 	checkAnyPackage extra "${pkg2}"
@@ -102,8 +102,8 @@ load ../lib/common
 	for arch in "${ARCH_BUILD[@]}"; do
 		for pkg in "${pkgdir}/${pkgs[0]}"/*-"${arch}"${PKGEXT}; do
 			checkRemovedPackage extra "${pkgs[0]}" "${arch}"
-			[ -f "${FTP_BASE}/${PKGPOOL}/${pkg}" ] && fail "${PKGPOOL}/${pkg} found"
-			[ -f "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ] && fail "${repo}/os/${arch}/${pkg} found"
+			[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
+			[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
 		done
 
 		for pkg in "${pkgdir}/${pkgs[1]}"/*-"${arch}"${PKGEXT}; do

@@ -115,7 +115,7 @@ load ../lib/common
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 
 	releasePackage extra pkg-any-a any
-	db-update >/dev/null 2>&1 && (fail 'Adding an existing package to the same repository should fail'; return 1)
+	! db-update >/dev/null 2>&1
 }
 
 @test "update same any package to different repositories" {
@@ -124,13 +124,13 @@ load ../lib/common
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 
 	releasePackage testing pkg-any-a any
-	db-update >/dev/null 2>&1 && (fail 'Adding an existing package to another repository should fail'; return 1)
+	! db-update >/dev/null 2>&1
 
 	local arch
 	for arch in "${ARCH_BUILD[@]}"; do
-		( [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ] \
-			&& bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null) \
-			&& fail "${pkgbase} should not be in testing/os/${arch}/testing${DBEXT%.tar.*}"
+		if [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ]; then
+			! bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
+		fi
 	done
 }
 
@@ -147,12 +147,12 @@ load ../lib/common
 	# remove a split package to make db-update fail
 	rm "${STAGING}/extra/${pkgbase}1-"*
 
-	db-update >/dev/null 2>&1 && fail "db-update should fail when a split package is missing!"
+	! db-update >/dev/null 2>&1
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		( [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ] \
-		&& bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null) \
-		&& fail "${pkgbase} should not be in ${repo}/os/${arch}/${repo}${DBEXT%.tar.*}"
+		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ]; then
+			! bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
+		fi
 	done
 }
 
@@ -162,6 +162,6 @@ load ../lib/common
 	releasePackage unknown 'pkg-simple-b' 'i686'
 	db-update
 	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
-	[ -e "${FTP_BASE}/unknown" ] && fail "db-update pushed a package into an unknown repository"
+	[ ! -e "${FTP_BASE}/unknown" ]
 	rm -rf "${STAGING}/unknown/"
 }
