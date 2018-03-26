@@ -54,11 +54,11 @@ setUp() {
 	local r
 	local a
 
-	[ -f "$(dirname "${BASH_SOURCE[0]}")/../../config.local" ] && die "$(dirname "${BASH_SOURCE[0]}")/../../config.local exists"
 	TMP="$(mktemp -dt "${0##*/}.XXXXXXXXXX")"
 	#msg "Using ${TMP}"
 
-	cat <<eot > "$(dirname "${BASH_SOURCE[0]}")/../../config.local"
+	export DBSCRIPTS_CONFIG=${TMP}/config.local
+	cat <<eot > "${DBSCRIPTS_CONFIG}"
 	FTP_BASE="${TMP}/ftp"
 	SVNREPO="file://${TMP}/svn-packages-repo"
 	PKGREPOS=('core' 'extra' 'testing')
@@ -105,8 +105,6 @@ eot
 
 tearDown() {
 	rm -rf "${TMP}"
-	rm -f "$(dirname "${BASH_SOURCE[0]}")/../../config.local"
-	echo
 }
 
 getpkgbase() {
