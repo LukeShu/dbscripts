@@ -7,8 +7,8 @@ load ../lib/common
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
-			cp "${pkgdir}/${pkgbase}/${pkgbase}-1-1-${arch}.pkg.tar.xz" "${FTP_BASE}/${PKGPOOL}/"
-			touch "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz.sig"
+			releasePackage extra "$pkgbase" "$arch"
+			mv "${STAGING}"/extra/* "${FTP_BASE}/${PKGPOOL}/"
 			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz" "${FTP_BASE}/extra/os/${arch}/"
 			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz.sig" "${FTP_BASE}/extra/os/${arch}/"
 			db-repo-add extra "${arch}" "${pkgbase}-1-1-${arch}.pkg.tar.xz"
@@ -30,8 +30,8 @@ load ../lib/common
 	for arch in "${ARCH_BUILD[@]}"; do
 		add_pkgs=()
 		for pkgbase in "${pkgs[@]}"; do
-			cp "${pkgdir}/${pkgbase}/${pkgbase}-1-1-${arch}.pkg.tar.xz" "${FTP_BASE}/${PKGPOOL}/"
-			touch "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz.sig"
+			releasePackage extra "$pkgbase" "$arch"
+			mv "${STAGING}"/extra/* "${FTP_BASE}/${PKGPOOL}/"
 			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz" "${FTP_BASE}/extra/os/${arch}/"
 			ln -s "${FTP_BASE}/${PKGPOOL}/${pkgbase}-1-1-${arch}.pkg.tar.xz.sig" "${FTP_BASE}/extra/os/${arch}/"
 			add_pkgs+=("${pkgbase}-1-1-${arch}.pkg.tar.xz")

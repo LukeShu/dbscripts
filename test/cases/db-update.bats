@@ -63,7 +63,7 @@ load ../lib/common
 
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
-			for pkg in "${pkgdir}/${pkgbase}"/*-"${arch}"${PKGEXT}; do
+			for pkg in $(getPackageNamesFromPackageBase ${pkgbase}); do
 				checkPackage extra "${pkg##*/}" "${arch}"
 			done
 		done
@@ -77,16 +77,13 @@ load ../lib/common
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
 	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo libremakepkg
-	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
+	__buildPackage any
 	popd >/dev/null
 
 	releasePackage extra pkg-any-a any
 	db-update
 
 	checkAnyPackage extra pkg-any-a-1-2-any.pkg.tar.xz any
-
-	rm -f "${pkgdir}/pkg-any-a/pkg-any-a-1-2-any.pkg.tar.xz"
 }
 
 @test "update any package to different repositories at once" {
@@ -95,8 +92,7 @@ load ../lib/common
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
 	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo libremakepkg
-	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
+	__buildPackage any
 	popd >/dev/null
 
 	releasePackage testing pkg-any-a any
@@ -105,8 +101,6 @@ load ../lib/common
 
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 	checkAnyPackage testing pkg-any-a-1-2-any.pkg.tar.xz any
-
-	rm -f "${pkgdir}/pkg-any-a/pkg-any-a-1-2-any.pkg.tar.xz"
 }
 
 @test "update same any package to same repository" {

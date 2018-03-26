@@ -24,27 +24,6 @@ signpkg() {
 	gpg --detach-sign --use-agent "${SIGNWITHKEY[@]}" "${@}"
 }
 
-oneTimeSetUp() {
-	local p
-	local d
-	local a
-	local pkgname
-	local pkgarch
-	local pkgversion
-	local build
-	pkgdir="$(mktemp -dt "${0##*/}.XXXXXXXXXX")"
-	cp -Lr "$(dirname "${BASH_SOURCE[0]}")"/../packages/* "${pkgdir}"
-	msg 'Building packages...'
-	for d in "${pkgdir}"/*; do
-		pushd "$d" >/dev/null
-		pkgarch=($(. PKGBUILD; echo "${arch[@]}"))
-		for a in "${pkgarch[@]}"; do
-			__buildPackage "$a"
-		done
-		popd >/dev/null
-	done
-}
-
 __buildPackage() {
 	local arch=$1
 	local pkgver
@@ -67,10 +46,6 @@ __buildPackage() {
 		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
 	fi
 	sudo libremakepkg -n "dbscripts@${arch}"
-}
-
-oneTimeTearDown() {
-	rm -rf "${pkgdir}"
 }
 
 setUp() {
@@ -116,14 +91,6 @@ eot
 	svnadmin create "${TMP}/svn-packages-repo"
 	svn checkout -q "file://${TMP}/svn-packages-repo" "${TMP}/svn-packages-copy"
 
-	for p in "${pkgdir}"/*; do
-		pkg=${p##*/}
-		mkdir -p "${TMP}/svn-packages-copy/${pkg}"/{trunk,repos}
-		cp "${p}"/* "${TMP}/svn-packages-copy/${pkg}/trunk/"
-		svn add -q "${TMP}/svn-packages-copy/${pkg}"
-		svn commit -q -m"initial commit of ${pkg}" "${TMP}/svn-packages-copy"
-	done
-
 	mkdir -p "${TMP}/home/.config/libretools"
 	export XDG_CONFIG_HOME="${TMP}/home/.config"
 	printf '%s\n' \
@@ -140,6 +107,23 @@ tearDown() {
 	echo
 }
 
+getpkgbase() {
+	local _base
+	_grep_pkginfo() {
+		local _ret
+
+		_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
+		echo "${_ret#${2} = }"
+	}
+
+	_base="$(_grep_pkginfo "$1" "pkgbase")"
+	if [ -z "$_base" ]; then
+		_grep_pkginfo "$1" "pkgname"
+	else
+		echo "$_base"
+	fi
+}
+
 releasePackage() {
 	local repo=$1
 	local pkgbase=$2
@@ -149,12 +133,20 @@ releasePackage() {
 	local pkgver
 	local pkgname
 
+	if [ ! -d "${TMP}/svn-packages-copy/${pkgbase}/trunk" ]; then
+		mkdir -p "${TMP}/svn-packages-copy/${pkgbase}"/{trunk,repos}
+		cp "fixtures/${pkgbase}"/* "${TMP}/svn-packages-copy"/${pkgbase}/trunk/
+		svn add -q "${TMP}/svn-packages-copy"/${pkgbase}
+		svn commit -q -m"initial commit of ${pkgbase}" "${TMP}/svn-packages-copy"
+	fi
+
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
+	__buildPackage ${arch}
 	xbs release "${repo}" "${arch}" >/dev/null 2>&1
 	pkgver=$(. PKGBUILD; get_full_version)
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
+	cp *-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"
 	popd >/dev/null
-	cp "${pkgdir}/${pkgbase}"/*-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"
 
 	if "${REQUIRE_SIGNATURE}"; then
 		for a in "${arch[@]}"; do
@@ -163,6 +155,12 @@ releasePackage() {
 			done
 		done
 	fi
+}
+
+getPackageNamesFromPackageBase() {
+	local pkgbase=$1
+
+	$(. "packages/${pkgbase}/PKGBUILD"; echo ${pkgname[@]})
 }
 
 checkAnyPackageDB() {

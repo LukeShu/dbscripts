@@ -99,12 +99,12 @@ load ../lib/common
 	db-move testing extra pkg-split-a
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		for pkg in "${pkgdir}/pkg-split-a"/*-"${arch}"${PKGEXT}; do
+		for pkg in $(getPackageNamesFromPackageBase pkg-split-a); do
 			checkPackage extra "${pkg##*/}" "${arch}"
 		done
 	done
 	for arch in "${ARCH_BUILD[@]}"; do
-		for pkg in "${pkgdir}/pkg-split-b"/*-"${arch}"${PKGEXT}; do
+		for pkg in $(getPackageNamesFromPackageBase pkg-split-b); do
 			checkPackage testing "${pkg##*/}" "${arch}"
 		done
 	done

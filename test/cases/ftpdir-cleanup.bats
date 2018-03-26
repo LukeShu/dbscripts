@@ -100,13 +100,13 @@ load ../lib/common
 	ftpdir-cleanup >/dev/null
 
 	for arch in "${ARCH_BUILD[@]}"; do
-		for pkg in "${pkgdir}/${pkgs[0]}"/*-"${arch}"${PKGEXT}; do
+		for pkg in $(getPackageNamesFromPackageBase "${pkgs[0]}"); do
 			checkRemovedPackage extra "${pkgs[0]}" "${arch}"
 			[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
 			[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
 		done
 
-		for pkg in "${pkgdir}/${pkgs[1]}"/*-"${arch}"${PKGEXT}; do
+		for pkg in $(getPackageNamesFromPackageBase "${pkgs[1]}"); do
 			checkPackage extra "${pkg##*/}" "${arch}"
 		done
 	done

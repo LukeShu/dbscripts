@@ -7,13 +7,11 @@ load ../lib/common
 	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
 	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
 	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	sudo libremakepkg
-	mv pkg-any-a-1-2-any.pkg.tar.xz "${pkgdir}/pkg-any-a/"
+	__buildPackage any
 	popd >/dev/null
 
 	releasePackage testing pkg-any-a any
 	db-update
-	rm -f "${pkgdir}/pkg-any-a/pkg-any-a-1-2-any.pkg.tar.xz"
 
 	testing2x pkg-any-a
 
