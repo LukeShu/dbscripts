@@ -91,14 +91,16 @@ eot
 	svnadmin create "${TMP}/svn-packages-repo"
 	svn checkout -q "file://${TMP}/svn-packages-repo" "${TMP}/svn-packages-copy"
 
-	mkdir -p "${TMP}/home/.config/libretools"
+	mkdir -p "${TMP}/home/.config/xbs"
 	export XDG_CONFIG_HOME="${TMP}/home/.config"
-	printf '%s\n' \
-		'SVNURL=foo' \
-		"SVNREPO=\"${TMP}/svn-packages-copy\"" \
-		"ARCHES=($(printf '%q ' "${BUILD_ARCHES[@]}"))" \
-		> "$XDG_CONFIG_HOME/libretools/xbs-abs.conf"
-	printf '%s\n' 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs.conf"
+	cat <<eot > "$XDG_CONFIG_HOME/xbs/xbs-abs.conf"
+	SVNDIR="${TMP}"
+	SVNREPOS=(
+		"svn-packages-copy file://${TMP}/svn-packages-repo core extra testing"
+	)
+	ARCHES=(${ARCH_BUILD[*]})
+eot
+	echo 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs/xbs.conf"
 }
 
 tearDown() {
@@ -142,7 +144,7 @@ releasePackage() {
 
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
 	__buildPackage ${arch}
-	xbs release "${repo}" "${arch}" >/dev/null 2>&1
+	xbs release-client "${repo}" "${arch}"
 	pkgver=$(. PKGBUILD; get_full_version)
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 	cp *-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"
