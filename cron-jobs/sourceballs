@@ -52,12 +52,8 @@ find "${FTP_BASE}/${SRCPOOL}" -xtype f -name "*${SRCEXT}" -printf '%f\n' | sort 
 for repo in "${PKGREPOS[@]}"; do
 	newpkgs=()
 	failedpkgs=()
-	while read line; do
-		pkginfo=("${line}")
-		pkgbase=${pkginfo[0]}
-		pkgver=${pkginfo[1]}
-		pkgarch=${pkginfo[2]}
-		pkglicense=("${pkginfo[@]:3}")
+	while read -r pkgbase pkgver pkgarch pkglicense; do
+		read -ra pkglicense <<<"$pkglicense"
 
 		# Should this package be skipped?
 		if grep -Fqx "${pkgbase}" "${dirname}/sourceballs.skip"; then
