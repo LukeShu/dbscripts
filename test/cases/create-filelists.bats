@@ -15,7 +15,7 @@ load ../lib/common
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
 			if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/${pkgbase}" &>/dev/null; then
-				fail "usr/bin/${pkgbase} not found in ${arch}/extra${FILESEXT}"
+				die "usr/bin/${pkgbase} not found in ${arch}/extra${FILESEXT}"
 			fi
 		done
 	done
@@ -34,7 +34,7 @@ load ../lib/common
 	for pkgbase in "${pkgs[@]}"; do
 		for arch in "${ARCH_BUILD[@]}"; do
 			if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/share/${pkgbase}/test" &>/dev/null; then
-				fail "usr/share/${pkgbase}/test not found in ${arch}/extra${FILESEXT}"
+				die "usr/share/${pkgbase}/test not found in ${arch}/extra${FILESEXT}"
 			fi
 		done
 	done
@@ -60,7 +60,7 @@ load ../lib/common
 		for pkgname in "${pkgnames[@]}"; do
 			for arch in "${ARCH_BUILD[@]}"; do
 				if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/${pkgname}" &>/dev/null; then
-					fail "usr/bin/${pkgname} not found in ${arch}/extra${FILESEXT}"
+					die "usr/bin/${pkgname} not found in ${arch}/extra${FILESEXT}"
 				fi
 			done
 		done
@@ -86,10 +86,10 @@ load ../lib/common
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		if ! bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/pkg-simple-b" &>/dev/null; then
-			fail "usr/bin/pkg-simple-b not found in ${arch}/extra${FILESEXT}"
+			die "usr/bin/pkg-simple-b not found in ${arch}/extra${FILESEXT}"
 		fi
 		if bsdtar -xOf "${FTP_BASE}/extra/os/${arch}/extra${FILESEXT}" | grep "usr/bin/pkg-simple-a" &>/dev/null; then
-			fail "usr/bin/pkg-simple-a still found in ${arch}/extra${FILESEXT}"
+			die "usr/bin/pkg-simple-a still found in ${arch}/extra${FILESEXT}"
 		fi
 	done
 
