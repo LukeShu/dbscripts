@@ -1,9 +1,13 @@
 #!/hint/bash
 set -E
 
-. "$(dirname "${BASH_SOURCE[0]}")/../../config"
-. "$(dirname "${BASH_SOURCE[0]}")/../../config.testing"
-. "$(dirname "${BASH_SOURCE[0]}")/../../db-functions"
+. /usr/share/makepkg/util.sh
+. "$(dirname "${BASH_SOURCE[0]}")"/../test.conf
+
+die() {
+	echo "$*" >&2
+	exit 1
+}
 
 signpkg() {
 	if [[ -r '/etc/makepkg.conf' ]]; then
