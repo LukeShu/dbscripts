@@ -45,4 +45,4 @@ FROM="repo@repo.parabola.nu"
 
 # Override default config with config.local
 LOCAL_CONFIG=${DBSCRIPTS_CONFIG:-"$(dirname ${BASH_SOURCE[0]})/config.local"}
-[[ -f "${LOCAL_CONFIG}" ]] && . "${LOCAL_CONFIG}"
+if [[ -f "${LOCAL_CONFIG}" ]]; then . "${LOCAL_CONFIG}"; fi
