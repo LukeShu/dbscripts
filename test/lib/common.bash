@@ -14,40 +14,6 @@ __getCheckSum() {
 	echo "${result%% *}"
 }
 
-__buildPackage() {
-	local arch=$1
-	local p
-	local checkSum
-	local pkgnames
-
-	if [[ -n ${PACKAGE_CACHE} ]]; then
-		checkSum=$(__getCheckSum PKGBUILD)
-			# TODO: Be more specific
-			if cp -av ${PACKAGE_CACHE}/${checkSum}/*-${arch}${PKGEXT}{,.sig} .; then
-				return 0
-			fi
-	fi
-
-	if [ "${arch}" == 'any' ]; then
-		sudo librechroot -n "dbscripts@${arch}" make
-	else
-		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
-	fi
-	sudo libremakepkg -n "dbscripts@${arch}"
-
-	pkgnames=($(. PKGBUILD; print_all_package_names))
-	for p in ${pkgnames[@]/%/${PKGEXT}}; do
-		[[ ${p} = *-${arch}${PKGEXT} ]] || continue
-		# Manually sign packages as "makepkg --sign" is buggy
-		gpg -v --detach-sign --no-armor --use-agent ${p}
-
-		if [[ -n ${PACKAGE_CACHE} ]]; then
-			mkdir -p ${PACKAGE_CACHE}/${checkSum}
-			cp -Lv ${p}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
-		fi
-	done
-}
-
 setup() {
 	local p
 	local pkg
@@ -147,6 +113,40 @@ releasePackage() {
 		cp "${p}-${pkgver}-${arch}"${PKGEXT}{,.sig} "${STAGING}/${repo}/"
 	done
 	popd >/dev/null
+}
+
+__buildPackage() {
+	local arch=$1
+	local p
+	local checkSum
+	local pkgnames
+
+	if [[ -n ${PACKAGE_CACHE} ]]; then
+		checkSum=$(__getCheckSum PKGBUILD)
+			# TODO: Be more specific
+			if cp -av ${PACKAGE_CACHE}/${checkSum}/*-${arch}${PKGEXT}{,.sig} .; then
+				return 0
+			fi
+	fi
+
+	if [ "${arch}" == 'any' ]; then
+		sudo librechroot -n "dbscripts@${arch}" make
+	else
+		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
+	fi
+	sudo libremakepkg -n "dbscripts@${arch}"
+
+	pkgnames=($(. PKGBUILD; print_all_package_names))
+	for p in ${pkgnames[@]/%/${PKGEXT}}; do
+		[[ ${p} = *-${arch}${PKGEXT} ]] || continue
+		# Manually sign packages as "makepkg --sign" is buggy
+		gpg -v --detach-sign --no-armor --use-agent ${p}
+
+		if [[ -n ${PACKAGE_CACHE} ]]; then
+			mkdir -p ${PACKAGE_CACHE}/${checkSum}
+			cp -Lv ${p}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
+		fi
+	done
 }
 
 getPackageNamesFromPackageBase() {
