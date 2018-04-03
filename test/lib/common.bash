@@ -8,21 +8,6 @@ die() {
 	exit 1
 }
 
-signpkg() {
-	if [[ -r '/etc/makepkg.conf' ]]; then
-		source '/etc/makepkg.conf'
-	else
-		die '/etc/makepkg.conf not found!'
-	fi
-	if [[ -r ~/.makepkg.conf ]]; then
-		. ~/.makepkg.conf
-	fi
-	if [[ -n $GPGKEY ]]; then
-		SIGNWITHKEY=(-u "${GPGKEY}")
-	fi
-	gpg --detach-sign --use-agent "${SIGNWITHKEY[@]}" "${@}"
-}
-
 __buildPackage() {
 	local arch=$1
 	local pkgver
@@ -45,6 +30,12 @@ __buildPackage() {
 		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
 	fi
 	sudo libremakepkg -n "dbscripts@${arch}"
+
+	for p in "${pkgname[@]}"; do
+		for file in "${p}-${pkgver}-${arch}"*; do
+			gpg --detach-sign --no-armor --use-agent "$file"
+		done
+	done
 }
 
 setup() {
@@ -141,14 +132,10 @@ releasePackage() {
 	xbs release-client "${repo}" "${arch}"
 	pkgver=$(. PKGBUILD; get_full_version)
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
-	cp *-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"
-	popd >/dev/null
-
-	for a in "${arch[@]}"; do
-		for p in "${pkgname[@]}"; do
-			signpkg "${STAGING}/${repo}/${p}-${pkgver}-${a}"${PKGEXT}
-		done
+	for p in "${pkgname[@]}"; do
+		cp "${p}-${pkgver}-${arch}"${PKGEXT}{,.sig} "${STAGING}/${repo}/"
 	done
+	popd >/dev/null
 }
 
 getPackageNamesFromPackageBase() {
