@@ -25,7 +25,7 @@ __updatePKGBUILD() {
 
 	pkgrel=$(. PKGBUILD; expr ${pkgrel} + 1)
 	sed "s/pkgrel=.*/pkgrel=${pkgrel}/" -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=${pkgrel}" >/dev/null
+	svn commit -q -m"update pkg to pkgrel=${pkgrel}"
 }
 
 __getCheckSum() {
@@ -107,7 +107,7 @@ releasePackage() {
 		svn commit -q -m"initial commit of ${pkgbase}" "${TMP}/svn-packages-copy"
 	fi
 
-	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
 	__buildPackage ${arch}
 	xbs release-client "${repo}" "${arch}"
 	pkgver=$(. PKGBUILD; get_full_version)
@@ -115,7 +115,7 @@ releasePackage() {
 	for p in "${pkgname[@]}"; do
 		cp "${p}-${pkgver}-${arch}"${PKGEXT}{,.sig} "${STAGING}/${repo}/"
 	done
-	popd >/dev/null
+	popd
 }
 
 __buildPackage() {
@@ -156,10 +156,10 @@ updatePackage() {
 	local pkgbase=$1
 	local arch=$2
 
-	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
 	__updatePKGBUILD
 	__buildPackage ${arch}
-	popd >/dev/null
+	popd
 }
 
 updateRepoPKGBUILD() {
@@ -167,9 +167,9 @@ updateRepoPKGBUILD() {
 	local repo=$2
 	local arch=$3
 
-	pushd "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}/" >/dev/null
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}/"
 	__updatePKGBUILD
-	popd >/dev/null
+	popd
 }
 
 getPackageNamesFromPackageBase() {

@@ -17,7 +17,7 @@ load ../lib/common
 		db-remove extra "${arch}" pkg-simple-a
 	done
 
-	ftpdir-cleanup >/dev/null
+	ftpdir-cleanup
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		local pkg1="pkg-simple-a-1-1-${arch}.pkg.tar.xz"
@@ -47,7 +47,7 @@ load ../lib/common
 		db-remove extra "${arch}" pkg-simple-epoch
 	done
 
-	ftpdir-cleanup >/dev/null
+	ftpdir-cleanup
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		local pkg1="pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz"
@@ -68,7 +68,7 @@ load ../lib/common
 
 	db-update
 	db-remove extra any pkg-any-a
-	ftpdir-cleanup >/dev/null
+	ftpdir-cleanup
 
 	local pkg1='pkg-any-a-1-1-any.pkg.tar.xz'
 	checkRemovedAnyPackage extra 'pkg-any-a'
@@ -97,7 +97,7 @@ load ../lib/common
 		db-remove extra "${arch}" "${pkgs[0]}"
 	done
 
-	ftpdir-cleanup >/dev/null
+	ftpdir-cleanup
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		for pkg in $(getPackageNamesFromPackageBase "${pkgs[0]}"); do
@@ -131,7 +131,7 @@ load ../lib/common
 		done
 	done
 
-	ftpdir-cleanup >/dev/null
+	ftpdir-cleanup
 
 	local pkgfilea="pkg-simple-a-1-1-${arch}.pkg.tar.xz"
 	local pkgfileb="pkg-simple-b-1-1-${arch}.pkg.tar.xz"
@@ -139,7 +139,7 @@ load ../lib/common
 		touch -d "-$(expr ${CLEANUP_KEEP} + 1)days" ${CLEANUP_DESTDIR}/${pkgfilea}{,.sig}
 	done
 
-	ftpdir-cleanup >/dev/null
+	ftpdir-cleanup
 
 	[ ! -f ${CLEANUP_DESTDIR}/${pkgfilea} ]
 	[ -f ${CLEANUP_DESTDIR}/${pkgfileb} ]
