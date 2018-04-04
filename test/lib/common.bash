@@ -171,9 +171,8 @@ checkAnyPackageDB() {
 		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
 
 		for db in "${DBEXT}" "${FILESEXT}"; do
-			if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
-				bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkg}" &>/dev/null
-			fi
+			[ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]
+			bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkg}" &>/dev/null
 		done
 	done
 	[ ! -r "${STAGING}/${repo}/${pkg}" ]
