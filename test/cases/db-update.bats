@@ -101,7 +101,8 @@ load ../lib/common
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 
 	releasePackage extra pkg-any-a any
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 }
 
 @test "update same any package to different repositories" {
@@ -110,7 +111,8 @@ load ../lib/common
 	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
 
 	releasePackage testing pkg-any-a any
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
 	local arch
 	for arch in "${ARCH_BUILD[@]}"; do
@@ -133,7 +135,8 @@ load ../lib/common
 	# remove a split package to make db-update fail
 	rm "${STAGING}/extra/${pkgbase}1-"*
 
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ]; then
@@ -155,7 +158,8 @@ load ../lib/common
 @test "add unsigned package fails" {
 	releasePackage extra 'pkg-simple-a' 'i686'
 	rm "${STAGING}"/extra/*.sig
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
 	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
 }
@@ -167,7 +171,8 @@ load ../lib/common
 		unxz "$p"
 		xz -0 "${p%%.xz}"
 	done
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
 	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
 }
@@ -178,7 +183,8 @@ load ../lib/common
 	for s in "${STAGING}"/extra/*.sig; do
 		echo 0 > "$s"
 	done
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
 	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
 }
@@ -191,7 +197,8 @@ load ../lib/common
 		mv "${p}" "${p/pkg-simple-a-1/pkg-simple-a-2}"
 	done
 
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 	checkRemovedPackage extra 'pkg-simple-a-2-1-i686.pkg.tar.xz' 'i686'
 }
 
@@ -203,7 +210,8 @@ load ../lib/common
 		mv "${p}" "${p/pkg-/foo-pkg-}"
 	done
 
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 	checkRemovedPackage extra 'foo-pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 }
 
@@ -213,7 +221,8 @@ load ../lib/common
 
 	updateRepoPKGBUILD 'pkg-simple-a' extra i686
 
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 	checkRemovedPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
 }
 
@@ -222,7 +231,8 @@ load ../lib/common
 	releasePackage extra 'pkg-simple-b' 'i686'
 
 	chmod -xwr ${FTP_BASE}/core/os/i686
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 	chmod +xwr ${FTP_BASE}/core/os/i686
 
 	checkRemovedPackage core 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
@@ -242,7 +252,8 @@ load ../lib/common
 		ln -s "${target}/${p##*/}" "${p}"
 	done
 
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 	for arch in "${ARCH_BUILD[@]}"; do
 		checkRemovedPackage extra "pkg-simple-a-1-1-${arch}.pkg.tar.xz" $arch
 	done
