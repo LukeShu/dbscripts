@@ -101,7 +101,7 @@ load ../lib/common
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		for pkg in $(getPackageNamesFromPackageBase "${pkgs[0]}"); do
-			checkRemovedPackage extra "${pkgs[0]}" "${arch}"
+			checkRemovedPackage extra "${pkg}" "${arch}"
 			[ ! -f "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
 			[ ! -f "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
 		done
