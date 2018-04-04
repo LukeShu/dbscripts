@@ -95,7 +95,7 @@ eot
 	SVNREPOS=(
 		"svn-packages-copy file://${TMP}/svn-packages-repo core extra testing"
 	)
-	ARCHES=(${ARCH_BUILD[*]})
+	ARCHES=(${ARCH_BUILD[*]@Q})
 eot
 	echo 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs/xbs.conf"
 }
