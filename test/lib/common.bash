@@ -261,7 +261,7 @@ checkRemovedPackageDB() {
 	if [[ ${pkgarches[@]} == any ]]; then
 		tarches=(${ARCHES[@]})
 	else
-		tarches=($pkgarches[@])
+		tarches=(${pkgarches[@]})
 	fi
 
 	for db in "${DBEXT}" "${FILESEXT}"; do
