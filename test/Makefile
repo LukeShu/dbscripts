@@ -1,4 +1,4 @@
-PACKAGE_CACHE:=$(shell mktemp -d)
+PACKAGE_CACHE ?= $(or $(TMPDIR),/tmp)/dbscripts-build
 
 test:
 	PATH=$(CURDIR)/../:$(CURDIR)/../cron-jobs/:$(PATH) PACKAGE_CACHE=$(PACKAGE_CACHE) bats cases

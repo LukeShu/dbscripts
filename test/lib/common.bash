@@ -16,11 +16,9 @@ __getCheckSum() {
 
 __buildPackage() {
 	local arch=$1
-	local pkgver
-	local pkgname
-	local a
 	local p
 	local checkSum
+	local pkgnames
 
 	if [[ -n ${PACKAGE_CACHE} ]]; then
 		checkSum=$(__getCheckSum PKGBUILD)
@@ -30,9 +28,6 @@ __buildPackage() {
 			fi
 	fi
 
-	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
-	pkgver=$(. PKGBUILD; get_full_version)
-
 	if [ "${arch}" == 'any' ]; then
 		sudo librechroot -n "dbscripts@${arch}" make
 	else
@@ -40,16 +35,17 @@ __buildPackage() {
 	fi
 	sudo libremakepkg -n "dbscripts@${arch}"
 
-	for p in "${pkgname[@]}"; do
-		for file in "${p}-${pkgver}-${arch}"*; do
-			gpg --detach-sign --no-armor --use-agent "$file"
-		done
-	done
+	pkgnames=($(. PKGBUILD; print_all_package_names))
+	for p in ${pkgnames[@]/%/${PKGEXT}}; do
+		[[ ${p} = *-${arch}${PKGEXT} ]] || continue
+		# Manually sign packages as "makepkg --sign" is buggy
+		gpg -v --detach-sign --no-armor --use-agent ${p}
 
-	if [[ -n ${PACKAGE_CACHE} ]]; then
-		mkdir -p ${PACKAGE_CACHE}/${checkSum}
-		cp -av *-${arch}${PKGEXT}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
-	fi
+		if [[ -n ${PACKAGE_CACHE} ]]; then
+			mkdir -p ${PACKAGE_CACHE}/${checkSum}
+			cp -Lv ${p}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
+		fi
+	done
 }
 
 setup() {
