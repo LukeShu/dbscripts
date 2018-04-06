@@ -72,11 +72,11 @@ filter_blacklisted() {
 # parabolaweb, librechroot, and who-knows-what-else.  This only
 # filters exact pkgname/epoch/pkgver/pkgrel matches.
 filter_duplicates() {
-	# FIXME: this will need to be adjusted when we turn PKGEXT in
+	# FIXME: this will need to be adjusted when we turn PKGEXTS in
 	# to an extglob.
 	sort -u | comm -23 \
 		- \
-		<(find "${FTP_BASE}/pool/" -name "*-any${PKGEXT}" -printf "%f\n" |
+		<(find "${FTP_BASE}/pool/" -name "*-any${PKGEXTS}" -printf "%f\n" |
 			sed 's/-any\.pkg.*//' |
 			sed -r 's/-([^-]*-[^-]*)$/ \1/' |
 			sort -u)
@@ -202,7 +202,7 @@ make_repo_dbs() {
 
 	pushd "${from}"
 	local -r pkgfiles
-	pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
+	pkgfiles=($(sed -e "s|\$|${PKGEXTS}|" "$whitelist"))
 	local -r UMASK=$(umask)
 	umask 002
 	repo-add "${db_file##*/}" "${pkgfiles[@]}"

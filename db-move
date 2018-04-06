@@ -46,7 +46,7 @@ for pkgbase in "${args[@]:2}"; do
 					die "Could not read pkgver"
 				fi
 				for tarch in "${tarches[@]}"; do
-					getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT} >/dev/null
+					getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXTS} >/dev/null
 				done
 			done
 			continue 2
@@ -78,7 +78,7 @@ for pkgbase in "${args[@]:2}"; do
 			for pkgname in "${pkgnames[@]}"; do
 				pkgver=$(. "${xbsrepo_to}/PKGBUILD"; get_full_version "${pkgname}")
 				for tarch in "${tarches[@]}"; do
-					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXT})
+					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXTS})
 					pkgfile="${pkgpath##*/}"
 
 					ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"

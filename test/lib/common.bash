@@ -63,6 +63,7 @@ setup() {
 	local pkg
 	local r
 	local a
+	PKGEXT=".pkg.tar.xz"
 
 	TMP="$(mktemp -d)"
 
@@ -84,7 +85,6 @@ setup() {
 	SOURCE_CLEANUP_DRYRUN=false
 eot
 	. config
-	PKGEXT=".pkg.tar.xz"
 
 	mkdir -p "${TMP}/"{ftp,tmp,staging,{package,source}-cleanup,svn-packages-{copy,repo}}
 
