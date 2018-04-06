@@ -27,8 +27,6 @@ SOURCE_CLEANUP_DRYRUN=true
 # Time in days to keep moved sourcepackages
 SOURCE_CLEANUP_KEEP=30
 
-REQUIRE_SIGNATURE=true
-
 LOCK_DELAY=10
 
 [ -n "${STAGING:-}" ] || STAGING="$HOME/staging/unknown/staging"

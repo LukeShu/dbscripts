@@ -8,19 +8,10 @@ die() {
 	exit 1
 }
 
-signpkg() {
-	if [[ -r '/etc/makepkg.conf' ]]; then
-		source '/etc/makepkg.conf'
-	else
-		die '/etc/makepkg.conf not found!'
-	fi
-	if [[ -r ~/.makepkg.conf ]]; then
-		. ~/.makepkg.conf
-	fi
-	if [[ -n $GPGKEY ]]; then
-		SIGNWITHKEY=(-u "${GPGKEY}")
-	fi
-	gpg --detach-sign --use-agent "${SIGNWITHKEY[@]}" "${@}"
+__getCheckSum() {
+	local result
+	result="$(sha1sum "$1")"
+	echo "${result%% *}"
 }
 
 __buildPackage() {
@@ -29,15 +20,18 @@ __buildPackage() {
 	local pkgname
 	local a
 	local p
+	local checkSum
+
+	if [[ -n ${PACKAGE_CACHE} ]]; then
+		checkSum=$(__getCheckSum PKGBUILD)
+			# TODO: Be more specific
+			if cp -av ${PACKAGE_CACHE}/${checkSum}/*-${arch}${PKGEXT}{,.sig} .; then
+				return 0
+			fi
+	fi
 
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
 	pkgver=$(. PKGBUILD; get_full_version)
-
-	for p in "${pkgname[@]}"; do
-		if [ -f "${p}-${pkgver}-${arch}"${PKGEXT} ]; then
-			return 0
-		fi
-	done
 
 	if [ "${arch}" == 'any' ]; then
 		sudo librechroot -n "dbscripts@${arch}" make
@@ -45,6 +39,17 @@ __buildPackage() {
 		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
 	fi
 	sudo libremakepkg -n "dbscripts@${arch}"
+
+	for p in "${pkgname[@]}"; do
+		for file in "${p}-${pkgver}-${arch}"*; do
+			gpg --detach-sign --no-armor --use-agent "$file"
+		done
+	done
+
+	if [[ -n ${PACKAGE_CACHE} ]]; then
+		mkdir -p ${PACKAGE_CACHE}/${checkSum}
+		cp -av *-${arch}${PKGEXT}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
+	fi
 }
 
 setup() {
@@ -70,7 +75,6 @@ setup() {
 	TMPDIR="${TMP}/tmp"
 	CLEANUP_DRYRUN=false
 	SOURCE_CLEANUP_DRYRUN=false
-	REQUIRE_SIGNATURE=true
 eot
 	. config
 
@@ -142,16 +146,10 @@ releasePackage() {
 	xbs release-client "${repo}" "${arch}"
 	pkgver=$(. PKGBUILD; get_full_version)
 	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
-	cp *-"${pkgver}-${arch}"${PKGEXT} "${STAGING}/${repo}/"
+	for p in "${pkgname[@]}"; do
+		cp "${p}-${pkgver}-${arch}"${PKGEXT}{,.sig} "${STAGING}/${repo}/"
+	done
 	popd >/dev/null
-
-	if "${REQUIRE_SIGNATURE}"; then
-		for a in "${arch[@]}"; do
-			for p in "${pkgname[@]}"; do
-				signpkg "${STAGING}/${repo}/${p}-${pkgver}-${a}"${PKGEXT}
-			done
-		done
-	fi
 }
 
 getPackageNamesFromPackageBase() {
@@ -167,18 +165,14 @@ checkAnyPackageDB() {
 	local db
 
 	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
-	if "${REQUIRE_SIGNATURE}"; then
-		[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
-	fi
+	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
 
 	for arch in "${ARCH_BUILD[@]}"; do
 		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
 		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
 
-		if "${REQUIRE_SIGNATURE}"; then
-			[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-			[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
-		fi
+		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
+		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
 
 		for db in "${DBEXT}" "${FILESEXT}"; do
 			if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
@@ -213,13 +207,11 @@ checkPackageDB() {
 
 	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
 
-	if "${REQUIRE_SIGNATURE}"; then
-		[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-		[ ! -r "${STAGING}/${repo}/${pkg}.sig" ]
+	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
+	[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
+	[ ! -r "${STAGING}/${repo}/${pkg}.sig" ]
 
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
-	fi
+	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
 
 	for db in "${DBEXT}" "${FILESEXT}"; do
 		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
