@@ -1,20 +1,28 @@
 load ../lib/common
 
+__checkSourcePackage() {
+	local pkgbase=$1
+	[ -r ${FTP_BASE}/${SRCPOOL}/${pkgbase}-*${SRCEXT} ]
+}
+
+__checkRemovedSourcePackage() {
+	local pkgbase=$1
+	[ ! -r ${FTP_BASE}/${SRCPOOL}/${pkgbase}-*${SRCEXT} ]
+}
+
 @test "sourceballs" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 	db-update
 
 	sourceballs
 	for pkgbase in "${pkgs[@]}"; do
-		[ -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ]
+		__checkSourcePackage ${pkgbase}
 	done
 }
 
@@ -23,13 +31,13 @@ load ../lib/common
 	local pkgbase
 
 	for pkgbase in "${pkgs[@]}"; do
-		releasePackage extra "${pkgbase}" any
+		releasePackage extra "${pkgbase}"
 	done
 	db-update
 
 	sourceballs
 	for pkgbase in "${pkgs[@]}"; do
-		[ -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ]
+		__checkSourcePackage ${pkgbase}
 	done
 }
 
@@ -40,16 +48,14 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	sourceballs
 	for pkgbase in "${pkgs[@]}"; do
-		[ -r "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}" ]
+		__checkSourcePackage ${pkgbase}
 	done
 }
 
@@ -59,9 +65,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 	db-update
 	sourceballs
@@ -71,6 +75,6 @@ load ../lib/common
 	done
 
 	sourceballs
-	[ ! -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-a"-*"${SRCEXT}" ]
-	[ -r "${FTP_BASE}/${SRCPOOL}/pkg-simple-b"-*"${SRCEXT}" ]
+	__checkRemovedSourcePackage pkg-simple-a
+	__checkSourcePackage pkg-simple-b
 }

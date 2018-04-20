@@ -6,21 +6,16 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
 
 	db-move testing extra pkg-simple-a
 
-	for arch in "${ARCH_BUILD[@]}"; do
-		checkPackage extra "pkg-simple-a-1-1-${arch}.pkg.tar.xz" "${arch}"
-		checkRemovedPackage testing "pkg-simple-a-1-1-${arch}.pkg.tar.xz" "${arch}"
-
-		checkPackage testing "pkg-simple-b-1-1-${arch}.pkg.tar.xz" "${arch}"
-	done
+	checkRemovedPackage testing pkg-simple-a
+	checkPackage extra pkg-simple-a
+	checkPackage testing pkg-simple-b
 }
 
 @test "move multiple packages" {
@@ -29,9 +24,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
@@ -39,10 +32,8 @@ load ../lib/common
 	db-move testing extra pkg-simple-a pkg-simple-b
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkPackage extra "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
-			checkRemovedPackage testing "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
-		done
+		checkRemovedPackage testing "${pkgbase}"
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -52,19 +43,15 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
 
 	db-move testing extra pkg-simple-epoch
 
-	for arch in "${ARCH_BUILD[@]}"; do
-		checkPackage extra "pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz" "${arch}"
-		checkRemovedPackage testing "pkg-simple-epoch-1:1-1-${arch}.pkg.tar.xz" "${arch}"
-	done
+	checkRemovedPackage testing pkg-simple-epoch
+	checkPackage extra pkg-simple-epoch
 }
 
 @test "move any packages" {
@@ -72,15 +59,15 @@ load ../lib/common
 	local pkgbase
 
 	for pkgbase in "${pkgs[@]}"; do
-		releasePackage testing "${pkgbase}" any
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
 	db-move testing extra pkg-any-a
 
-	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz
-	checkRemovedAnyPackage testing pkg-any-a
-	checkAnyPackage testing pkg-any-b-1-1-any.pkg.tar.xz
+	checkPackage extra pkg-any-a
+	checkRemovedPackage testing pkg-any-a
+	checkPackage testing pkg-any-b
 }
 
 @test "move split packages" {
@@ -90,24 +77,12 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage testing "${pkgbase}" "${arch}"
-		done
+		releasePackage testing "${pkgbase}"
 	done
 
 	db-update
 	db-move testing extra pkg-split-a
 
-	for arch in "${ARCH_BUILD[@]}"; do
-		for pkg in $(getPackageNamesFromPackageBase pkg-split-a); do
-			checkPackage extra "${pkg##*/}" "${arch}"
-		done
-	done
-	for arch in "${ARCH_BUILD[@]}"; do
-		for pkg in $(getPackageNamesFromPackageBase pkg-split-b); do
-			checkPackage testing "${pkg##*/}" "${arch}"
-		done
-	done
-
-	checkRemovedAnyPackage testing pkg-split-a
+	checkPackage extra pkg-split-a
+	checkPackage testing pkg-split-b
 }

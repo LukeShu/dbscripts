@@ -297,7 +297,7 @@ check_pkgfile() {
 
 	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
 
-	if echo "${pkgfile##*/}" | grep "${pkgname}-${pkgver}-${pkgarch}" &>/dev/null; then
+	if echo "${pkgfile##*/}" | grep "^${pkgname}-${pkgver}-${pkgarch}" &>/dev/null; then
 		return 0
 	else
 		return 1

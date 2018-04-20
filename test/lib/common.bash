@@ -3,9 +3,12 @@
 . /usr/share/makepkg/util.sh
 . "$(dirname "${BASH_SOURCE[0]}")"/../test.conf
 
-die() {
-	echo "$*" >&2
-	exit 1
+__updatePKGBUILD() {
+	local pkgrel
+
+	pkgrel=$(. PKGBUILD; expr ${pkgrel} + 1)
+	sed "s/pkgrel=.*/pkgrel=${pkgrel}/" -i PKGBUILD
+	svn commit -q -m"update pkg to pkgrel=${pkgrel}"
 }
 
 __getCheckSum() {
@@ -15,37 +18,44 @@ __getCheckSum() {
 }
 
 __buildPackage() {
-	local arch=$1
+	local pkgdest=${1:-.}
 	local p
-	local checkSum
+	local cache
+	local pkgarches
+	local tarch
 	local pkgnames
 
-	if [[ -n ${PACKAGE_CACHE} ]]; then
-		checkSum=$(__getCheckSum PKGBUILD)
-			# TODO: Be more specific
-			if cp -av ${PACKAGE_CACHE}/${checkSum}/*-${arch}${PKGEXT}{,.sig} .; then
-				return 0
-			fi
+	if [[ -n ${BUILDDIR} ]]; then
+		cache=${BUILDDIR}/$(__getCheckSum PKGBUILD)
+		if [[ -d ${cache} ]]; then
+			cp -Lv ${cache}/*${PKGEXT}{,.sig} ${pkgdest}
+			return 0
+		else
+			mkdir -p ${cache}
+		fi
 	fi
 
-	if [ "${arch}" == 'any' ]; then
-		sudo librechroot -n "dbscripts@${arch}" make
-	else
-		sudo librechroot -n "dbscripts@${arch}" -A "$arch" make
-	fi
-	sudo libremakepkg -n "dbscripts@${arch}"
+	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
+	for tarch in ${pkgarches[@]}; do
+		if [ "${tarch}" == 'any' ]; then
+			sudo librechroot -n "dbscripts@${tarch}" make
+		else
+			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" make
+		fi
+		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
+	done
 
 	pkgnames=($(. PKGBUILD; print_all_package_names))
+	pushd ${pkgdest}
 	for p in ${pkgnames[@]/%/${PKGEXT}}; do
-		[[ ${p} = *-${arch}${PKGEXT} ]] || continue
 		# Manually sign packages as "makepkg --sign" is buggy
 		gpg -v --detach-sign --no-armor --use-agent ${p}
 
-		if [[ -n ${PACKAGE_CACHE} ]]; then
-			mkdir -p ${PACKAGE_CACHE}/${checkSum}
-			cp -Lv ${p}{,.sig} ${PACKAGE_CACHE}/${checkSum}/
+		if [[ -n ${BUILDDIR} ]]; then
+			cp -Lv ${p}{,.sig} ${cache}/
 		fi
 	done
+	popd
 }
 
 setup() {
@@ -65,6 +75,7 @@ setup() {
 	SRCPOOL='sources/packages'
 	TESTING_REPO='testing'
 	STABLE_REPOS=('core' 'extra')
+	ARCHES=(${ARCH_BUILD[*]@Q})
 	CLEANUP_DESTDIR="${TMP}/package-cleanup"
 	SOURCE_CLEANUP_DESTDIR="${TMP}/source-cleanup"
 	STAGING="${TMP}/staging"
@@ -73,6 +84,7 @@ setup() {
 	SOURCE_CLEANUP_DRYRUN=false
 eot
 	. config
+	PKGEXT=".pkg.tar.xz"
 
 	mkdir -p "${TMP}/"{ftp,tmp,staging,{package,source}-cleanup,svn-packages-{copy,repo}}
 
@@ -95,7 +107,7 @@ eot
 	SVNREPOS=(
 		"svn-packages-copy file://${TMP}/svn-packages-repo core extra testing"
 	)
-	ARCHES=(${ARCH_BUILD[*]})
+	ARCHES=(${ARCH_BUILD[*]@Q})
 eot
 	echo 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs/xbs.conf"
 }
@@ -104,31 +116,11 @@ teardown() {
 	rm -rf "${TMP}"
 }
 
-getpkgbase() {
-	local _base
-	_grep_pkginfo() {
-		local _ret
-
-		_ret="$(/usr/bin/bsdtar -xOqf "$1" .PKGINFO | grep -m 1 "^${2} = ")"
-		echo "${_ret#${2} = }"
-	}
-
-	_base="$(_grep_pkginfo "$1" "pkgbase")"
-	if [ -z "$_base" ]; then
-		_grep_pkginfo "$1" "pkgname"
-	else
-		echo "$_base"
-	fi
-}
-
 releasePackage() {
 	local repo=$1
 	local pkgbase=$2
-	local arch=$3
-	local a
-	local p
-	local pkgver
-	local pkgname
+	local pkgarches
+	local tarch
 
 	if [ ! -d "${TMP}/svn-packages-copy/${pkgbase}/trunk" ]; then
 		mkdir -p "${TMP}/svn-packages-copy/${pkgbase}"/{trunk,repos}
@@ -137,142 +129,148 @@ releasePackage() {
 		svn commit -q -m"initial commit of ${pkgbase}" "${TMP}/svn-packages-copy"
 	fi
 
-	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/" >/dev/null
-	__buildPackage ${arch}
-	xbs release-client "${repo}" "${arch}"
-	pkgver=$(. PKGBUILD; get_full_version)
-	pkgname=($(. PKGBUILD; echo "${pkgname[@]}"))
-	for p in "${pkgname[@]}"; do
-		cp "${p}-${pkgver}-${arch}"${PKGEXT}{,.sig} "${STAGING}/${repo}/"
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
+
+	__buildPackage "${STAGING}"/${repo}
+	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
+	for tarch in "${pkgarches[@]}"; do
+		xbs release-client "${repo}" "${tarch}"
 	done
-	popd >/dev/null
+	popd
 }
 
-getPackageNamesFromPackageBase() {
+updatePackage() {
 	local pkgbase=$1
 
-	$(. "packages/${pkgbase}/PKGBUILD"; echo ${pkgname[@]})
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
+	__updatePKGBUILD
+	__buildPackage
+	popd
 }
 
-checkAnyPackageDB() {
-	local repo=$1
-	local pkg=$2
-	local arch
-	local db
+updateRepoPKGBUILD() {
+	local pkgbase=$1
+	local repo=$2
+	local arch=$3
 
-	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
-	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
-
-	for arch in "${ARCH_BUILD[@]}"; do
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
-
-		[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-		[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
-
-		for db in "${DBEXT}" "${FILESEXT}"; do
-			if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
-				bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkg}" &>/dev/null
-			fi
-		done
-	done
-	[ ! -r "${STAGING}/${repo}/${pkg}" ]
-	[ ! -r "${STAGING}/${repo}/${pkg}".sig ]
-}
-
-checkAnyPackage() {
-	local repo=$1
-	local pkg=$2
-
-	checkAnyPackageDB "$repo" "$pkg"
-
-	local pkgbase=$(getpkgbase "${FTP_BASE}/${PKGPOOL}/${pkg}")
-	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
-	[ -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-any" ]
+	pushd "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}/"
+	__updatePKGBUILD
+	popd
 }
 
 checkPackageDB() {
 	local repo=$1
-	local pkg=$2
-	local arch=$3
+	local pkgbase=$2
 	local db
+	local pkgarch
+	local repoarch
+	local repoarches
+	local pkgfile
+	local pkgname
 
-	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}" ]
-	[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}" ]
-	[ ! -r "${STAGING}/${repo}/${pkg}" ]
+	# FIXME: We guess the location of the PKGBUILD used for this repo
+	# We cannot read from trunk as __updatePKGBUILD() might have bumped the version
+	# and different repos can have different versions of the same package
+	local pkgbuildPaths=($(compgen -G "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-*"))
+	local pkgbuildPath="${pkgbuildPaths[0]}"
+	echo Repo is $repo
+	echo pkgbuildPaths = ${pkgbuildPaths[@]}
+	echo pkgbuildPath = ${pkgbuildPath}
+	ls -ahl ${TMP}/svn-packages-copy/${pkgbase}/repos/
+	[ -r "${pkgbuildPath}/PKGBUILD" ]
 
-	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}")" ]
+	local pkgarches=($(. "${pkgbuildPath}/PKGBUILD"; echo ${arch[@]}))
+	local pkgnames=($(. "${pkgbuildPath}/PKGBUILD"; echo ${pkgname[@]}))
+	local pkgver=$(. "${pkgbuildPath}/PKGBUILD"; get_full_version)
 
-	[ -r "${FTP_BASE}/${PKGPOOL}/${pkg}.sig" ]
-	[ -L "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig" ]
-	[ ! -r "${STAGING}/${repo}/${pkg}.sig" ]
+	if [[ ${pkgarches[@]} == any ]]; then
+		repoarches=("${ARCHES[@]}")
+	else
+		repoarches=("${pkgarches[@]}")
+	fi
 
-	[ "$(readlink -e "${FTP_BASE}/${repo}/os/${arch}/${pkg}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkg}.sig")" ]
+	for pkgarch in ${pkgarches[@]}; do
+		for pkgname in ${pkgnames[@]}; do
+			pkgfile="${pkgname}-${pkgver}-${pkgarch}${PKGEXT}"
 
-	for db in "${DBEXT}" "${FILESEXT}"; do
-		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
-			bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkg}" &>/dev/null
-		fi
+			[ -r "${FTP_BASE}/${PKGPOOL}/${pkgfile}" ]
+			[ -r "${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig" ]
+			[ ! -r "${STAGING}/${repo}/${pkgfile}" ]
+			[ ! -r "${STAGING}/${repo}/${pkgfile}.sig" ]
+
+			for repoarch in "${repoarches[@]}"; do
+				# Only 'any' packages can be found in repos of both arches
+				if [[ $pkgarch != any ]]; then
+					if [[ $pkgarch != ${repoarch} ]]; then
+						continue
+					fi
+				fi
+
+				[ -L "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}" ]
+				[ "$(readlink -e "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkgfile}")" ]
+
+				[ -L "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}.sig" ]
+				[ "$(readlink -e "${FTP_BASE}/${repo}/os/${repoarch}/${pkgfile}.sig")" == "$(readlink -e "${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig")" ]
+
+				for db in "${DBEXT}" "${FILESEXT}"; do
+					[ -r "${FTP_BASE}/${repo}/os/${repoarch}/${repo}${db%.tar.*}" ]
+					bsdtar -xf "${FTP_BASE}/${repo}/os/${repoarch}/${repo}${db%.tar.*}" -O | grep "${pkgfile%${PKGEXT}}" &>/dev/null
+				done
+			done
+		done
 	done
 }
 
 checkPackage() {
 	local repo=$1
-	local pkg=$2
-	local arch=$3
-
-	checkPackageDB "$repo" "$pkg" "$arch"
-
-	local pkgbase=$(getpkgbase "${FTP_BASE}/${PKGPOOL}/${pkg}")
-	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
-	[ -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}" ]
-}
-
-checkRemovedPackageDB() {
-	local repo=$1
 	local pkgbase=$2
-	local arch=$3
-	local db
 
-	for db in "${DBEXT}" "${FILESEXT}"; do
-		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
-			! bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
-		fi
-	done
+	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
+	# TODO: Does not fail if one arch is missing
+	compgen -G "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-*" >/dev/null
+
+	checkPackageDB "$repo" "$pkgbase"
 }
 
 checkRemovedPackage() {
 	local repo=$1
 	local pkgbase=$2
-	local arch=$3
-
-	checkRemovedPackageDB "$repo" "$pkgbase" "$arch"
 
 	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
-	[ ! -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-${arch}" ]
+	! compgen -G "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-*" >/dev/null
+
+	checkRemovedPackageDB "$repo" "$pkgbase"
 }
 
-checkRemovedAnyPackageDB() {
+checkRemovedPackageDB() {
 	local repo=$1
 	local pkgbase=$2
 	local arch
 	local db
+	local tarch
+	local tarches
+	local pkgarches
+	local pkgnames
+	local pkgname
+
+	local pkgbuildPath="${TMP}/svn-packages-copy/${pkgbase}/trunk/PKGBUILD"
+	[[ -r ${pkgbuildPath} ]]
+	pkgarches=($(. "${pkgbuildPath}"; echo ${arch[@]}))
+	pkgnames=($(. "${pkgbuildPath}"; echo ${pkgname[@]}))
+
+	if [[ ${pkgarches[@]} == any ]]; then
+		tarches=(${ARCHES[@]})
+	else
+		tarches=(${pkgarches[@]})
+	fi
 
 	for db in "${DBEXT}" "${FILESEXT}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" ]; then
-				! bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${db%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
+		for tarch in "${tarches[@]}"; do
+			if [ -r "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" ]; then
+				for pkgname in ${pkgnames[@]}; do
+					! bsdtar -xf "${FTP_BASE}/${repo}/os/${tarch}/${repo}${db%.tar.*}" -O | grep "${pkgname}" &>/dev/null
+				done
 			fi
 		done
 	done
-}
-
-checkRemovedAnyPackage() {
-	local repo=$1
-	local pkgbase=$2
-
-	checkRemovedAnyPackageDB "$repo" "$pkgbase"
-
-	svn up -q "${TMP}/svn-packages-copy/${pkgbase}"
-	[ ! -d "${TMP}/svn-packages-copy/${pkgbase}/repos/${repo}-any" ]
 }

@@ -6,6 +6,7 @@ arch=('i686' 'x86_64')
 url='http://www.archlinux.org/'
 license=('GPL')
 depends=('glibc')
+options=(!strip)
 makedepends=('gcc')
 source=('Makefile' 'test.c')
 md5sums=('c6cb8dcc86253355fed559416d0c8dcf'

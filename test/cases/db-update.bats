@@ -6,30 +6,26 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkPackage extra "${pkgbase}-1-1-${arch}.pkg.tar.xz" "${arch}"
-		done
+		checkPackage extra "${pkgbase}"
 	done
 }
 
 @test "add single simple package" {
-	releasePackage extra 'pkg-simple-a' 'i686'
+	releasePackage extra 'pkg-single-arch'
 	db-update
-	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
+	checkPackage extra 'pkg-single-arch'
 }
 
 @test "add single epoch package" {
-	releasePackage extra 'pkg-simple-epoch' 'i686'
+	releasePackage extra 'pkg-single-epoch'
 	db-update
-	checkPackage extra 'pkg-simple-epoch-1:1-1-i686.pkg.tar.xz' 'i686'
+	checkPackage extra 'pkg-single-epoch'
 }
 
 @test "add any packages" {
@@ -37,13 +33,13 @@ load ../lib/common
 	local pkgbase
 
 	for pkgbase in "${pkgs[@]}"; do
-		releasePackage extra "${pkgbase}" any
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		checkAnyPackage extra "${pkgbase}-1-1-any.pkg.tar.xz"
+		checkPackage extra "${pkgbase}"
 	done
 }
 
@@ -54,80 +50,62 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			for pkg in $(getPackageNamesFromPackageBase ${pkgbase}); do
-				checkPackage extra "${pkg##*/}" "${arch}"
-			done
-		done
+		checkPackage extra "${pkgbase}"
 	done
 }
 
 @test "update any package" {
-	releasePackage extra pkg-any-a any
+	releasePackage extra pkg-any-a
 	db-update
 
-	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
-	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	__buildPackage any
-	popd >/dev/null
+	updatePackage pkg-any-a
 
-	releasePackage extra pkg-any-a any
+	releasePackage extra pkg-any-a
 	db-update
 
-	checkAnyPackage extra pkg-any-a-1-2-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
 }
 
 @test "update any package to different repositories at once" {
-	releasePackage extra pkg-any-a any
+	releasePackage extra pkg-any-a
 
-	pushd "${TMP}/svn-packages-copy/pkg-any-a/trunk/" >/dev/null
-	sed 's/pkgrel=1/pkgrel=2/g' -i PKGBUILD
-	svn commit -q -m"update pkg to pkgrel=2" >/dev/null
-	__buildPackage any
-	popd >/dev/null
+	updatePackage pkg-any-a
 
-	releasePackage testing pkg-any-a any
+	releasePackage testing pkg-any-a
 
 	db-update
 
-	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
-	checkAnyPackage testing pkg-any-a-1-2-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
+	checkPackage testing pkg-any-a
 }
 
 @test "update same any package to same repository" {
-	releasePackage extra pkg-any-a any
+	releasePackage extra pkg-any-a
 	db-update
-	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
 
-	releasePackage extra pkg-any-a any
-	! db-update >/dev/null 2>&1
+	releasePackage extra pkg-any-a
+	run db-update
+	[ "$status" -ne 0 ]
 }
 
 @test "update same any package to different repositories" {
-	releasePackage extra pkg-any-a any
+	releasePackage extra pkg-any-a
 	db-update
-	checkAnyPackage extra pkg-any-a-1-1-any.pkg.tar.xz any
+	checkPackage extra pkg-any-a
 
-	releasePackage testing pkg-any-a any
-	! db-update >/dev/null 2>&1
+	releasePackage testing pkg-any-a
+	run db-update
+	[ "$status" -ne 0 ]
 
-	local arch
-	for arch in "${ARCH_BUILD[@]}"; do
-		if [ -r "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" ]; then
-			! bsdtar -xf "${FTP_BASE}/testing/os/${arch}/testing${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
-		fi
-	done
+	checkRemovedPackageDB testing pkg-any-a
 }
-
 
 @test "add incomplete split package" {
 	skip # commented out with "This is fucking obnoxious" -- abslibre is broken
@@ -135,59 +113,123 @@ load ../lib/common
 	local pkgbase='pkg-split-a'
 	local arch
 
-	for arch in "${ARCH_BUILD[@]}"; do
-		releasePackage "${repo}" "${pkgbase}" "${arch}"
-	done
+	releasePackage "${repo}" "${pkgbase}"
 
 	# remove a split package to make db-update fail
 	rm "${STAGING}/extra/${pkgbase}1-"*
 
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
-	for arch in "${ARCH_BUILD[@]}"; do
-		if [ -r "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" ]; then
-			! bsdtar -xf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT%.tar.*}" -O | grep "${pkgbase}" &>/dev/null
-		fi
-	done
+	checkRemovedPackageDB ${repo} ${pkgbase}
 }
 
 @test "unknown repo" {
 	mkdir "${STAGING}/unknown/"
-	releasePackage extra 'pkg-simple-a' 'i686'
-	releasePackage unknown 'pkg-simple-b' 'i686'
+	releasePackage extra 'pkg-any-a'
+	releasePackage unknown 'pkg-any-b'
 	db-update
-	checkPackage extra 'pkg-simple-a-1-1-i686.pkg.tar.xz' 'i686'
+	checkPackage extra 'pkg-any-a'
 	[ ! -e "${FTP_BASE}/unknown" ]
 	rm -rf "${STAGING}/unknown/"
 }
 
 @test "add unsigned package fails" {
-	releasePackage extra 'pkg-simple-a' 'i686'
+	releasePackage extra 'pkg-any-a'
 	rm "${STAGING}"/extra/*.sig
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
-	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
+	checkRemovedPackageDB extra pkg-any-a
 }
 
 @test "add invalid signed package fails" {
 	local p
-	releasePackage extra 'pkg-simple-a' 'i686'
+	releasePackage extra 'pkg-any-a'
 	for p in "${STAGING}"/extra/*${PKGEXT}; do
 		unxz "$p"
 		xz -0 "${p%%.xz}"
 	done
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
-	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
+	checkRemovedPackageDB extra pkg-any-a
 }
 
 @test "add broken signature fails" {
 	local s
-	releasePackage extra 'pkg-simple-a' 'i686'
+	releasePackage extra 'pkg-any-a'
 	for s in "${STAGING}"/extra/*.sig; do
 		echo 0 > "$s"
 	done
-	! db-update >/dev/null 2>&1
+	run db-update
+	[ "$status" -ne 0 ]
 
-	checkRemovedPackage extra pkg-simple-a-1-1-i686.pkg.tar.xz i686
+	checkRemovedPackageDB extra pkg-any-a
+}
+
+@test "add package with inconsistent version fails" {
+	local p
+	releasePackage extra 'pkg-any-a'
+
+	for p in "${STAGING}"/extra/*; do
+		mv "${p}" "${p/pkg-any-a-1/pkg-any-a-2}"
+	done
+
+	run db-update
+	[ "$status" -ne 0 ]
+	checkRemovedPackageDB extra 'pkg-any-a'
+}
+
+@test "add package with inconsistent name fails" {
+	local p
+	releasePackage extra 'pkg-any-a'
+
+	for p in "${STAGING}"/extra/*; do
+		mv "${p}" "${p/pkg-/foo-pkg-}"
+	done
+
+	run db-update
+	[ "$status" -ne 0 ]
+	checkRemovedPackage extra 'pkg-any-a'
+}
+
+@test "add package with inconsistent pkgbuild fails" {
+	skip # abslibre is broken
+	releasePackage extra 'pkg-any-a'
+
+	updateRepoPKGBUILD 'pkg-any-a' extra any
+
+	run db-update
+	[ "$status" -ne 0 ]
+	checkRemovedPackageDB extra 'pkg-any-a'
+}
+
+@test "add package with insufficient permissions fails" {
+	releasePackage core 'pkg-any-a'
+	releasePackage extra 'pkg-any-b'
+
+	chmod -xwr ${FTP_BASE}/core/os/i686
+	run db-update
+	[ "$status" -ne 0 ]
+	chmod +xwr ${FTP_BASE}/core/os/i686
+
+	checkRemovedPackageDB core 'pkg-any-a'
+	checkRemovedPackageDB extra 'pkg-any-b'
+}
+
+@test "package has to be a regular file" {
+	local p
+	local target=$(mktemp -d)
+
+	releasePackage extra 'pkg-simple-a'
+
+	for p in "${STAGING}"/extra/*i686*; do
+		mv "${p}" "${target}"
+		ln -s "${target}/${p##*/}" "${p}"
+	done
+
+	run db-update
+	[ "$status" -ne 0 ]
+	checkRemovedPackageDB extra "pkg-simple-a"
 }

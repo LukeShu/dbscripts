@@ -6,9 +6,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -20,9 +18,7 @@ load ../lib/common
 	done
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkRemovedPackage extra "${pkgbase}" "${arch}"
-		done
+		checkRemovedPackage extra "${pkgbase}"
 	done
 }
 
@@ -32,9 +28,7 @@ load ../lib/common
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			releasePackage extra "${pkgbase}" "${arch}"
-		done
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -44,9 +38,7 @@ load ../lib/common
 	done
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
-			checkRemovedPackage extra "${pkgbase}" "${arch}"
-		done
+		checkRemovedPackage extra "${pkgbase}"
 	done
 }
 
@@ -55,7 +47,7 @@ load ../lib/common
 	local pkgbase
 
 	for pkgbase in "${pkgs[@]}"; do
-		releasePackage extra "${pkgbase}" any
+		releasePackage extra "${pkgbase}"
 	done
 
 	db-update
@@ -65,6 +57,6 @@ load ../lib/common
 	done
 
 	for pkgbase in "${pkgs[@]}"; do
-		checkRemovedAnyPackage extra "${pkgbase}"
+		checkRemovedPackage extra "${pkgbase}"
 	done
 }
