@@ -22,10 +22,10 @@ The executables that you (might) care about are:
     ├── db-check-repo-sanity            [Parabola only]
     ├── db-check-unsigned-packages      [Parabola only]
     ├── db-check-unsigned-packages.py   [Parabola only]
+    ├── db-import-archlinuxarm-src      [Parabola only]
     ├── db-import-archlinux-any-to-ours [Parabola only]
-    ├── db-import-archlinux-pkg         [Parabola only]
     ├── db-import-archlinux-src         [Parabola only]
-    ├── db-import-archlinuxarm-pkg      [Parabola only]
+    ├── db-import-pkg                   [Parabola only]
     ├── db-init                         [Parabola only]
     ├── db-move
     ├── db-remove
@@ -75,10 +75,11 @@ decided to write their own from scratch, instead of modifying
 But, Parabola doesn't just publish our own packages, we also import
 packages from elsewhere:
 
- - `db-import-${source}*`
+ - `db-import-*`
 
-Unfortunately, these scripts are horribly duct-taped together and are
-aweful.  I hate them.
+Unfortunately, these import scripts fiddle with the repos directly,
+rather than calling `db-{update,move,remove}`, and are prone to break
+things.
 
 Things that haven't been mentioned yet:
 
