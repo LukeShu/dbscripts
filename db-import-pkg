@@ -244,8 +244,11 @@ main() {
 
 	# Get the blacklisted packages
 	libreblacklist update
-	local -a blacklist=($(libreblacklist cat | libreblacklist get-pkg))
-	test ${#blacklist[@]} -eq 0 && fatal_error "Empty blacklist"
+	local blacklist
+	readarray -t blacklist < <(libreblacklist cat | libreblacklist get-pkg)
+	if test ${#blacklist[@]} -eq 0; then
+		fatal_error "Empty blacklist"
+	fi
 	msg2 "%d packages in blacklist" ${#blacklist[@]}
 
 	# Sync the repos databases
