@@ -237,15 +237,20 @@ main() {
 	fi
 
 	source "$(dirname "$(readlink -e "$0")")/config"
+	for var in DBEXT FILESEXT FTP_BASE; do
+		test -z "${!var}" && fatal_error "Empty %s" "${var}"
+	done
+
 	source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
+	vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOLS)
+	[[ $UPSTREAM == archlinux ]] && vars+=(ARCHSRCPOOLS)
+	for var in "${vars[@]}"; do
+		test -z "${!var}" && fatal_error "Empty %s" "${var}"
+	done
 
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
-
-	# Check variables presence
-	vars=(DBEXT FILESEXT mirror mirrorpath WORKDIR FTP_BASE ARCHREPOS ARCHPKGPOOLS)
-	[[ $UPSTREAM == archlinux ]] && vars+=(ARCHSRCPOOLS)
-	for var in "${vars[@]}"; do
+	for var in WORKDIR; do
 		test -z "${!var}" && fatal_error "Empty %s" "${var}"
 	done
 
