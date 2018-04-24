@@ -4,8 +4,8 @@
 # License: GPLv3
 
 set -eE
-
 source "$(librelib messages)"
+setup_traps
 
 readonly -a UPSTREAMS=(archlinux{,32,arm})
 
@@ -214,27 +214,26 @@ make_repo_dbs() {
 # * Create new repo.db with them
 # * Sync repo.db => repo.db
 main() {
-	source "$(dirname "$(readlink -e "$0")")/config"
 
 	# Run as `V=true db-import-pkg-archlinux` to get verbose output
-	VERBOSE=${V}
+	readonly VERBOSE=${V}
 	extra=()
 	${VERBOSE} && extra+=(-v)
-
-	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
-	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
-
-	setup_traps
+	readonly extra
+	readonly UPSTREAM=$1
 
 	# Print usage message
-	if [[ $# -ne 1 ]] || ! in_array "$1" "${UPSTREAMS[@]}" ; then
+	if [[ $# -ne 1 ]] || ! in_array "$UPSTREAM" "${UPSTREAMS[@]}" ; then
 		fatal_error 'usage: %s {%s\b}' \
 			"${0##*/}" \
 			"$(printf -- ' %s |' "${UPSTREAMS[@]}")"
 	fi
 
-	readonly UPSTREAM=$1
+	source "$(dirname "$(readlink -e "$0")")/config"
 	source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
+
+	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
+	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
 
 	# Check variables presence
 	vars=(DBEXT FILESEXT mirror mirrorpath WORKDIR FTP_BASE ARCHREPOS ARCHPKGPOOLS)
