@@ -207,15 +207,22 @@ make_repo_dbs() {
 
 # Main function. Process the databases and get the libre packages
 # Outline:
-# * Get repo.db from an Arch-like repo
-# * Generate a list of available packages
-# * Create sync whitelist (based on package blacklist)
-# * Get packages and signatures
-# * Create new repo.db with them
-# * Sync repo.db => repo.db
+#  1. Fetch package info
+#     * Get blacklist.txt
+#     * Get repo.db from an Arch-like repo
+#  2. Enumerate the repo-arch pairs we'll be operating on
+#  3. Fetch the packages we want
+#     * Create sync whitelist (based on package blacklist)
+#     * Call sync_repo and/or sync_pool to fetch packages and signatures
+#  4. Put the packages in the repos
+#     * Create new repo.db with them (repo-add)
+#     * rsync scratch directory => repos
 main() {
+	##############################################################
+	# 0. Initialization                                          #
+	##############################################################
 
-	# Run as `V=true db-import-pkg-archlinux` to get verbose output
+	# Run as `V=true db-import-pkg` to get verbose output
 	readonly VERBOSE=${V}
 	extra=()
 	${VERBOSE} && extra+=(-v)
@@ -242,6 +249,10 @@ main() {
 		test -z "${!var}" && fatal_error "Empty %s" "${var}"
 	done
 
+	##############################################################
+	# 1. Fetch package info                                      #
+	##############################################################
+
 	# Get the blacklisted packages
 	libreblacklist update
 	local blacklist
@@ -254,6 +265,10 @@ main() {
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
 	sync_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR"
+
+	##############################################################
+	# 2. Enumerate the repo-arch pairs we'll be operating on     #
+	##############################################################
 
 	# Create a list of all repo-arch pairs
 	local tags=()
@@ -269,6 +284,9 @@ main() {
 		done
 	done
 
+	##############################################################
+	# 3. Fetch the packages we want                              #
+	##############################################################
 
 	# Traverse all repo-arch pairs
 	local _tag reponame _arch
@@ -347,6 +365,10 @@ main() {
 			done
 			;;
 	esac
+
+	##############################################################
+	# 4. Put the packages in the repos                           #
+	##############################################################
 
 	msg "Putting databases back in place"
 
