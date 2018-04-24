@@ -255,49 +255,53 @@ main() {
 	msg 'Retrieving .db and .files files'
 	sync_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR"
 
-	# Traverse all repo-arch pairs
-	local _arch _repo
-	for _arch in "${ARCHARCHES[@]}"; do
-		for (( _repo = 0; _repo < ${#ARCHREPOS[@]}; ++_repo )); do
-			local reponame=${ARCHREPOS[$_repo]}
-			msg "Processing %s-%s" "${_arch}" "${reponame}"
-			local db_file=$(get_repo_workdir "${reponame}" "${_arch}")/${reponame}${DBEXT}
-			local files_file=$(get_repo_workdir "${reponame}" "${_arch}")/${reponame}${FILESEXT}
-			local _file
-			for _file in db_file files_file; do
-				if [ ! -f "${!_file}" ]; then
-					warning "%s doesn't exist, skipping this arch-repo" \
-						"${!_file}"
-					unset ARCHREPOS[$_repo]
-					continue
-				fi
-			done
-
-			make_whitelist "/tmp/${reponame}-${_arch}.whitelist" \
-				"$db_file" \
-				"${blacklist[@]}"
-			case "$UPSTREAM" in
-				archlinux)
-					# Append to whitelists array so that we can
-					# later sync_pool() all packages
-					local -a whitelists+=(/tmp/${reponame}-${_arch}.whitelist)
-					# Get repo packages (symlinks)
-					sync_repo \
-						"rsync://${mirror}/${mirrorpath}/${reponame}/os/${_arch}/" \
-						"/tmp/${reponame}-${_arch}.whitelist" \
-						"${FTP_BASE}/${reponame}/os/${_arch}/"
-					;;
-				archlinux32|archlinuxarm)
-					# Upstream doesn't use an $ARCHPKGPOOL
-					filter_duplicates \
-						< "/tmp/${reponame}-${_arch}.whitelist" \
-						> "/tmp/${reponame}-${_arch}-nodups.whitelist"
-					sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${reponame}/" \
-						"/tmp/${reponame}-${_arch}-nodups.whitelist" \
-						"${FTP_BASE}/${ARCHPKGPOOLS}/"
-					;;
-			esac
+	# Create a list of all repo-arch pairs
+	local tags=()
+	local _repo _arch _dir
+	for _repo in "${ARCHREPOS[@]}"; do
+		for _arch in "${ARCHARCHES[@]}"; do
+			_dir=$(get_repo_workdir "${_repo}" "${_arch}")
+			if [[ -f "${_dir}/${_repo}${DBEXT}" && -f "${_dir}/${_repo}${FILESEXT}" ]]; then
+				tags+=("$_repo-$_arch")
+			else
+				warning "%s-%s doesn't exist, skipping this repo-arch" "$_repo" "$_arch"
+			fi
 		done
+	done
+
+
+	# Traverse all repo-arch pairs
+	local _tag reponame _arch
+	for _tag in "${tags[@]}"; do
+		reponame=${_tag%-*}
+		_arch=${_tag##*-}
+		msg "Processing %s-%s" "${_arch}" "${reponame}"
+		_dir=$(get_repo_workdir "${reponame}" "${_arch}")
+		local db_file="${_dir}/${reponame}${DBEXT}"
+		make_whitelist "/tmp/${reponame}-${_arch}.whitelist" \
+			"$db_file" \
+			"${blacklist[@]}"
+		case "$UPSTREAM" in
+			archlinux)
+				# Append to whitelists array so that we can
+				# later sync_pool() all packages
+				local -a whitelists+=(/tmp/${reponame}-${_arch}.whitelist)
+				# Get repo packages (symlinks)
+				sync_repo \
+					"rsync://${mirror}/${mirrorpath}/${reponame}/os/${_arch}/" \
+					"/tmp/${reponame}-${_arch}.whitelist" \
+					"${FTP_BASE}/${reponame}/os/${_arch}/"
+				;;
+			archlinux32|archlinuxarm)
+				# Upstream doesn't use an $ARCHPKGPOOL
+				filter_duplicates \
+					< "/tmp/${reponame}-${_arch}.whitelist" \
+					> "/tmp/${reponame}-${_arch}-nodups.whitelist"
+				sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${reponame}/" \
+					"/tmp/${reponame}-${_arch}-nodups.whitelist" \
+					"${FTP_BASE}/${ARCHPKGPOOLS}/"
+				;;
+		esac
 	done
 
 	case "$UPSTREAM" in
