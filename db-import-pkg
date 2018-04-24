@@ -18,22 +18,7 @@ ${VERBOSE} && extra+=(-v)
 WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
 
-trap_exit() {
-	local signal=$1; shift
-	echo
-	error "$@"
-	trap -- "$signal"
-	kill "-$signal" "$$"
-}
-
-# From makepkg
-for signal in TERM HUP QUIT; do
-    trap "trap_exit $signal '%s signal caught. Exiting...' $signal" \
-	 "$signal"
-done
-unset signal
-trap 'trap_exit INT "Aborted by user! Exiting..."' INT
-trap 'trap_exit USR1 "An unknown error has occurred. Exiting..."' ERR
+setup_traps
 
 fatal_error() {
 	error "$@"
