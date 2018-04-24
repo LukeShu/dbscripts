@@ -1,4 +1,5 @@
 export BUILDDIR ?= $(or $(TMPDIR),/tmp)/dbscripts-build
+COVERAGE_DIR ?= $(CURDIR)/../coverage
 
 test:
 	PATH=$(CURDIR)/../:$(CURDIR)/../cron-jobs/:$(PATH) bats cases
@@ -6,7 +7,7 @@ test:
 test-coverage:
 	PATH=$(CURDIR)/../:$(CURDIR)/../cron-jobs/:$(PATH) kcov \
 		--include-path=$(CURDIR)/../ \
-		--exclude-path=$(CURDIR)/../test,$(CURDIR)/../cron-jobs/makepkg.conf,$(CURDIR)/../config \
+		--exclude-path=$(CURDIR)/../test,$(CURDIR)/../config \
 		$(COVERAGE_DIR) \
 		bats cases
 
