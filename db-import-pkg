@@ -6,41 +6,13 @@
 set -eE
 
 source "$(librelib messages)"
-source "$(dirname "$(readlink -e "$0")")/config"
 
 readonly -a UPSTREAMS=(archlinux{,32,arm})
-
-# Run as `V=true db-import-pkg-archlinux` to get verbose output
-VERBOSE=${V}
-extra=()
-${VERBOSE} && extra+=(-v)
-
-WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
-trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
-
-setup_traps
 
 fatal_error() {
 	error "$@"
 	exit 1
 }
-
-# Print usage message
-if [[ $# -ne 1 ]] || ! in_array "$1" "${UPSTREAMS[@]}" ; then
-	fatal_error 'usage: %s {%s\b}' \
-	            "${0##*/}" \
-	            "$(printf -- ' %s |' "${UPSTREAMS[@]}")"
-fi
-
-readonly UPSTREAM=$1
-source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
-
-# Check variables presence
-vars=(DBEXT FILESEXT mirror mirrorpath WORKDIR FTP_BASE ARCHREPOS ARCHPKGPOOLS)
-[[ $UPSTREAM == archlinux ]] && vars+=(ARCHSRCPOOLS)
-for var in "${vars[@]}"; do
-	test -z "${!var}" && fatal_error "Empty %s" "${var}"
-done
 
 # usage: sync_dbs <from> <into>
 #
@@ -241,7 +213,36 @@ make_repo_dbs() {
 # * Get packages and signatures
 # * Create new repo.db with them
 # * Sync repo.db => repo.db
-init() {
+main() {
+	source "$(dirname "$(readlink -e "$0")")/config"
+
+	# Run as `V=true db-import-pkg-archlinux` to get verbose output
+	VERBOSE=${V}
+	extra=()
+	${VERBOSE} && extra+=(-v)
+
+	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
+	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
+
+	setup_traps
+
+	# Print usage message
+	if [[ $# -ne 1 ]] || ! in_array "$1" "${UPSTREAMS[@]}" ; then
+		fatal_error 'usage: %s {%s\b}' \
+			    "${0##*/}" \
+			    "$(printf -- ' %s |' "${UPSTREAMS[@]}")"
+	fi
+
+	readonly UPSTREAM=$1
+	source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
+
+	# Check variables presence
+	vars=(DBEXT FILESEXT mirror mirrorpath WORKDIR FTP_BASE ARCHREPOS ARCHPKGPOOLS)
+	[[ $UPSTREAM == archlinux ]] && vars+=(ARCHSRCPOOLS)
+	for var in "${vars[@]}"; do
+		test -z "${!var}" && fatal_error "Empty %s" "${var}"
+	done
+
 	# Get the blacklisted packages
 	libreblacklist update
 	local -a blacklist=($(libreblacklist cat | libreblacklist get-pkg))
@@ -353,4 +354,4 @@ init() {
 	date -u +%s > "${FTP_BASE}/lastsync"
 }
 
-init
+main "$@"
