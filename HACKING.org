@@ -10,13 +10,6 @@ db-update is the testing file
 
 db-update-mailer is another (testing) one for the moment. in cron/
 * TODO.txt
-** Test Suite for clean_repo.py
-
-  - Review all repo 
-  - Remove all blacklisted packages
-  - Get pending list right
-  - Extract licenses all right
-
 ** Fix db-move
 
   - Make it use abslibre
