@@ -349,8 +349,6 @@ main() {
 			make_repo_dbs "$_repo" "$_arch"
 		done
 	done
-
-	date -u +%s > "${FTP_BASE}/lastsync"
 }
 
 main "$@"
