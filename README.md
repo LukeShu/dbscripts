@@ -87,3 +87,7 @@ Things that haven't been mentioned yet:
  - `cron-jobs/sourceballs`
  - `db-init`
  - `make_individual_torrent`
+## Testing
+* Install the `base-devel` package group, as well as the `bash-bats`, `kcov`, `subversion`, and `xbs` packages.
+* The test suite can now be run with `make test`.
+* A coverage report can be generated with `make test-coverage`. Open `coverage/index.html` in your web browser to inspect the results.
