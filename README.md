@@ -17,7 +17,6 @@ The executables that you (might) care about are:
     │   ├── update-web-db               [Arch Linux only]
     │   └── update-web-files-db         [Arch Linux only]
     ├── db-check-nonfree                [Parabola only]
-    ├── db-check-nonfree-in-db          [Parabola only]
     ├── db-check-package-libraries      [Parabola only]
     ├── db-check-repo-sanity            [Parabola only]
     ├── db-check-unsigned-packages      [Parabola only]
