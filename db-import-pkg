@@ -185,6 +185,8 @@ make_repo_dbs() {
 	msg2 "Adding whitelisted packages to clean %s and %s ..." \
 		"${db_file##*/}" "${files_file##*/}"
 	rm "$db_file" "$files_file"
+	local UMASK=$(umask)
+	umask 002
 	case "$UPSTREAM" in
 		packages|community)
 			LC_ALL=C repo-add "$db_file" \
@@ -196,6 +198,7 @@ make_repo_dbs() {
 				sed -n 's/==> Adding/   -> Adding/p'
 			;;
 	esac
+	umask "$UMASK" >/dev/null
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
 	mkdir -p -- "$into"
