@@ -7,7 +7,7 @@ set -eE
 source "$(librelib messages)"
 setup_traps
 
-readonly -a UPSTREAMS=(archlinux{,32,arm})
+readonly -a UPSTREAMS=(packages community archlinux{32,arm})
 
 fatal_error() {
 	error "$@"
@@ -35,7 +35,7 @@ sync_dbs() {
 # Prints workdir path for given <repo> <arch> combination
 get_repo_workdir() {
 	case "$UPSTREAM" in
-		archlinux)
+		packages|community)
 			printf -- '%s' "${WORKDIR}/${1}/os/${2}/" ;;
 		archlinux32|archlinuxarm)
 			printf -- '%s' "${WORKDIR}/${2}/${1}/" ;;
@@ -186,7 +186,7 @@ make_repo_dbs() {
 		"${db_file##*/}" "${files_file##*/}"
 	rm "$db_file" "$files_file"
 	case "$UPSTREAM" in
-		archlinux)
+		packages|community)
 			LC_ALL=C repo-add "$db_file" \
 				$(sed "s|^|${into}|; s|$|${PKGEXT}|" "$whitelist") |& \
 				sed -n 's/==> Adding/   -> Adding/p'
@@ -242,8 +242,11 @@ main() {
 	done
 
 	source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
-	vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOLS)
-	[[ $UPSTREAM == archlinux ]] && vars+=(ARCHSRCPOOLS)
+	local vars
+	case "$UPSTREAM" in
+		packages|community)       vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL ARCHSRCPOOL) ;;
+		archlinux32|archlinuxarm) vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL            ) ;;
+	esac
 	for var in "${vars[@]}"; do
 		test -z "${!var}" && fatal_error "Empty %s" "${var}"
 	done
@@ -305,7 +308,7 @@ main() {
 			"$db_file" \
 			"${blacklist[@]}"
 		case "$UPSTREAM" in
-			archlinux)
+			packages|community)
 				# Append to whitelists array so that we can
 				# later sync_pool() all packages
 				local -a whitelists+=(/tmp/${reponame}-${_arch}.whitelist)
@@ -322,36 +325,30 @@ main() {
 					> "/tmp/${reponame}-${_arch}-nodups.whitelist"
 				sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${reponame}/" \
 					"/tmp/${reponame}-${_arch}-nodups.whitelist" \
-					"${FTP_BASE}/${ARCHPKGPOOLS}/"
+					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				;;
 		esac
 	done
 
 	case "$UPSTREAM" in
-		archlinux)
+		packages|community)
 			# Concatenate all whitelists, check for single *s just in case
 			cat "${whitelists[@]}" | grep -v "^\*$" |
 				sort -u > "/tmp/${UPSTREAM}-all.whitelist"
 			# FIXME: make_whitelist() wildcards should be narrowed
 			#        down to respect ${ARCHARCHES[@]}
 
-			msg "Syncing package pools"
-			local pkgpool
-			for pkgpool in "${ARCHPKGPOOLS[@]}"; do
-				sync_pool \
-					"rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
-					"/tmp/${UPSTREAM}-all.whitelist" \
-					"${FTP_BASE}/${pkgpool}/"
-			done
+			msg "Syncing package pool"
+			sync_pool \
+				"rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
+				"/tmp/${UPSTREAM}-all.whitelist" \
+				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
-			local srcpool
-			for srcpool in "${ARCHSRCPOOLS[@]}"; do
-				sync_pool \
-					"rsync://${mirror}/${mirrorpath}/${srcpool}/" \
-					"/tmp/${UPSTREAM}-all.whitelist" \
-					"${FTP_BASE}/${srcpool}/"
-			done
+			sync_pool \
+				"rsync://${mirror}/${mirrorpath}/${ARCHSRCPOOL}/" \
+				"/tmp/${UPSTREAM}-all.whitelist" \
+				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
 		archlinux32|archlinuxarm)
 			msg "Generating symbolic links to pool"
@@ -359,13 +356,11 @@ main() {
 			local _arch _repo _pkgpool
 			for _arch in "${ARCHARCHES[@]}"; do
 				for _repo in "${ARCHREPOS[@]}"; do
-					for _pkgpool in "${ARCHPKGPOOLS[@]}"; do
-						make_repo_symlinks \
-							"$_pkgpool" \
-							"/tmp/${_repo}-${_arch}.whitelist" \
-							"$_repo" \
-							"$_arch"
-					done
+					make_repo_symlinks \
+						"$ARCHPKGPOOL" \
+						"/tmp/${_repo}-${_arch}.whitelist" \
+						"$_repo" \
+						"$_arch"
 				done
 			done
 			;;
