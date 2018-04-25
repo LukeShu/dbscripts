@@ -1,0 +1,12 @@
+[Unit]
+Description=db-import %I
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=repo
+Environment=DBSCRIPTS_CONFIG=/etc/dbscripts/config.local.%I
+ExecStart=/usr/bin/db-import-pkg %I
+
+PrivateTmp=true

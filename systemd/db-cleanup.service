@@ -1,0 +1,7 @@
+[Unit]
+Description=Clean up old files
+
+[Service]
+Type=oneshot
+User=repo
+ExecStart=/opt/dbscripts/cron-jobs/db-cleanup

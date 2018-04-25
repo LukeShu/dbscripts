@@ -1,0 +1,7 @@
+[Unit]
+Description=Create pacman2pacman torrent files
+
+[Service]
+Type=oneshot
+User=repo
+ExecStart=/opt/dbscripts/cron-jobs/make_repo_torrents

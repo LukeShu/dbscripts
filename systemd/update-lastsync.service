@@ -1,0 +1,7 @@
+[Unit]
+Description=Update ${FTP_BASE}/lastsync
+
+[Service]
+Type=oneshot
+User=repo
+ExecStart=/opt/dbscripts/cron-jobs/update-lastsync
