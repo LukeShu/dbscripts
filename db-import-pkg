@@ -37,9 +37,9 @@ sync_dbs() {
 get_repo_workdir() {
 	case "$UPSTREAM" in
 		packages|community)
-			printf -- '%s' "${WORKDIR}/${1}/os/${2}/" ;;
+			printf -- '%s' "${WORKDIR}/rsync/${1}/os/${2}/" ;;
 		archlinux32|archlinuxarm)
-			printf -- '%s' "${WORKDIR}/${2}/${1}/" ;;
+			printf -- '%s' "${WORKDIR}/rsync/${2}/${1}/" ;;
 	esac
 }
 
@@ -179,7 +179,7 @@ make_repo_dbs() {
 	local -r into=${FTP_BASE}/${1}/os/${2}/
 	local -r db_file=${from}/${1}${DBEXT}
 	local -r files_file=${from}/${1}${FILESEXT}
-	local -r whitelist=/tmp/${1}-${2}.whitelist
+	local -r whitelist=${WORKDIR}/${1}-${2}.whitelist
 
 	# create fresh databases to reflect actual `any.pkg.tar.xz` packages.
 	# this also avoids corrupt upstream metadata (ALARM)
@@ -266,7 +266,8 @@ main() {
 
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
-	sync_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR"
+	mkdir "${WORKDIR}/rsync"
+	sync_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR/rsync"
 
 	##############################################################
 	# 2. Enumerate the repo-arch pairs we'll be operating on     #
@@ -291,6 +292,7 @@ main() {
 	##############################################################
 
 	# Traverse all repo-arch pairs
+	local whitelists=()
 	local _tag reponame _arch
 	for _tag in "${tags[@]}"; do
 		reponame=${_tag%-*}
@@ -298,27 +300,27 @@ main() {
 		msg "Processing %s-%s" "${_arch}" "${reponame}"
 		_dir=$(get_repo_workdir "${reponame}" "${_arch}")
 		local db_file="${_dir}/${reponame}${DBEXT}"
-		make_whitelist "/tmp/${reponame}-${_arch}.whitelist" \
+		make_whitelist "${WORKDIR}/${reponame}-${_arch}.whitelist" \
 			"$db_file" \
 			"${blacklist[@]}"
 		case "$UPSTREAM" in
 			packages|community)
 				# Append to whitelists array so that we can
 				# later sync_pool() all packages
-				local -a whitelists+=(/tmp/${reponame}-${_arch}.whitelist)
+				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
 				sync_repo \
 					"rsync://${mirror}/${mirrorpath}/${reponame}/os/${_arch}/" \
-					"/tmp/${reponame}-${_arch}.whitelist" \
+					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					"${FTP_BASE}/${reponame}/os/${_arch}/"
 				;;
 			archlinux32|archlinuxarm)
 				# Upstream doesn't use an $ARCHPKGPOOL
 				filter_duplicates \
-					< "/tmp/${reponame}-${_arch}.whitelist" \
-					> "/tmp/${reponame}-${_arch}-nodups.whitelist"
+					< "${WORKDIR}/${reponame}-${_arch}.whitelist" \
+					> "${WORKDIR}/${reponame}-${_arch}-nodups.whitelist"
 				sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${reponame}/" \
-					"/tmp/${reponame}-${_arch}-nodups.whitelist" \
+					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				;;
 		esac
@@ -328,20 +330,20 @@ main() {
 		packages|community)
 			# Concatenate all whitelists, check for single *s just in case
 			cat "${whitelists[@]}" | grep -v "^\*$" |
-				sort -u > "/tmp/${UPSTREAM}-all.whitelist"
+				sort -u > "${WORKDIR}/${UPSTREAM}-all.whitelist"
 			# FIXME: make_whitelist() wildcards should be narrowed
 			#        down to respect ${ARCHARCHES[@]}
 
 			msg "Syncing package pool"
 			sync_pool \
 				"rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
-				"/tmp/${UPSTREAM}-all.whitelist" \
+				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
 			sync_pool \
 				"rsync://${mirror}/${mirrorpath}/${ARCHSRCPOOL}/" \
-				"/tmp/${UPSTREAM}-all.whitelist" \
+				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
 		archlinux32|archlinuxarm)
@@ -352,7 +354,7 @@ main() {
 				for _repo in "${ARCHREPOS[@]}"; do
 					make_repo_symlinks \
 						"$ARCHPKGPOOL" \
-						"/tmp/${_repo}-${_arch}.whitelist" \
+						"${WORKDIR}/${_repo}-${_arch}.whitelist" \
 						"$_repo" \
 						"$_arch"
 				done
