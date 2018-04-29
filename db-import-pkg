@@ -5,6 +5,7 @@
 
 set -eE
 source "$(librelib messages)"
+source "$(librelib conf)"
 setup_traps
 
 readonly -a UPSTREAMS=(packages community archlinux{32,arm})
@@ -239,26 +240,16 @@ main() {
 		exit $EXIT_INVALIDARGUMENT
 	fi
 
-	source "$(dirname "$(readlink -e "$0")")/config"
-	for var in DBEXT FILESEXT FTP_BASE; do
-		test -z "${!var}" && fatal_error "Empty %s" "${var}"
-	done
-
-	source "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf"
 	local vars
 	case "$UPSTREAM" in
 		packages|community)       vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL ARCHSRCPOOL) ;;
 		archlinux32|archlinuxarm) vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL            ) ;;
 	esac
-	for var in "${vars[@]}"; do
-		test -z "${!var}" && fatal_error "Empty %s" "${var}"
-	done
+	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
+	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
 
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
-	for var in WORKDIR; do
-		test -z "${!var}" && fatal_error "Empty %s" "${var}"
-	done
 
 	##############################################################
 	# 1. Fetch package info                                      #
