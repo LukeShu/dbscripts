@@ -186,19 +186,19 @@ make_repo_dbs() {
 	msg2 "Adding whitelisted packages to clean %s and %s ..." \
 		"${db_file##*/}" "${files_file##*/}"
 	rm "$db_file" "$files_file"
-	local UMASK=$(umask)
-	umask 002
+	local pkgfiles=()
 	case "$UPSTREAM" in
 		packages|community)
-			LC_ALL=C repo-add "$db_file" \
-				$(sed "s|^|${into}|; s|$|${PKGEXT}|" "$whitelist") |& \
-				sed -n 's/==> Adding/   -> Adding/p'
+			pkgfiles=($(sed "s|^|${into}|; s|$|${PKGEXT}|" "$whitelist"))
 			;;
 		archlinux32|archlinuxarm)
-			LC_ALL=C repo-add "$db_file" $(cat "$whitelist") |& \
-				sed -n 's/==> Adding/   -> Adding/p'
+			pkgfiles=($(cat "$whitelist"))
 			;;
 	esac
+	local UMASK=$(umask)
+	umask 002
+	LC_ALL=C repo-add "$db_file" "${pkgfiles[@]}" |& \
+		sed -n 's/==> Adding/   -> Adding/p'
 	umask "$UMASK" >/dev/null
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
