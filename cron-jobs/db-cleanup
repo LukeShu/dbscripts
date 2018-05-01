@@ -30,7 +30,7 @@ EXTRAFLAGS=()
 "${CLEANUP_DRYRUN}" && EXTRAFLAGS+=(--dry-run)
 
 filter=$(mktemp -t "${0##*/}.XXXXXXXXXX")
-trap "rm -f -- $(printf %q "$filter")" EXIT
+trap "rm -f -- ${filter@Q}" EXIT
 
 for _repo in "${PKGREPOS[@]}"; do
 	for _arch in "${ARCHES[@]}"; do

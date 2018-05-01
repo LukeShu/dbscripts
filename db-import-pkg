@@ -248,7 +248,7 @@ main() {
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
 
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
-	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
+	trap "rm -rf -- ${WORKDIR@Q}" EXIT
 
 	##############################################################
 	# 1. Fetch package info                                      #
