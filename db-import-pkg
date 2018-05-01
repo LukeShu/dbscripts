@@ -335,7 +335,7 @@ main() {
 
 			msg "Syncing package pool"
 			sync_pool \
-				"rsync://${mirror}/${mirrorpath}/${pkgpool}/" \
+				"rsync://${mirror}/${mirrorpath}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
@@ -348,7 +348,7 @@ main() {
 		archlinux32|archlinuxarm)
 			msg "Generating symbolic links to pool"
 
-			local _arch _repo _pkgpool
+			local _arch _repo
 			for _arch in "${ARCHARCHES[@]}"; do
 				for _repo in "${ARCHREPOS[@]}"; do
 					make_repo_symlinks \
