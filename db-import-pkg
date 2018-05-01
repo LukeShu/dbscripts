@@ -202,7 +202,7 @@ make_repo_dbs() {
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
 	mkdir -p -- "$into"
-	rsync "${extra[@]}" --no-motd -rtlH \
+	rsync "${extra[@]}" --no-motd -rtlpH \
 		--delay-updates \
 		--safe-links \
 		"$from" "$into"
