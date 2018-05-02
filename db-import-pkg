@@ -93,7 +93,7 @@ sync_pool() {
 
 	mkdir -p -- "$_into"
 	msg2 "Retrieving %d packages from %s pool" \
-		"$(wc -l "$_whitelist" | cut -d' ' -f1)" \
+		"$(wc -l < "$_whitelist")" \
 		"$(basename "$_from")"
 
 	# *Don't delete-after*, this is the job of
@@ -115,7 +115,7 @@ sync_repo() {
 	local -r _from=$1 _whitelist=$2 _into=$3
 	mkdir -p -- "$_into"
 	msg2 "Retrieving %d files from repo" \
-		"$(wc -l "$_whitelist" | cut -d' ' -f1)"
+		"$(wc -l < "$_whitelist")"
 
 	# We delete here for cleanup
 	rsync "${extra[@]}" --no-motd -rtlH \
