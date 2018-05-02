@@ -15,7 +15,7 @@ readonly -a UPSTREAMS=(packages community archlinux{32,arm})
 #
 # Fetch excluding everything but db files
 # TODO: we could be doing without things other than what is in
-#       ${ARCHARCHES[@]} and ${ARCHREPOS[@]}
+#       ${ARCHTAGS[@]}
 fetch_dbs() {
 	rsync "${extra[@]}" --no-motd -mrtlH --no-p \
 		--include="*/" \
@@ -209,11 +209,10 @@ make_repo_dbs() {
 #  1. Fetch package info
 #     * Get blacklist.txt
 #     * Get repo.db from an Arch-like repo
-#  2. Enumerate the repo-arch pairs we'll be operating on
-#  3. Fetch the packages we want
+#  2. Fetch the packages we want
 #     * Create sync whitelist (based on package blacklist)
 #     * Call sync_repo and/or sync_pool to fetch packages and signatures
-#  4. Put the packages in the repos
+#  3. Put the packages in the repos
 #     * Create new repo.db with them (repo-add)
 #     * rsync scratch directory => repos
 main() {
@@ -237,8 +236,8 @@ main() {
 
 	local vars
 	case "$UPSTREAM" in
-		packages|community)       vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL ARCHSRCPOOL) ;;
-		archlinux32|archlinuxarm) vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL            ) ;;
+		packages|community)       vars=(mirror mirrorpath ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
+		archlinux32|archlinuxarm) vars=(mirror mirrorpath ARCHTAGS ARCHPKGPOOL            ) ;;
 	esac
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
@@ -259,31 +258,13 @@ main() {
 	fetch_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR/rsync"
 
 	##############################################################
-	# 2. Enumerate the repo-arch pairs we'll be operating on     #
-	##############################################################
-
-	# Create a list of all repo-arch pairs
-	local tags=()
-	local _repo _arch _dir
-	for _repo in "${ARCHREPOS[@]}"; do
-		for _arch in "${ARCHARCHES[@]}"; do
-			_dir=$(get_repo_workdir "${_repo}" "${_arch}")
-			if [[ -f "${_dir}/${_repo}${DBEXT}" && -f "${_dir}/${_repo}${FILESEXT}" ]]; then
-				tags+=("$_repo-$_arch")
-			else
-				warning "%s-%s doesn't exist, skipping this repo-arch" "$_repo" "$_arch"
-			fi
-		done
-	done
-
-	##############################################################
-	# 3. Fetch the packages we want                              #
+	# 2. Fetch the packages we want                              #
 	##############################################################
 
 	# Traverse all repo-arch pairs
 	local whitelists=()
 	local _tag reponame _arch
-	for _tag in "${tags[@]}"; do
+	for _tag in "${ARCHTAGS[@]}"; do
 		reponame=${_tag%-*}
 		_arch=${_tag##*-}
 		msg "Processing %s-%s" "${_arch}" "${reponame}"
@@ -320,7 +301,7 @@ main() {
 			cat "${whitelists[@]}" | grep -v "^\*$" |
 				sort -u > "${WORKDIR}/${UPSTREAM}-all.whitelist"
 			# FIXME: make_whitelist() wildcards should be narrowed
-			#        down to respect ${ARCHARCHES[@]}
+			#        down to respect the architecture of the tag
 
 			msg "Syncing package pool"
 			sync_pool \
@@ -338,29 +319,29 @@ main() {
 			msg "Generating symbolic links to pool"
 
 			local _arch _repo
-			for _arch in "${ARCHARCHES[@]}"; do
-				for _repo in "${ARCHREPOS[@]}"; do
-					make_repo_symlinks \
-						"$ARCHPKGPOOL" \
-						"${WORKDIR}/${_repo}-${_arch}.whitelist" \
-						"$_repo" \
-						"$_arch"
-				done
+			for _tag in "${ARCHTAGS[@]}"; do
+				_repo=${_tag%-*}
+				_arch=${_tag##*-}
+				make_repo_symlinks \
+					"$ARCHPKGPOOL" \
+					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
+					"$_repo" \
+					"$_arch"
 			done
 			;;
 	esac
 
 	##############################################################
-	# 4. Put the packages in the repos                           #
+	# 3. Put the packages in the repos                           #
 	##############################################################
 
 	msg "Putting databases back in place"
 
 	# FIXME: all repo DBs should be replaced at once (per architecture)
-	for _arch in "${ARCHARCHES[@]}"; do
-		for _repo in "${ARCHREPOS[@]}"; do
-			make_repo_dbs "$_repo" "$_arch"
-		done
+	for _tag in "${ARCHTAGS[@]}"; do
+		_repo=${_tag%-*}
+		_arch=${_tag##*-}
+		make_repo_dbs "$_repo" "$_arch"
 	done
 }
 
