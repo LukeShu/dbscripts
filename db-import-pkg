@@ -10,11 +10,6 @@ setup_traps
 
 readonly -a UPSTREAMS=(packages community archlinux{32,arm})
 
-fatal_error() {
-	error "$@"
-	exit 1
-}
-
 # usage: sync_dbs <from> <into>
 #
 # Sync excluding everything but db files
@@ -259,7 +254,8 @@ main() {
 	local blacklist
 	readarray -t blacklist < <(libreblacklist cat | libreblacklist get-pkg)
 	if test ${#blacklist[@]} -eq 0; then
-		fatal_error "Empty blacklist"
+		error "Empty blacklist"
+		exit 1
 	fi
 	msg2 "%d packages in blacklist" ${#blacklist[@]}
 
