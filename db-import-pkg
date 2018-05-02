@@ -236,8 +236,8 @@ main() {
 
 	local vars
 	case "$UPSTREAM" in
-		packages|community)       vars=(mirror mirrorpath ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
-		archlinux32|archlinuxarm) vars=(mirror mirrorpath ARCHTAGS ARCHPKGPOOL            ) ;;
+		packages|community)       vars=(ARCHMIRROR ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
+		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHTAGS ARCHPKGPOOL            ) ;;
 	esac
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
@@ -255,7 +255,7 @@ main() {
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
 	mkdir "${WORKDIR}/rsync"
-	fetch_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR/rsync"
+	fetch_dbs "${ARCHMIRROR}/" "$WORKDIR/rsync"
 
 	##############################################################
 	# 2. Fetch the packages we want                              #
@@ -279,7 +279,7 @@ main() {
 				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
 				sync_repo \
-					"rsync://${mirror}/${mirrorpath}/${reponame}/os/${_arch}/" \
+					"${ARCHMIRROR}/${reponame}/os/${_arch}/" \
 					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					"${FTP_BASE}/${reponame}/os/${_arch}/"
 				;;
@@ -288,7 +288,7 @@ main() {
 				filter_duplicates \
 					< "${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					> "${WORKDIR}/${reponame}-${_arch}-nodups.whitelist"
-				sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${reponame}/" \
+				sync_pool "${ARCHMIRROR}/${_arch}/${reponame}/" \
 					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				;;
@@ -305,13 +305,13 @@ main() {
 
 			msg "Syncing package pool"
 			sync_pool \
-				"rsync://${mirror}/${mirrorpath}/${ARCHPKGPOOL}/" \
+				"${ARCHMIRROR}}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
 			sync_pool \
-				"rsync://${mirror}/${mirrorpath}/${ARCHSRCPOOL}/" \
+				"${ARCHMIRROR}/${ARCHSRCPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
