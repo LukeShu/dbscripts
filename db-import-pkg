@@ -60,8 +60,7 @@ make_whitelist() {
 	# Remove blacklisted packages and count them
 	# TODO: capture all removed packages for printing on debug mode
 	msg2 "Removing blacklisted packages from %s ..." "${db_file##*/}"
-	LC_ALL=C repo-remove "$db_file" "${blacklist[@]}" |& \
-		sed -n 's/-> Removing/	&/p'
+	repo-remove "$db_file" "${blacklist[@]}"
 
 	# Get db contents
 	local -r db=($(get_repo_content "${db_file}"))
@@ -194,7 +193,7 @@ make_repo_dbs() {
 	esac
 	local UMASK=$(umask)
 	umask 002
-	LC_ALL=C repo-add "$db_file" "${pkgfiles[@]}"
+	repo-add "$db_file" "${pkgfiles[@]}"
 	umask "$UMASK" >/dev/null
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
