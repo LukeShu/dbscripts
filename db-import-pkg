@@ -5,6 +5,7 @@
 
 set -eE
 source "$(librelib messages)"
+source "$(librelib blacklist)"
 source "$(librelib conf)"
 setup_traps
 
@@ -250,9 +251,9 @@ main() {
 	##############################################################
 
 	# Get the blacklisted packages
-	libreblacklist update
+	blacklist-update
 	local blacklist
-	readarray -t blacklist < <(libreblacklist cat | libreblacklist get-pkg)
+	readarray -t blacklist < <(blacklist-cat | blacklist-get-pkg)
 	if test ${#blacklist[@]} -eq 0; then
 		error "Empty blacklist"
 		exit 1
