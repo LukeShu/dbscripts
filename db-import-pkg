@@ -305,7 +305,7 @@ main() {
 
 			msg "Syncing package pool"
 			sync_pool \
-				"${ARCHMIRROR}}/${ARCHPKGPOOL}/" \
+				"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
