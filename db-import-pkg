@@ -56,11 +56,11 @@ get_repo_content() {
 #   2. Cleaning <path-to-db> from <blacklisted-pkg1> [...] in the process.
 #   2.1. repo-remove will also clean the corresponding .files db during 2.
 make_whitelist() {
-	local -r output_file=$1 db_file=$2 blacklist=(${@:3})
+	local -r output_file=$1 db_file=$2
 	# Remove blacklisted packages and count them
 	# TODO: capture all removed packages for printing on debug mode
 	msg2 "Removing blacklisted packages from %s ..." "${db_file##*/}"
-	repo-remove "$db_file" "${blacklist[@]}"
+	blacklist-cat | blacklist-get-pkg | xargs -d '\n' repo-remove "$db_file"
 
 	# Get db contents
 	local -r db=($(get_repo_content "${db_file}"))
@@ -252,13 +252,6 @@ main() {
 
 	# Get the blacklisted packages
 	blacklist-update
-	local blacklist
-	readarray -t blacklist < <(blacklist-cat | blacklist-get-pkg)
-	if test ${#blacklist[@]} -eq 0; then
-		error "Empty blacklist"
-		exit 1
-	fi
-	msg2 "%d packages in blacklist" ${#blacklist[@]}
 
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
@@ -297,8 +290,7 @@ main() {
 		_dir=$(get_repo_workdir "${reponame}" "${_arch}")
 		local db_file="${_dir}/${reponame}${DBEXT}"
 		make_whitelist "${WORKDIR}/${reponame}-${_arch}.whitelist" \
-			"$db_file" \
-			"${blacklist[@]}"
+			"$db_file"
 		case "$UPSTREAM" in
 			packages|community)
 				# Append to whitelists array so that we can
