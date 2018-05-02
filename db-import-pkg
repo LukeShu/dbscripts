@@ -32,12 +32,10 @@ fetch_dbs() {
 #
 # Prints workdir path for given <repo> <arch> combination
 get_repo_workdir() {
-	case "$UPSTREAM" in
-		packages|community)
-			printf -- '%s' "${WORKDIR}/rsync/${1}/os/${2}/" ;;
-		archlinux32|archlinuxarm)
-			printf -- '%s' "${WORKDIR}/rsync/${2}/${1}/" ;;
-	esac
+	local repo=$1 arch=$2
+	local rel
+	rel="$(repo=${repo} arch=${arch} envsubst '$repo $arch' <<<"$ARCHMIRROR_path")"
+	printf '%s\n' "${WORKDIR}/rsync/${rel}/"
 }
 
 # usage: db_list_pkgs <path-to-db>
@@ -241,6 +239,9 @@ main() {
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
 
+	declare -rg ARCHMIRROR_path="${ARCHMIRROR#rsync://*/*/}"
+	declare -rg ARCHMIRROR_fullmodule="${ARCHMIRROR%"/${ARCHMIRROR_path}"}"
+
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 	trap "rm -rf -- ${WORKDIR@Q}" EXIT
 
@@ -254,7 +255,7 @@ main() {
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
 	mkdir "${WORKDIR}/rsync"
-	fetch_dbs "${ARCHMIRROR}/" "$WORKDIR/rsync"
+	fetch_dbs "${ARCHMIRROR_fullmodule}/" "$WORKDIR/rsync"
 
 	##############################################################
 	# 2. Fetch the packages we want                              #
@@ -308,7 +309,7 @@ main() {
 				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
 				sync_repo \
-					"${ARCHMIRROR}/${reponame}/os/${_arch}/" \
+					"${ARCHMIRROR_fullmodule}/${reponame}/os/${_arch}/" \
 					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					"${FTP_BASE}/${reponame}/os/${_arch}/"
 				;;
@@ -317,7 +318,7 @@ main() {
 				filter_duplicates \
 					< "${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					> "${WORKDIR}/${reponame}-${_arch}-nodups.whitelist"
-				sync_pool "${ARCHMIRROR}/${_arch}/${reponame}/" \
+				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${reponame}/" \
 					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				;;
@@ -334,13 +335,13 @@ main() {
 
 			msg "Syncing package pool"
 			sync_pool \
-				"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
+				"${ARCHMIRROR_fullmodule}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
 			sync_pool \
-				"${ARCHMIRROR}/${ARCHSRCPOOL}/" \
+				"${ARCHMIRROR_fullmodule}/${ARCHSRCPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
