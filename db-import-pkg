@@ -17,7 +17,8 @@ readonly -a UPSTREAMS=(packages community archlinux{32,arm})
 # TODO: we could be doing without things other than what is in
 #       ${ARCHARCHES[@]} and ${ARCHREPOS[@]}
 fetch_dbs() {
-	rsync "${extra[@]}" --no-motd -mrtlH --no-p --include="*/" \
+	rsync "${extra[@]}" --no-motd -mrtlH --no-p \
+		--include="*/" \
 		--include="*.db" \
 		--include="*${DBEXT}" \
 		--include="*.files" \
