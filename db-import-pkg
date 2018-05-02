@@ -11,12 +11,12 @@ setup_traps
 
 readonly -a UPSTREAMS=(packages community archlinux{32,arm})
 
-# usage: sync_dbs <from> <into>
+# usage: fetch_dbs <from> <into>
 #
-# Sync excluding everything but db files
+# Fetch excluding everything but db files
 # TODO: we could be doing without things other than what is in
 #       ${ARCHARCHES[@]} and ${ARCHREPOS[@]}
-sync_dbs() {
+fetch_dbs() {
 	rsync "${extra[@]}" --no-motd -mrtlH --no-p --include="*/" \
 		--include="*.db" \
 		--include="*${DBEXT}" \
@@ -263,7 +263,7 @@ main() {
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
 	mkdir "${WORKDIR}/rsync"
-	sync_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR/rsync"
+	fetch_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR/rsync"
 
 	##############################################################
 	# 2. Enumerate the repo-arch pairs we'll be operating on     #
