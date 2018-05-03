@@ -205,8 +205,10 @@ make_repo_dbs() {
 	(
 		# I'm nervous about loading db-functions in the global
 		# scope.
+		set -eE
 		. "$(dirname "$(readlink -e "$0")")/db-functions"
 		set_repo_permission "$1" "$2"
+		trap - EXIT
 	)
 }
 
