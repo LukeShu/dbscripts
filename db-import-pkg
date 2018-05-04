@@ -53,26 +53,6 @@ db_list_pkgs() {
 		sort -u
 }
 
-# usage: make_whitelist <output-file> <path-to-db> <blacklisted-pkg1> [...]
-#
-# Has 2 side effects:
-#   1. Notably, overwrites <output-file> with the whitelist created from...
-#   2. Cleaning <path-to-db> from <blacklisted-pkg1> [...] in the process.
-#   2.1. repo-remove will also clean the corresponding .files db during 2.
-make_whitelist() {
-	local -r output_file=$1 db_file=$2
-
-	# Create a whitelist, add * wildcard to end.
-
-	# FIXME: due to lack of -arch suffix, the pool sync retrieves
-	# every arch even if we aren't syncing them.
-
-	# IMPORTANT: the . in the sed command is needed because an empty
-	# whitelist would consist of a single * allowing any package to
-	# pass through.
-	db_list_pkgs "$db_file" | filter_blacklisted | sed -e 's/ /-/' -e 's|.$|&*|g' > "$output_file"
-}
-
 # usage: filter_blacklisted <FULL_LIST >WHITE_LIST
 #
 # Given a list of packages in the format:
@@ -280,17 +260,47 @@ main() {
 	# 2. Fetch the packages we want                              #
 	##############################################################
 
-	# Traverse all repo-arch pairs
+	mkdir "${WORKDIR}"/{old,new}
+	local _tag _repo _arch db_file
+	for _tag in "${ARCHTAGS[@]}"; do
+		_repo=${_tag%-*}
+		_arch=${_tag##*-}
+		# FIXME: this assumes that the local DBEXT and the
+		# imported DBEXT are the same, which is potentially
+		# not true.
+		#
+		# FIXME: this should use db-functions to lock the
+		# repos while we read them.
+		db_file="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
+		db_list_pkgs "$db_file" > "${WORKDIR}/old/${_tag}.txt"
+
+		db_file="$(get_repo_workdir "${_repo}" "${_arch}")${_repo}${DBEXT}"
+		db_list_pkgs "$db_file" | filter_blacklisted > "${WORKDIR}/new/${_tag}.txt"
+	done
+
+	# OK, now we have $WORKDIR/old/ describing the way the repos
+	# are, and $WORKDIR/new/, describing the way we want them to
+	# be.  We now need to use db-move, db-update, and db-remove to
+	# apply that diff.
+	#
+	# Just kidding!  We'll nuke the current repos and totally
+	# re-create everything.  FIXME: Don't do that, do the above.
+
 	local whitelists=()
-	local _tag reponame _arch
+	local reponame
 	for _tag in "${ARCHTAGS[@]}"; do
 		reponame=${_tag%-*}
 		_arch=${_tag##*-}
 		msg "Processing %s-%s" "${_arch}" "${reponame}"
-		_dir=$(get_repo_workdir "${reponame}" "${_arch}")
-		local db_file="${_dir}/${reponame}${DBEXT}"
-		make_whitelist "${WORKDIR}/${reponame}-${_arch}.whitelist" \
-			"$db_file"
+		# Create a whitelist, add * wildcard to end.
+		#
+		# FIXME: due to lack of -arch suffix, the pool sync
+		# retrieves every arch even if we aren't syncing them.
+		#
+		# IMPORTANT: the . in the sed command is needed
+		# because an empty whitelist would consist of a single
+		# * allowing any package to pass through.
+		sed -e 's/ /-/' -e 's|.$|&*|g' <"${WORKDIR}/new/${_tag}.txt" >"${WORKDIR}/${reponame}-${_arch}.whitelist"
 		case "$UPSTREAM" in
 			packages|community)
 				# Append to whitelists array so that we can
