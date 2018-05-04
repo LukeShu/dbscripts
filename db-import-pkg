@@ -43,13 +43,13 @@ get_repo_dir() {
 #
 #     pkgname [epoch:]pkgver-pkgrel
 db_list_pkgs() {
-	bsdtar tf "${1}" |
+	bsdtar tf "$1" |
 		cut -d "/" -f 1 |
 		sed -r 's/-([^-]*-[^-]*)$/ \1/' |
 		sort -u
 }
 
-# usage: filter_blacklisted <FULL_LIST >WHITE_LIST
+# usage: filter_blacklisted <FULL_LIST >FILTERED_LIST
 #
 # Given a list of packages in the format:
 #
@@ -62,7 +62,7 @@ filter_blacklisted() {
 		<(blacklist-cat | blacklist-get-pkg | sort -u)
 }
 
-# usage: filter_duplicates <FULL_LIST >WHITE_LIST
+# usage: filter_duplicates <FULL_LIST >FILTERED_LIST
 #
 # Given a list of packages in the format:
 #
@@ -72,11 +72,12 @@ filter_blacklisted() {
 # parabolaweb, librechroot, and who-knows-what-else.  This only
 # filters exact pkgname/epoch/pkgver/pkgrel matches.
 filter_duplicates() {
-	# FIXME: won't work when PKGEXT is an extglob
+	# FIXME: this will need to be adjusted when we turn PKGEXT in
+	# to an extglob.
 	sort -u | comm -23 \
 		- \
 		<(find "${FTP_BASE}/pool/" -name "*-any${PKGEXT}" -printf "%f\n" |
-			sed  's/-any\.pkg.*//' |
+			sed 's/-any\.pkg.*//' |
 			sed -r 's/-([^-]*-[^-]*)$/ \1/' |
 			sort -u)
 }
@@ -279,7 +280,7 @@ main() {
 	blacklist-update
 
 	# Sync the repos databases
-	msg 'Downloading .db and .files files'
+	msg 'Downloading .db and .files files to import'
 	mkdir "${WORKDIR}/rsync"
 	fetch_dbs "${ARCHMIRROR_fullmodule}/" "$WORKDIR/rsync"
 
@@ -338,9 +339,9 @@ main() {
 
 	local whitelists=()
 	for _tag in "${ARCHTAGS[@]}"; do
+		msg "Processing %s" "$_tag"
 		_repo=${_tag%-*}
 		_arch=${_tag##*-}
-		msg "Processing %s-%s" "${_arch}" "${_repo}"
 		# Create a whitelist, add * wildcard to end.
 		#
 		# FIXME: due to lack of -arch suffix, the pool sync
