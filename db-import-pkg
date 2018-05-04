@@ -40,12 +40,16 @@ get_repo_workdir() {
 	esac
 }
 
-# usage: get_repo_content <path-to-db>
+# usage: db_list_pkgs <path-to-db>
 #
-# Prints a list of packages within a given <path-to-db>
-get_repo_content() {
-	bsdtar tf "${1}" | \
-		cut -d "/" -f 1 | \
+# Prints a list of packages within a given <path-to-db>, one-per-line,
+# in the format:
+#
+#     pkgname [epoch:]pkgver-pkgver
+db_list_pkgs() {
+	bsdtar tf "${1}" |
+		cut -d "/" -f 1 |
+		sed -r 's/-([^-]*-[^-]*)$/ \1/' |
 		sort -u
 }
 
@@ -57,22 +61,29 @@ get_repo_content() {
 #   2.1. repo-remove will also clean the corresponding .files db during 2.
 make_whitelist() {
 	local -r output_file=$1 db_file=$2
-	# Remove blacklisted packages and count them
-	# TODO: capture all removed packages for printing on debug mode
-	msg2 "Removing blacklisted packages from %s ..." "${db_file##*/}"
-	blacklist-cat | blacklist-get-pkg | xargs -d '\n' repo-remove "$db_file"
-
-	# Get db contents
-	local -r db=($(get_repo_content "${db_file}"))
-	msg2 "%d packages in whitelist" ${#db[@]}
 
 	# Create a whitelist, add * wildcard to end.
+
 	# FIXME: due to lack of -arch suffix, the pool sync retrieves
 	# every arch even if we aren't syncing them.
+
 	# IMPORTANT: the . in the sed command is needed because an empty
 	# whitelist would consist of a single * allowing any package to
 	# pass through.
-	printf '%s\n' "${db[@]}" | sed "s|.$|&*|g" > "$output_file"
+	db_list_pkgs "$db_file" | filter_blacklisted | sed -e 's/ /-/' -e 's|.$|&*|g' > "$output_file"
+}
+
+# usage: filter_blacklisted <FULL_LIST >WHITE_LIST
+#
+# Given a list of packages in the format:
+#
+#     pkgname [epoch:]pkgver-pkgver
+#
+# filter out all of the packages named in blacklist.txt.
+filter_blacklisted() {
+	sort -u | join -v1 \
+		- \
+		<(blacklist-cat | blacklist-get-pkg | sort -u)
 }
 
 # usage: < <whitelist> filter_duplicates
