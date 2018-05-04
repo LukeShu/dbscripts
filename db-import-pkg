@@ -28,14 +28,12 @@ fetch_dbs() {
 		"$1" "$2"
 }
 
-# usage: get_repo_workdir <repo> <arch>
+# usage: get_repo_dir <repo> <arch>
 #
-# Prints workdir path for given <repo> <arch> combination
-get_repo_workdir() {
-	local repo=$1 arch=$2
-	local rel
-	rel="$(repo=${repo} arch=${arch} envsubst '$repo $arch' <<<"$ARCHMIRROR_path")"
-	printf '%s\n' "${WORKDIR}/rsync/${rel}/"
+# Prints repo directory path fo rthe given <repo> <arch> combination,
+# relative to the rsync root.
+get_repo_dir() {
+	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHMIRROR_path"
 }
 
 # usage: db_list_pkgs <path-to-db>
@@ -160,7 +158,7 @@ make_repo_symlinks() {
 
 # usage: make_repo_dbs <repo> <arch>
 make_repo_dbs() {
-	local -r from=$(get_repo_workdir "$1" "$2")/
+	local -r from=${WORKDIR}/rsync/$(get_repo_dir "$1" "$2")
 	local -r into=${FTP_BASE}/${1}/os/${2}/
 	local -r db_file=${from}/${1}${DBEXT}
 	local -r files_file=${from}/${1}${FILESEXT}
@@ -190,7 +188,7 @@ make_repo_dbs() {
 	rsync "${extra[@]}" --no-motd -rtlpH \
 		--delay-updates \
 		--safe-links \
-		"$from" "$into"
+		"$from/" "$into"
 	(
 		# I'm nervous about loading db-functions in the global
 		# scope.
@@ -275,7 +273,7 @@ main() {
 		db_file="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
 		db_list_pkgs "$db_file" > "${WORKDIR}/old/${_tag}.txt"
 
-		db_file="$(get_repo_workdir "${_repo}" "${_arch}")${_repo}${DBEXT}"
+		db_file="${WORKDIR}/rsync/$(get_repo_dir "${_repo}" "${_arch}")/${_repo}${DBEXT}"
 		db_list_pkgs "$db_file" | filter_blacklisted > "${WORKDIR}/new/${_tag}.txt"
 	done
 
