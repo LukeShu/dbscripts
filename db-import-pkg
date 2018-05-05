@@ -204,10 +204,13 @@ make_repo_dbs() {
 #  1. Fetch package info
 #     * Get blacklist.txt
 #     * Get repo.db from an Arch-like repo
-#  2. Fetch the packages we want
+#  2. Figure out what we want
+#     * Generate textfiles describing the current repo state, and
+#       (using blacklist.txt) the desired repo state
+#  3. Fetch the packages we want
 #     * Create sync whitelist (based on package blacklist)
 #     * Call sync_repo and/or sync_pool to fetch packages and signatures
-#  3. Put the packages in the repos
+#  4. Put the packages in the repos
 #     * Create new repo.db with them (repo-add)
 #     * rsync scratch directory => repos
 main() {
@@ -256,10 +259,10 @@ main() {
 	fetch_dbs "${ARCHMIRROR_fullmodule}/" "$WORKDIR/rsync"
 
 	##############################################################
-	# 2. Fetch the packages we want                              #
+	# 2. Figure out what we want                                 #
 	##############################################################
 
-	mkdir "${WORKDIR}"/{old,new}
+	mkdir "${WORKDIR}"/{old,new,dif}
 	local _tag _repo _arch db_file
 	for _tag in "${ARCHTAGS[@]}"; do
 		_repo=${_tag%-*}
@@ -277,13 +280,36 @@ main() {
 		db_list_pkgs "$db_file" | filter_blacklisted > "${WORKDIR}/new/${_tag}.txt"
 	done
 
-	# OK, now we have $WORKDIR/old/ describing the way the repos
-	# are, and $WORKDIR/new/, describing the way we want them to
-	# be.  We now need to use db-move, db-update, and db-remove to
-	# apply that diff.
+	# We now have $WORKDIR/old/ describing the way the repos are,
+	# and $WORKDIR/new/ describing the way we want them to be.  We
+	# now create $WORKDIR/dif/ describing how to get from point A
+	# to point B.
 	#
-	# Just kidding!  We'll nuke the current repos and totally
-	# re-create everything.  FIXME: Don't do that, do the above.
+	# TODO: finish this section
+	for _tag in "${ARCHTAGS[@]}"; do
+		comm -23 "${WORKDIR}"/{old,new}/"${_tag}.txt" # take packages that have been "removed"
+	done | grep -rFx -f /dev/stdin "${WORKDIR}/new/" | # but now appear in another repo
+		sort -u > "${WORKDIR}/dif/moved.txt"
+	comm -23 \
+		<(cat "${WORKDIR}"/old/* | cut -d' ' -f1 | sort -u) \
+		<(cat "${WORKDIR}"/new/* | cut -d' ' -f1 | sort -u) \
+		> "${WORKDIR}/dif/removed.txt"
+
+	##############################################################
+	# 3. Fetch the packages we want                              #
+	##############################################################
+
+	# OK, now we have $WORKDIR/old/ describing the way the repos
+	# are, $WORKDIR/new/ describing the way we want them to be,
+	# and $WORKDIR/dif/ describing how to get from `old` to `new`.
+	# We should (TODO) now use db-move, db-update, and db-remove
+	# to apply that diff.
+	#
+	# But,
+	#  - db-move is broken
+	#  - The code that populates /dif/ isn't finished
+	# So, just nuke the current repos and entirely re-create
+	# everything from /new/.
 
 	local whitelists=()
 	local reponame
@@ -360,7 +386,7 @@ main() {
 	esac
 
 	##############################################################
-	# 3. Put the packages in the repos                           #
+	# 4. Put the packages in the repos                           #
 	##############################################################
 
 	msg "Putting databases back in place"
