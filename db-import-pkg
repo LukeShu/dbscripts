@@ -125,8 +125,10 @@ sync_repo() {
 make_repo_symlinks() {
 	local -r pool=$1 whitelist=$2 repo=$3 arch=$4
 
+	local repodir="${WORKDIR}/staging-rsync/${repo}-${arch}"
+
 	msg2 "Putting symlinks in ${repo}/os/${arch}"
-	mkdir -p -- "${FTP_BASE}/${repo}/os/${arch}"
+	mkdir -p -- "${repodir}"
 
 	local pkgfile
 	while read pkgfile; do
@@ -148,7 +150,7 @@ make_repo_symlinks() {
 				"${pkgfile%-*}"
 			continue
 		fi
-		local symlink="${FTP_BASE}/${repo}/os/${arch}/${path##*/}"
+		local symlink="${repodir}/${path##*/}"
 		ln -sfv "../../../pool/${path##*/pool/}" "$symlink"
 		ln -sfv "../../../pool/${path##*/pool/}.sig" "${symlink}.sig"
 		local -a new_whitelist+=($symlink)
@@ -158,7 +160,7 @@ make_repo_symlinks() {
 
 # usage: make_repo_dbs <repo> <arch>
 make_repo_dbs() {
-	local -r from=${WORKDIR}/rsync/$(get_repo_dir "$1" "$2")
+	local -r from=${WORKDIR}/staging-rsync/${1}-${2}
 	local -r into=${FTP_BASE}/${1}/os/${2}/
 	local -r db_file=${from}/${1}${DBEXT}
 	local -r files_file=${from}/${1}${FILESEXT}
@@ -166,9 +168,7 @@ make_repo_dbs() {
 
 	# create fresh databases to reflect actual `any.pkg.tar.xz` packages.
 	# this also avoids corrupt upstream metadata (ALARM)
-	msg2 "Adding whitelisted packages to clean %s and %s ..." \
-		"${db_file##*/}" "${files_file##*/}"
-	rm "$db_file" "$files_file"
+	msg2 "Adding whitelisted packages to clean DBs ..."
 	local pkgfiles=()
 	case "$UPSTREAM" in
 		packages|community)
@@ -194,7 +194,8 @@ make_repo_dbs() {
 	msg2 "Updating %s-%s databases" "$2" "$1"
 	rsync "${extra[@]}" --no-motd -rtlpH \
 		--delay-updates \
-		--safe-links \
+		--delete-after \
+		--links \
 		"$from/" "$into"
 }
 
@@ -310,6 +311,8 @@ main() {
 	# So, just nuke the current repos and entirely re-create
 	# everything from /new/.
 
+	mkdir "${WORKDIR}/staging-rsync"
+
 	local whitelists=()
 	local reponame
 	for _tag in "${ARCHTAGS[@]}"; do
@@ -331,10 +334,13 @@ main() {
 				# later sync_pool() all packages
 				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
+				mkdir "${WORKDIR}/staging-rsync/${_tag}"
+				ln -t "${WORKDIR}/staging-rsync/${_tag}" \
+					"${FTP_BASE}/${reponame}/os/${_arch}"/*
 				sync_repo \
-					"${ARCHMIRROR_fullmodule}/${reponame}/os/${_arch}/" \
+					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${reponame}" "${_arch}")/" \
 					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
-					"${FTP_BASE}/${reponame}/os/${_arch}/"
+					"${WORKDIR}/staging-rsync/${_tag}/"
 				;;
 			archlinux32|archlinuxarm)
 				# Upstream doesn't use an $ARCHPKGPOOL
