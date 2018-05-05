@@ -254,7 +254,7 @@ main() {
 	blacklist-update
 
 	# Sync the repos databases
-	msg 'Retrieving .db and .files files'
+	msg 'Downloading .db and .files files'
 	mkdir "${WORKDIR}/rsync"
 	fetch_dbs "${ARCHMIRROR_fullmodule}/" "$WORKDIR/rsync"
 
