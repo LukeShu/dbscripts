@@ -146,9 +146,8 @@ make_repo_symlinks() {
 		fi
 		# give up
 		if [[ ! (-f "$path" && -f "${path}.sig") ]]; then
-			warning "No file was found for %s, skipping" \
-				"${pkgfile%-*}"
-			continue
+			error "No file was found for %s, skipping" "$pkgfile"
+			return 1
 		fi
 		local symlink="${repodir}/${path##*/}"
 		ln -sfv "../../../pool/${path##*/pool/}" "$symlink"
