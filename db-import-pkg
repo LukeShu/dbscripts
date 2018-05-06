@@ -172,7 +172,14 @@ make_repo_dbs() {
 
 	pushd "${from}"
 	local pkgfiles
-	pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
+	case "$UPSTREAM" in
+		packages|community)
+			pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
+			;;
+		archlinux32|archlinuxarm)
+			pkgfiles=($(cat "$whitelist"))
+			;;
+	esac
 	local UMASK=$(umask)
 	umask 002
 	repo-add "$db_file" "${pkgfiles[@]}"
