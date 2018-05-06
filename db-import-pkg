@@ -81,7 +81,7 @@ sync_pool() {
 	mkdir -p -- "$_into"
 	msg2 "Retrieving %d packages from %s pool" \
 		"$(wc -l < "$_whitelist")" \
-		"$(basename "$_from")"
+		"$(basename "$_into")"
 
 	# *Don't delete-after*, this is the job of
 	# cleanup scripts. It will remove our packages too
