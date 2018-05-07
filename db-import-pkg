@@ -62,15 +62,23 @@ filter_blacklisted() {
 		<(blacklist-cat | blacklist-get-pkg | sort -u)
 }
 
-# usage: < <whitelist> filter_duplicates
+# usage: filter_duplicates <FULL_LIST >WHITE_LIST
 #
-# Don't import arch=(any) packages present elsewhere, it confuses parabolaweb.
-# This reads a whitelist from stdin and prints it without said duplicates.
+# Given a list of packages in the format:
+#
+#     pkgname [epoch:]pkgver-pkgrel
+#
+# filter out arch=(any) packages present elsewhere, as it confuses
+# parabolaweb, librechroot, and who-knows-what-else.  This only
+# filters exact pkgname/epoch/pkgver/pkgrel matches.
 filter_duplicates() {
 	# FIXME: won't work when PKGEXT is an extglob
-	grep -vf <(find "${FTP_BASE}/pool/" \
-	                -name "*-any${PKGEXT}" \
-	                -printf "%f\n" | sed  's/-any\.pkg.*/*/') --
+	sort -u | comm -23 \
+		- \
+		<(find "${FTP_BASE}/pool/" -name "*-any${PKGEXT}" -printf "%f\n" |
+			sed  's/-any\.pkg.*//' |
+			sed -r 's/-([^-]*-[^-]*)$/ \1/' |
+			sort -u)
 }
 
 # usage: sync_pool <from> <path-to-whitelist> <into>
@@ -328,7 +336,9 @@ main() {
 		# IMPORTANT: the . in the sed command is needed
 		# because an empty whitelist would consist of a single
 		# * allowing any package to pass through.
-		sed -e 's/ /-/' -e 's|.$|&*|g' <"${WORKDIR}/new/${_tag}.txt" >"${WORKDIR}/${reponame}-${_arch}.whitelist"
+		sed -e 's/ /-/' -e 's|.$|&*|g' \
+			<"${WORKDIR}/new/${_tag}.txt" \
+			>"${WORKDIR}/${reponame}-${_arch}.whitelist"
 		case "$UPSTREAM" in
 			packages|community)
 				# Append to whitelists array so that we can
@@ -346,7 +356,8 @@ main() {
 			archlinux32|archlinuxarm)
 				# Upstream doesn't use an $ARCHPKGPOOL
 				filter_duplicates \
-					< "${WORKDIR}/${reponame}-${_arch}.whitelist" \
+					<"${WORKDIR}/new/${_tag}.txt" \
+					| sed -e 's/ /-/' -e 's|.$|&*|g' \
 					> "${WORKDIR}/${reponame}-${_arch}-nodups.whitelist"
 				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${reponame}/" \
 					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
