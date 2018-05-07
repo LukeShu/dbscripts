@@ -41,7 +41,7 @@ get_repo_dir() {
 # Prints a list of packages within a given <path-to-db>, one-per-line,
 # in the format:
 #
-#     pkgname [epoch:]pkgver-pkgver
+#     pkgname [epoch:]pkgver-pkgrel
 db_list_pkgs() {
 	bsdtar tf "${1}" |
 		cut -d "/" -f 1 |
@@ -53,7 +53,7 @@ db_list_pkgs() {
 #
 # Given a list of packages in the format:
 #
-#     pkgname [epoch:]pkgver-pkgver
+#     pkgname [epoch:]pkgver-pkgrel
 #
 # filter out all of the packages named in blacklist.txt.
 filter_blacklisted() {
@@ -67,6 +67,7 @@ filter_blacklisted() {
 # Don't import arch=(any) packages present elsewhere, it confuses parabolaweb.
 # This reads a whitelist from stdin and prints it without said duplicates.
 filter_duplicates() {
+	# FIXME: won't work when PKGEXT is an extglob
 	grep -vf <(find "${FTP_BASE}/pool/" \
 	                -name "*-any${PKGEXT}" \
 	                -printf "%f\n" | sed  's/-any\.pkg.*/*/') --
