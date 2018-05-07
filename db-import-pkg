@@ -190,7 +190,7 @@ make_repo_dbs() {
 	esac
 	local UMASK=$(umask)
 	umask 002
-	repo-add "$db_file" "${pkgfiles[@]}"
+	repo-add "${db_file##*/}" "${pkgfiles[@]}"
 	umask "$UMASK" >/dev/null
 	popd >/dev/null
 
