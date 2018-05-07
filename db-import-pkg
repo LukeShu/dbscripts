@@ -124,46 +124,66 @@ sync_repo() {
 		"$_into"
 }
 
-# usage: make_repo_symlinks <pool> <path-to-whitelist> <repo> <arch>
+# usage: poolify <arch> <preferred-pool>
 #
-# Generate symbolic links to target packages <repo-whitelist> lying in
-# some of our <pool>s, and put them in $FTP_BASE/<repo>/os/<arch>.
+# Given a list of packages in the format:
 #
-# Use this after `sync_pool`ing from an upstream with no pool(s) and
-# therefore no symlinks inside <repo>/os/<arch>.
+#     pkgname [epoch:]pkgver-pkgrel
+#
+# Resolve each to a file in `${FTP_BASE}/pool/`.  The output is
+# relative to `${FTP_BASE}/pool/`.  That is, something along the lines
+# of:
+#
+#     poolname/pkgname-[epoch:]pkgver-pkgrel-arch.pkg.tar.xz
+#     archlinux32/zip-3.0-7-i686.pkg.tar.xz
+#     packages/rhino-1.7.7.1-1-any.pkg.tar.xz
+poolify() {
+	local arch=$1 pool=$2
+	local pkgname fullpkgver
+	while read -r pkgname fullpkgver; do
+		local restore paths path
+		restore=$(shopt -p extglob)
+		shopt -s extglob
+		paths=(
+			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}.pkg.tar.xz"
+			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any.pkg.tar.xz"
+			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver}-any.pkg.tar.xz"
+			# HACK: Arch32 appends '.digits' to pkgrels. That
+			# prevents us from finding the corresponding package
+			# if we're using an upstream Arch pool.
+			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver%.+([0-9])}-any.pkg.tar.xz"
+		)
+		$restore
+		for path in "${paths[@]}"; do
+			if [[ -f $path ]]; then
+				break
+			fi
+		done
+		if ! [[ -f "$path" && -f "${path}.sig" ]]; then
+			error "No file was found for %q=%q, aborting" "$pkgname" "$fullpkgver"
+			printf ' -> %q\n' "${paths[@]}" >&2
+			exit 1
+		fi
+		printf '%s\n' "${path#"${FTP_BASE}/pool/"}"
+	done
+}
+
+# usage: make_repo_symlinks TAG <POOLFILELIST
 make_repo_symlinks() {
-	local -r pool=$1 whitelist=$2 repo=$3 arch=$4
+	local tag=$1
 
-	local repodir="${WORKDIR}/staging-rsync/${repo}/os/${arch}"
+	local repo=${tag%-*}
+	local arch=${tag##*-}
+	local repodir=${WORKDIR}/staging-rsync/${repo}/os/${arch}
 
-	msg2 "Putting symlinks in ${repo}/os/${arch}"
+	msg2 "Putting symlinks in %s" "${repo}/os/${arch}"
 	mkdir -p -- "${repodir}"
 
-	local pkgfile
-	while read pkgfile; do
-		local path="${FTP_BASE}/${pool}/${pkgfile}"
-		if [[ ! -f "$path" ]]; then
-			# pkg was an `any.pkg.tar.?z`, find which pool it's in.
-			pkgfile=${pkgfile/${arch}/any}
-			# HACK: Arch32 appends '.digits' to pkgrels. That
-			# prevents us from finding the corresponding package.
-			shopt -s extglob &&
-				pkgfile=${pkgfile/.+([0-9])-any/-any} || :
-			shopt -u extglob || :
-			local any_pkgs=(${FTP_BASE}/pool/*/${pkgfile})
-			path="${any_pkgs[0]}"
-		fi
-		# give up
-		if [[ ! (-f "$path" && -f "${path}.sig") ]]; then
-			error "No file was found for %s, skipping" "$pkgfile"
-			return 1
-		fi
-		local symlink="${repodir}/${path##*/}"
-		ln -sfv "../../../pool/${path##*/pool/}" "$symlink"
-		ln -sfv "../../../pool/${path##*/pool/}.sig" "${symlink}.sig"
-		local -a new_whitelist+=($symlink)
-	done < <(sed "s/*/-${arch}.pkg.tar.xz/" "$whitelist")
-	printf -- '%s\n' "${new_whitelist[@]}" > "$whitelist"
+	local poolfile
+	while read -r poolfile; do
+		ln -sfvT "../../../pool/${poolfile##*/pool/}"     "${repodir}/${poolfile##*/}"
+		ln -sfvT "../../../pool/${poolfile##*/pool/}.sig" "${repodir}/${poolfile##*/}.sig"
+	done
 }
 
 # usage: make_repo_dbs <repo> <arch>
@@ -180,14 +200,7 @@ make_repo_dbs() {
 
 	pushd "${from}"
 	local pkgfiles
-	case "$UPSTREAM" in
-		packages|community)
-			pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
-			;;
-		archlinux32|archlinuxarm)
-			pkgfiles=($(cat "$whitelist"))
-			;;
-	esac
+	pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
 	local UMASK=$(umask)
 	umask 002
 	repo-add "${db_file##*/}" "${pkgfiles[@]}"
@@ -389,15 +402,13 @@ main() {
 		archlinux32|archlinuxarm)
 			msg "Generating symbolic links to pool"
 
-			local _arch _repo
 			for _tag in "${ARCHTAGS[@]}"; do
-				_repo=${_tag%-*}
 				_arch=${_tag##*-}
-				make_repo_symlinks \
-					"$ARCHPKGPOOL" \
-					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
-					"$_repo" \
-					"$_arch"
+				poolify "${_arch}" "${ARCHPKGPOOL}" \
+					<"${WORKDIR}/new/${_tag}.txt" \
+					>"${WORKDIR}/${_tag}.pool"
+				make_repo_symlinks "$_tag" \
+					<"${WORKDIR}/${_tag}.pool"
 			done
 			;;
 	esac
