@@ -138,10 +138,11 @@ sync_repo() {
 #     archlinux32/zip-3.0-7-i686.pkg.tar.xz
 #     packages/rhino-1.7.7.1-1-any.pkg.tar.xz
 poolify() {
-	local arch=$1 pool=$2
+	local -r arch=$1 pool=$2
+
 	local pkgname fullpkgver
+	local restore paths path
 	while read -r pkgname fullpkgver; do
-		local restore paths path
 		restore=$(shopt -p extglob)
 		shopt -s extglob
 		paths=(
@@ -170,11 +171,11 @@ poolify() {
 
 # usage: make_repo_symlinks TAG <POOLFILELIST
 make_repo_symlinks() {
-	local tag=$1
+	local -r tag=$1
 
-	local repo=${tag%-*}
-	local arch=${tag##*-}
-	local repodir=${WORKDIR}/staging-rsync/${repo}/os/${arch}
+	local -r repo=${tag%-*}
+	local -r arch=${tag##*-}
+	local -r repodir=${WORKDIR}/staging-rsync/${repo}/os/${arch}
 
 	msg2 "Putting symlinks in %s" "${repo}/os/${arch}"
 	mkdir -p -- "${repodir}"
@@ -199,9 +200,9 @@ make_repo_dbs() {
 	msg2 "Adding whitelisted packages to clean DBs ..."
 
 	pushd "${from}"
-	local pkgfiles
+	local -r pkgfiles
 	pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
-	local UMASK=$(umask)
+	local -r UMASK=$(umask)
 	umask 002
 	repo-add "${db_file##*/}" "${pkgfiles[@]}"
 	umask "$UMASK" >/dev/null
@@ -209,7 +210,7 @@ make_repo_dbs() {
 
 	mkdir -p -- "$into"
 	# This bit is based on db-functions:set_repo_permission()
-	local group=$(/usr/bin/stat --printf='%G' "${into}")
+	local -r group=$(/usr/bin/stat --printf='%G' "${into}")
 	chgrp "$group" "${db_file}"
 	chgrp "$group" "${files_file}"
 	chmod g+w "${db_file}"
@@ -336,7 +337,6 @@ main() {
 	# everything from /new/.
 
 	local whitelists=()
-	local _repo
 	for _tag in "${ARCHTAGS[@]}"; do
 		_repo=${_tag%-*}
 		_arch=${_tag##*-}
