@@ -9,11 +9,11 @@ clean_pkg() {
 
 	if ! "${CLEANUP_DRYRUN}"; then
 		for pkg in "$@"; do
-			if [ -h "$pkg" ]; then
+			if [[ -h $pkg ]]; then
 				rm -f "$pkg" "$pkg.sig"
 			else
 				mv_acl "$pkg" "$CLEANUP_DESTDIR/${pkg##*/}"
-				if [ -e "$pkg.sig" ]; then
+				if [[ -e $pkg.sig ]]; then
 					mv_acl "$pkg.sig" "$CLEANUP_DESTDIR/${pkg##*/}.sig"
 				fi
 				touch "${CLEANUP_DESTDIR}/${pkg##*/}"
@@ -34,16 +34,16 @@ done
 
 for repo in "${PKGREPOS[@]}"; do
 	for arch in "${ARCHES[@]}"; do
-		if [ ! -f "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}" ]; then
+		if [[ ! -f ${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT} ]]; then
 			continue
 		fi
 		# get a list of actual available package files
-		find "${FTP_BASE}/${repo}/os/${arch}" -xtype f -name "*${PKGEXT}" -printf '%f\n' | sort > "${WORKDIR}/repo-${repo}-${arch}"
+		find "${FTP_BASE}/${repo}/os/${arch}" -xtype f -name "*${PKGEXTS}" -printf '%f\n' | sort > "${WORKDIR}/repo-${repo}-${arch}"
 		# get a list of package files defined in the repo db
 		bsdtar -xOf "${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}" | awk '/^%FILENAME%/{getline;print}' | sort > "${WORKDIR}/db-${repo}-${arch}"
 
 		missing_pkgs=($(comm -13 "${WORKDIR}/repo-${repo}-${arch}" "${WORKDIR}/db-${repo}-${arch}"))
-		if [ ${#missing_pkgs[@]} -ge 1 ]; then
+		if (( ${#missing_pkgs[@]} >= 1 )); then
 			error "Missing packages in [%s] (%s)..." "$repo" "$arch"
 			for missing_pkg in "${missing_pkgs[@]}"; do
 				msg2 '%s' "${missing_pkg}"
@@ -51,7 +51,7 @@ for repo in "${PKGREPOS[@]}"; do
 		fi
 
 		old_pkgs=($(comm -23 "${WORKDIR}/repo-${repo}-${arch}" "${WORKDIR}/db-${repo}-${arch}"))
-		if [ ${#old_pkgs[@]} -ge 1 ]; then
+		if (( ${#old_pkgs[@]} >= 1 )); then
 			msg "Removing old packages from [%s] (%s)..." "$repo" "$arch"
 			for old_pkg in "${old_pkgs[@]}"; do
 				msg2 '%s' "${old_pkg}"
@@ -62,12 +62,12 @@ for repo in "${PKGREPOS[@]}"; do
 done
 
 # get a list of all available packages in the pacakge pool
-find "$FTP_BASE/${PKGPOOL}" -name "*${PKGEXT}" -printf '%f\n' | sort > "${WORKDIR}/pool"
+find "$FTP_BASE/${PKGPOOL}" -name "*${PKGEXTS}" -printf '%f\n' | sort > "${WORKDIR}/pool"
 # create a list of packages in our db
 find "${WORKDIR}" -maxdepth 1 -type f -name 'db-*' -exec cat {} \; | sort -u > "${WORKDIR}/db"
 
 old_pkgs=($(comm -23 "${WORKDIR}/pool" "${WORKDIR}/db"))
-if [ ${#old_pkgs[@]} -ge 1 ]; then
+if (( ${#old_pkgs[@]} >= 1 )); then
 	msg "Removing old packages from package pool..."
 	for old_pkg in "${old_pkgs[@]}"; do
 		msg2 '%s' "${old_pkg}"
@@ -75,8 +75,8 @@ if [ ${#old_pkgs[@]} -ge 1 ]; then
 	done
 fi
 
-old_pkgs=($(find "${CLEANUP_DESTDIR}" -type f -name "*${PKGEXT}" -mtime +"${CLEANUP_KEEP}" -printf '%f\n'))
-if [ ${#old_pkgs[@]} -ge 1 ]; then
+old_pkgs=($(find "${CLEANUP_DESTDIR}" -type f -name "*${PKGEXTS}" -mtime +"${CLEANUP_KEEP}" -printf '%f\n'))
+if (( ${#old_pkgs[@]} >= 1 )); then
 	msg "Removing old packages from the cleanup directory..."
 	for old_pkg in "${old_pkgs[@]}"; do
 		msg2 '%s' "${old_pkg}"

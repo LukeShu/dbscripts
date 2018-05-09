@@ -28,7 +28,7 @@ mkdir -p "$TMPDIR"
 ARCHES=(x86_64 i686 armv7h)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
-PKGEXT=".pkg.tar.?z"
+PKGEXTS=".pkg.tar.?z"
 SRCEXT=".src.tar.gz"
 
 # Where to send error emails, and who they are from

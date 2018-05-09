@@ -27,8 +27,7 @@ __buildPackage() {
 
 	if [[ -n ${BUILDDIR} ]]; then
 		cache=${BUILDDIR}/$(__getCheckSum PKGBUILD)
-		if [[ -d ${cache} ]]; then
-			cp -Lv ${cache}/*${PKGEXT}{,.sig} ${pkgdest}
+		if cp -Lv ${cache}/*${PKGEXT}{,.sig} ${pkgdest} 2>/dev/null; then
 			return 0
 		else
 			mkdir -p ${cache}
@@ -38,10 +37,11 @@ __buildPackage() {
 	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
 	for tarch in ${pkgarches[@]}; do
 		if [ "${tarch}" == 'any' ]; then
-			sudo librechroot -n "dbscripts@${tarch}" make
+			sudo librechroot -n "dbscripts@${tarch}" sync
 		else
-			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" make
+			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" sync
 		fi
+		sudo librechroot -n "dbscripts@${tarch}" run bash -c "$(printf '%q ' echo "PKGEXT=${PKGEXT@Q}") >> /etc/makepkg.conf"
 		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
 	done
 
@@ -63,6 +63,7 @@ setup() {
 	local pkg
 	local r
 	local a
+	PKGEXT=".pkg.tar.xz"
 
 	TMP="$(mktemp -d)"
 
@@ -84,7 +85,6 @@ setup() {
 	SOURCE_CLEANUP_DRYRUN=false
 eot
 	. config
-	PKGEXT=".pkg.tar.xz"
 
 	mkdir -p "${TMP}/"{ftp,tmp,staging,{package,source}-cleanup,svn-packages-{copy,repo}}
 

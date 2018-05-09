@@ -3,14 +3,13 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
-if [ $# -ge 1 ]; then
+if (( $# >= 1 )); then
 	warning "Calling %s with a specific repository is no longer supported" "${0##*/}"
 	exit 1
 fi
 
 # Find repos with packages to release
-staging_repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 3 -type f -name "*${PKGEXT}" -printf '%h\n' | sort -u))
-if [ $? -ge 1 ]; then
+if ! staging_repos=($(find  "${STAGING}" -mindepth 1 -maxdepth 3 -type f -name "*${PKGEXTS}" -printf '%h\n' | sort -u)); then
 	die "Could not read %s" "$STAGING"
 fi
 
@@ -34,10 +33,10 @@ for repo in "${repos[@]}"; do
 	if ! check_repo_permission "${repo}"; then
 		die "You don't have permission to update packages in %s" "$repo"
 	fi
-	pkgs=($(getpkgfiles "${STAGING}/${repo}/"*${PKGEXT}))
-	if [ $? -eq 0 ]; then
+	pkgs=($(getpkgfiles "${STAGING}/${repo}/"*${PKGEXTS}))
+	if (( $? == 0 )); then
 		for pkg in "${pkgs[@]}"; do
-			if [ -h "${pkg}" ]; then
+			if [[ -h ${pkg} ]]; then
 				die "Package %s is a symbolic link" "$repo/${pkg##*/}"
 			fi
 			if ! check_pkgfile "${pkg}"; then
@@ -70,28 +69,28 @@ done
 
 for repo in "${repos[@]}"; do
 	msg "Updating [%s]..." "$repo"
-	any_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-any${PKGEXT} 2>/dev/null))
+	any_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-any${PKGEXTS} 2>/dev/null))
 	for pkgarch in "${ARCHES[@]}"; do
 		add_pkgs=()
-		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-"${pkgarch}"${PKGEXT} 2>/dev/null))
+		arch_pkgs=($(getpkgfiles "${STAGING}/${repo}/"*-"${pkgarch}"${PKGEXTS} 2>/dev/null))
 		for pkg in "${arch_pkgs[@]}" "${any_pkgs[@]}"; do
 			pkgfile="${pkg##*/}"
 			msg2 "%s (%s)" "${pkgfile}" "${pkgarch}"
 			# any packages might have been moved by the previous run
-			if [ -f "${pkg}" ]; then
+			if [[ -f ${pkg} ]]; then
 				mv "${pkg}" "$FTP_BASE/${PKGPOOL}"
 			fi
 			ln -s "../../../${PKGPOOL}/${pkgfile}" "$FTP_BASE/$repo/os/${pkgarch}"
 			# also move signatures
-			if [ -f "${pkg}.sig" ]; then
+			if [[ -f ${pkg}.sig ]]; then
 				mv "${pkg}.sig" "$FTP_BASE/${PKGPOOL}"
 			fi
-			if [ -f "$FTP_BASE/${PKGPOOL}/${pkgfile}.sig" ]; then
+			if [[ -f $FTP_BASE/${PKGPOOL}/${pkgfile}.sig ]]; then
 				ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "$FTP_BASE/$repo/os/${pkgarch}"
 			fi
 			add_pkgs+=("${pkgfile}")
 		done
-		if [ ${#add_pkgs[@]} -ge 1 ]; then
+		if (( ${#add_pkgs[@]} >= 1 )); then
 			arch_repo_add "${repo}" "${pkgarch}" "${add_pkgs[@]}"
 		fi
 	done

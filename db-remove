@@ -3,7 +3,7 @@
 . "$(dirname "$(readlink -e "$0")")/config"
 . "$(dirname "$(readlink -e "$0")")/db-functions"
 
-if [ $# -lt 3 ]; then
+if (( $# < 3 )); then
 	msg "usage: %s <repo> <arch> <pkgname|pkgbase> ..." "${0##*/}"
 	exit 1
 fi
@@ -16,7 +16,7 @@ if ! check_repo_permission "$repo"; then
 	die "You don't have permission to remove packages from %s" "$repo"
 fi
 
-if [ "$arch" == "any" ]; then
+if [[ $arch = any ]]; then
 	tarches=("${ARCHES[@]}")
 else
 	tarches=("$arch")
@@ -31,7 +31,7 @@ for pkgbase in "${pkgbases[@]}"; do
 	msg "Removing %s from [%s]..." "$pkgbase" "$repo"
 
 	path="$(xbs releasepath "$pkgbase" "$repo" "$arch")"
-	if [ -d "$path" ]; then
+	if [[ -d $path ]]; then
 		remove_pkgs+=($(. "$path/PKGBUILD"; echo "${pkgname[@]}"))
 		xbs unrelease "$pkgbase" "$repo" "$arch"
 	else
