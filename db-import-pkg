@@ -336,11 +336,11 @@ main() {
 	# everything from /new/.
 
 	local whitelists=()
-	local reponame
+	local _repo
 	for _tag in "${ARCHTAGS[@]}"; do
-		reponame=${_tag%-*}
+		_repo=${_tag%-*}
 		_arch=${_tag##*-}
-		msg "Processing %s-%s" "${_arch}" "${reponame}"
+		msg "Processing %s-%s" "${_arch}" "${_repo}"
 		# Create a whitelist, add * wildcard to end.
 		#
 		# FIXME: due to lack of -arch suffix, the pool sync
@@ -351,29 +351,29 @@ main() {
 		# * allowing any package to pass through.
 		sed -e 's/ /-/' -e 's|.$|&*|g' \
 			<"${WORKDIR}/new/${_tag}.txt" \
-			>"${WORKDIR}/${reponame}-${_arch}.whitelist"
+			>"${WORKDIR}/${_repo}-${_arch}.whitelist"
 		case "$UPSTREAM" in
 			packages|community)
 				# Append to whitelists array so that we can
 				# later sync_pool() all packages
-				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
+				whitelists+=("${WORKDIR}/${_repo}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
-				mkdir -p "${WORKDIR}/staging-rsync/${reponame}/os/${_arch}"
-				ln -t "${WORKDIR}/staging-rsync/${reponame}/os/${_arch}" \
-					"${FTP_BASE}/${reponame}/os/${_arch}"/*
+				mkdir -p "${WORKDIR}/staging-rsync/${_repo}/os/${_arch}"
+				ln -t "${WORKDIR}/staging-rsync/${_repo}/os/${_arch}" \
+					"${FTP_BASE}/${_repo}/os/${_arch}"/*
 				sync_repo \
-					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${reponame}" "${_arch}")/" \
-					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
-					"${WORKDIR}/staging-rsync/${reponame}/os/${_arch}/"
+					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${_repo}" "${_arch}")/" \
+					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
+					"${WORKDIR}/staging-rsync/${_repo}/os/${_arch}/"
 				;;
 			archlinux32|archlinuxarm)
 				# Upstream doesn't use an $ARCHPKGPOOL
 				filter_duplicates \
 					<"${WORKDIR}/new/${_tag}.txt" \
 					| sed -e 's/ /-/' -e 's|.$|&*|g' \
-					> "${WORKDIR}/${reponame}-${_arch}-nodups.whitelist"
-				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${reponame}/" \
-					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
+					> "${WORKDIR}/${_repo}-${_arch}-nodups.whitelist"
+				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${_repo}/" \
+					"${WORKDIR}/${_repo}-${_arch}-nodups.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				poolify "${_arch}" "${ARCHPKGPOOL}" \
 					<"${WORKDIR}/new/${_tag}.txt" \
