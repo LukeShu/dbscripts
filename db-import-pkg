@@ -375,6 +375,11 @@ main() {
 				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${reponame}/" \
 					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
+				poolify "${_arch}" "${ARCHPKGPOOL}" \
+					<"${WORKDIR}/new/${_tag}.txt" \
+					>"${WORKDIR}/${_tag}.pool"
+				make_repo_symlinks "$_tag" \
+					<"${WORKDIR}/${_tag}.pool"
 				;;
 		esac
 	done
@@ -400,16 +405,7 @@ main() {
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
 		archlinux32|archlinuxarm)
-			msg "Generating symbolic links to pool"
-
-			for _tag in "${ARCHTAGS[@]}"; do
-				_arch=${_tag##*-}
-				poolify "${_arch}" "${ARCHPKGPOOL}" \
-					<"${WORKDIR}/new/${_tag}.txt" \
-					>"${WORKDIR}/${_tag}.pool"
-				make_repo_symlinks "$_tag" \
-					<"${WORKDIR}/${_tag}.pool"
-			done
+			: # do nothing
 			;;
 	esac
 
