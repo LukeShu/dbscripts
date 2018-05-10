@@ -201,7 +201,7 @@ make_repo_dbs() {
 	msg2 "Adding whitelisted packages to clean DBs ..."
 
 	pushd "${from}"
-	local -r pkgfiles
+	local pkgfiles
 	pkgfiles=($(sed -e "s|\$|${PKGEXTS}|" "$whitelist"))
 	local -r UMASK=$(umask)
 	umask 002
