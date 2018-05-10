@@ -347,11 +347,11 @@ main() {
 		# IMPORTANT: the . in the sed command is needed
 		# because an empty whitelist would consist of a single
 		# * allowing any package to pass through.
-		sed -e 's/ /-/' -e 's|.$|&*|g' \
-			<"${WORKDIR}/new/${_tag}.txt" \
-			>"${WORKDIR}/${_repo}-${_arch}.whitelist"
 		case "$UPSTREAM" in
 			packages|community)
+				sed -e 's/ /-/' -e 's|.$|&*|g' \
+					<"${WORKDIR}/new/${_tag}.txt" \
+					>"${WORKDIR}/${_repo}-${_arch}.whitelist"
 				# Append to whitelists array so that we can
 				# later sync_pool() all packages
 				whitelists+=("${WORKDIR}/${_repo}-${_arch}.whitelist")
@@ -369,9 +369,9 @@ main() {
 				filter_duplicates \
 					<"${WORKDIR}/new/${_tag}.txt" \
 					| sed -e 's/ /-/' -e 's|.$|&*|g' \
-					> "${WORKDIR}/${_repo}-${_arch}-nodups.whitelist"
+					> "${WORKDIR}/${_repo}-${_arch}.whitelist"
 				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${_repo}/" \
-					"${WORKDIR}/${_repo}-${_arch}-nodups.whitelist" \
+					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				poolify "${_arch}" "${ARCHPKGPOOL}" \
 					<"${WORKDIR}/new/${_tag}.txt" \
@@ -386,20 +386,20 @@ main() {
 		packages|community)
 			# Concatenate all whitelists, check for single *s just in case
 			cat "${whitelists[@]}" | grep -v "^\*$" |
-				sort -u > "${WORKDIR}/${UPSTREAM}-all.whitelist"
+				sort -u > "${WORKDIR}/all.whitelist"
 			# FIXME: make_whitelist() wildcards should be narrowed
 			#        down to respect the architecture of the tag
 
 			msg "Syncing package pool"
 			sync_pool \
 				"${ARCHMIRROR_fullmodule}/${ARCHPKGPOOL}/" \
-				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
+				"${WORKDIR}/all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
 			sync_pool \
 				"${ARCHMIRROR_fullmodule}/${ARCHSRCPOOL}/" \
-				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
+				"${WORKDIR}/all.whitelist" \
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
 		archlinux32|archlinuxarm)
