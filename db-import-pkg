@@ -194,18 +194,15 @@ make_repo_dbs() {
 	local -r into=${FTP_BASE}/${1}/os/${2}/
 	local -r db_file=${from}/${1}${DBEXT}
 	local -r files_file=${from}/${1}${FILESEXT}
-	local -r whitelist=${WORKDIR}/${1}-${2}.whitelist
 
 	# create fresh databases to reflect actual `any.pkg.tar.xz` packages.
 	# this also avoids corrupt upstream metadata (ALARM)
 	msg2 "Adding whitelisted packages to clean DBs ..."
 
 	pushd "${from}"
-	local pkgfiles
-	pkgfiles=($(sed -e "s|\$|${PKGEXTS}|" "$whitelist"))
 	local -r UMASK=$(umask)
 	umask 002
-	repo-add "${db_file##*/}" "${pkgfiles[@]}"
+	repo-add "${db_file##*/}" *${PKGEXTS}
 	umask "$UMASK" >/dev/null
 	popd >/dev/null
 
