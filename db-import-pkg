@@ -370,7 +370,8 @@ main() {
 					<"${WORKDIR}/new/${_tag}.txt" \
 					| sed -e 's/ /-/' -e 's|.$|&*|g' \
 					> "${WORKDIR}/${_tag}.whitelist"
-				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${_repo}/" \
+				sync_pool \
+					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${_repo}" "${_arch}")/" \
 					"${WORKDIR}/${_tag}.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				poolify "${_arch}" "${ARCHPKGPOOL}" \
