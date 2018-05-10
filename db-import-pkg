@@ -351,17 +351,17 @@ main() {
 			packages|community)
 				sed -e 's/ /-/' -e 's|.$|&*|g' \
 					<"${WORKDIR}/new/${_tag}.txt" \
-					>"${WORKDIR}/${_repo}-${_arch}.whitelist"
+					>"${WORKDIR}/${_tag}.whitelist"
 				# Append to whitelists array so that we can
 				# later sync_pool() all packages
-				whitelists+=("${WORKDIR}/${_repo}-${_arch}.whitelist")
+				whitelists+=("${WORKDIR}/${_tag}.whitelist")
 				# Get repo packages (symlinks)
 				mkdir -p "${WORKDIR}/staging-rsync/${_repo}/os/${_arch}"
 				ln -t "${WORKDIR}/staging-rsync/${_repo}/os/${_arch}" \
 					"${FTP_BASE}/${_repo}/os/${_arch}"/*
 				sync_repo \
 					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${_repo}" "${_arch}")/" \
-					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
+					"${WORKDIR}/${_tag}.whitelist" \
 					"${WORKDIR}/staging-rsync/${_repo}/os/${_arch}/"
 				;;
 			archlinux32|archlinuxarm)
@@ -369,9 +369,9 @@ main() {
 				filter_duplicates \
 					<"${WORKDIR}/new/${_tag}.txt" \
 					| sed -e 's/ /-/' -e 's|.$|&*|g' \
-					> "${WORKDIR}/${_repo}-${_arch}.whitelist"
+					> "${WORKDIR}/${_tag}.whitelist"
 				sync_pool "${ARCHMIRROR_fullmodule}/${_arch}/${_repo}/" \
-					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
+					"${WORKDIR}/${_tag}.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				poolify "${_arch}" "${ARCHPKGPOOL}" \
 					<"${WORKDIR}/new/${_tag}.txt" \
