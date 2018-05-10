@@ -356,9 +356,6 @@ main() {
 				# later sync_pool() all packages
 				whitelists+=("${WORKDIR}/${_tag}.whitelist")
 				# Get repo packages (symlinks)
-				mkdir -p "${WORKDIR}/staging-rsync/${_repo}/os/${_arch}"
-				ln -t "${WORKDIR}/staging-rsync/${_repo}/os/${_arch}" \
-					"${FTP_BASE}/${_repo}/os/${_arch}"/*
 				sync_repo \
 					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${_repo}" "${_arch}")/" \
 					"${WORKDIR}/${_tag}.whitelist" \

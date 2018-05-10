@@ -8,3 +8,5 @@ Type=oneshot
 User=repo
 Environment=DBSCRIPTS_CONFIG=/etc/dbscripts/config.local.%I
 ExecStart=/usr/bin/db-import-pkg %I
+
+PrivateTmp=true
