@@ -48,11 +48,11 @@ setup() {
 	# Configure db-import to use that rsyncd server
 	cat <<-eot >"${TMP}/db-import-archlinux.local.conf"
 		ARCHTAGS=('core-x86_64')
-		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux
+		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux/"\${ARCHMIRROR#rsync://*/*/}"
 	eot
 	cat <<-eot >"${TMP}/db-import-archlinux32.local.conf"
 		ARCHTAGS=('core-i686')
-		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux32
+		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux32/"\${ARCHMIRROR#rsync://*/*/}"
 	eot
 
 	# Set up HTTP server
@@ -71,6 +71,15 @@ setup() {
 	cat <<-eot >"$XDG_CONFIG_HOME"/libretools/libretools.conf
 		BLACKLIST=http://localhost:${httpport@Q}/blacklist.txt
 	eot
+
+	# Set up repo contents
+	mkdir -p -- "${TMP}/ftp/core/os"/{x86_64,i686}
+	touch -- "${TMP}"/ftp/core/os/{x86_64,i686}/core.db.tar.gz
+	ln -s core.db.tar.gz "${TMP}/ftp/core/os/x86_64/core.db"
+	ln -s core.db.tar.gz "${TMP}/ftp/core/os/i686/core.db"
+	mkdir -p -- "${TMP}/ftp"/{pool,sources}/{packages,community,archlinux32}
+	date +%s > "${TMP}/ftp/lastupdate"
+	date +%s > "${TMP}/ftp/lastsync"
 }
 eval "__common_$(declare -f teardown)"
 teardown() {
