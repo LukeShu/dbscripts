@@ -81,6 +81,31 @@ teardown() {
 
 ######################################################################
 
+# Run the command in a new mount namespace with /tmp remounted
+# read-only, but with $TMP (which might be under /tmp) still writable.
+#
+# Arguments are passed as arguments to `sudo`.
+__withRoTmp() {
+	local mount="mount -o bind ${TMP@Q}{,} && mount -o bind,remount,ro /tmp{,}"
+	local env=(
+		"DBIMPORT_CONFIG=${DBIMPORT_CONFIG}"
+		"DBSCRIPTS_CONFIG=${DBSCRIPTS_CONFIG}"
+		"XDG_CONFIG_HOME=${XDG_CONFIG_HOME}"
+	)
+	sudo -- unshare -m -- sh -c "${mount} && sudo -u ${USER@Q} ${env[*]@Q} \$@" -- "$@"
+}
+
+__db-import-pkg() {
+	# Since common.bash->config.local sets TMPDIR=${TMP}/tmp,
+	# TMPDIR is necessarily != /tmp.
+	# Which means that if we try to write anything directly under /tmp,
+	# then we are erroneously disregarding TMPDIR.
+	# So, make /tmp read-only to make that be an error.
+	__withRoTmp db-import-pkg "$@"
+	# Verify that it cleaned up after itself and TMPDIR is empty
+	find "$TMPDIR" -mindepth 1 | diff - /dev/null
+}
+
 # releaseImportedPackage PKGBASE ARCH DBFILE [POOLDIR]
 #
 # This is different from common.bash:releasePackage because
@@ -157,7 +182,7 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 	__doesNotExist "$TMP"/ftp/{core/os/x86_64,pool/packages,sources/packages}/slavery-*
@@ -167,7 +192,7 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" db-import-pkg archlinux32
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
 
 	__isLinkTo "$TMP/ftp/core/os/i686/pkg-simple-a-1-1-i686.pkg.tar.xz" "$TMP/ftp/pool/archlinux32/pkg-simple-a-1-1-i686.pkg.tar.xz"
 	__doesNotExist "$TMP"/ftp/{core/os/i686,pool/archlinux32,sources/archlinux32}/slavery-*
@@ -176,7 +201,7 @@ __doesNotExist() {
 @test "imports DBs with no blacklisted packages" {
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 }
@@ -185,14 +210,14 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 
 	__updateImportedPackage pkg-simple-a
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-2-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-2-x86_64.pkg.tar.xz"
 }
@@ -201,7 +226,7 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 	__doesNotExist "$TMP"/ftp/{core/os/x86_64,pool/packages,sources/packages}/slavery-*
@@ -212,7 +237,7 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" db-import-pkg archlinux32
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
 
 	__isLinkTo "$TMP/ftp/core/os/i686/pkg-simple-a-1-1-i686.pkg.tar.xz" "$TMP/ftp/pool/archlinux32/pkg-simple-a-1-1-i686.pkg.tar.xz"
 	__doesNotExist "$TMP"/ftp/{core/os/i686,pool/archlinux32,sources/archlinux32}/slavery-*
