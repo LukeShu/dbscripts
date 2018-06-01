@@ -144,7 +144,10 @@ __isLinkTo() {
 __doesNotExist() {
 	local file
 	for file in "$@"; do
-		! stat "$file"
+		if stat "$file" 2>/dev/null; then
+			echo "TEST ERROR: File shouldn't exist, but does: $file"
+			return 1
+		fi
 	done
 }
 
