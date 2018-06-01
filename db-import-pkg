@@ -202,6 +202,14 @@ make_repo_dbs() {
 		--delay-updates \
 		--safe-links \
 		"$from" "$into"
+	(
+		# I'm nervous about loading db-functions in the global
+		# scope.
+		set -eE
+		. "$(dirname "$(readlink -e "$0")")/db-functions"
+		set_repo_permission "$1" "$2"
+		trap - EXIT
+	)
 }
 
 # Main function. Process the databases and get the libre packages
@@ -305,7 +313,7 @@ main() {
 
 			msg "Syncing package pool"
 			sync_pool \
-				"${ARCHMIRROR}}/${ARCHPKGPOOL}/" \
+				"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
