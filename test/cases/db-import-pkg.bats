@@ -156,7 +156,7 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg archlinux
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 	__doesNotExist "$TMP"/ftp/{core/os/x86_64,pool/packages,sources/packages}/slavery-*
@@ -175,7 +175,7 @@ __doesNotExist() {
 @test "imports DBs with no blacklisted packages" {
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg archlinux
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 }
@@ -184,14 +184,14 @@ __doesNotExist() {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg archlinux
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 
 	__updateImportedPackage pkg-simple-a
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
-	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg archlinux
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" db-import-pkg packages
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-2-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-2-x86_64.pkg.tar.xz"
 }
