@@ -5,23 +5,20 @@
 
 set -eE
 source "$(librelib messages)"
+source "$(librelib blacklist)"
 source "$(librelib conf)"
 setup_traps
 
 readonly -a UPSTREAMS=(packages community archlinux{32,arm})
 
-fatal_error() {
-	error "$@"
-	exit 1
-}
-
-# usage: sync_dbs <from> <into>
+# usage: fetch_dbs <from> <into>
 #
-# Sync excluding everything but db files
+# Fetch excluding everything but db files
 # TODO: we could be doing without things other than what is in
-#       ${ARCHARCHES[@]} and ${ARCHREPOS[@]}
-sync_dbs() {
-	rsync "${extra[@]}" --no-motd -mrtlH --no-p --include="*/" \
+#       ${ARCHTAGS[@]}
+fetch_dbs() {
+	rsync "${extra[@]}" --no-motd -mrtlH --no-p \
+		--include="*/" \
 		--include="*.db" \
 		--include="*${DBEXT}" \
 		--include="*.files" \
@@ -59,14 +56,11 @@ get_repo_content() {
 #   2. Cleaning <path-to-db> from <blacklisted-pkg1> [...] in the process.
 #   2.1. repo-remove will also clean the corresponding .files db during 2.
 make_whitelist() {
-	local -r output_file=$1 db_file=$2 blacklist=(${@:3})
+	local -r output_file=$1 db_file=$2
 	# Remove blacklisted packages and count them
 	# TODO: capture all removed packages for printing on debug mode
 	msg2 "Removing blacklisted packages from %s ..." "${db_file##*/}"
-	local package
-	for package in "${blacklist[@]}"; do
-		LC_ALL=C repo-remove "$db_file" "$package" || true
-	done |& sed -n 's/-> Removing/	&/p'
+	blacklist-cat | blacklist-get-pkg | xargs -d '\n' -n1 -r repo-remove "$db_file"
 
 	# Get db contents
 	local -r db=($(get_repo_content "${db_file}"))
@@ -99,7 +93,7 @@ sync_pool() {
 
 	mkdir -p -- "$_into"
 	msg2 "Retrieving %d packages from %s pool" \
-		"$(wc -l "$_whitelist" | cut -d' ' -f1)" \
+		"$(wc -l < "$_whitelist")" \
 		"$(basename "$_from")"
 
 	# *Don't delete-after*, this is the job of
@@ -121,7 +115,7 @@ sync_repo() {
 	local -r _from=$1 _whitelist=$2 _into=$3
 	mkdir -p -- "$_into"
 	msg2 "Retrieving %d files from repo" \
-		"$(wc -l "$_whitelist" | cut -d' ' -f1)"
+		"$(wc -l < "$_whitelist")"
 
 	# We delete here for cleanup
 	rsync "${extra[@]}" --no-motd -rtlH \
@@ -199,12 +193,12 @@ make_repo_dbs() {
 	esac
 	local UMASK=$(umask)
 	umask 002
-	LC_ALL=C repo-add "$db_file" "${pkgfiles[@]}"
+	repo-add "$db_file" "${pkgfiles[@]}"
 	umask "$UMASK" >/dev/null
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
 	mkdir -p -- "$into"
-	rsync "${extra[@]}" --no-motd -rtlH \
+	rsync "${extra[@]}" --no-motd -rtlpH \
 		--delay-updates \
 		--safe-links \
 		"$from" "$into"
@@ -215,11 +209,10 @@ make_repo_dbs() {
 #  1. Fetch package info
 #     * Get blacklist.txt
 #     * Get repo.db from an Arch-like repo
-#  2. Enumerate the repo-arch pairs we'll be operating on
-#  3. Fetch the packages we want
+#  2. Fetch the packages we want
 #     * Create sync whitelist (based on package blacklist)
 #     * Call sync_repo and/or sync_pool to fetch packages and signatures
-#  4. Put the packages in the repos
+#  3. Put the packages in the repos
 #     * Create new repo.db with them (repo-add)
 #     * rsync scratch directory => repos
 main() {
@@ -243,67 +236,42 @@ main() {
 
 	local vars
 	case "$UPSTREAM" in
-		packages|community)       vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL ARCHSRCPOOL) ;;
-		archlinux32|archlinuxarm) vars=(mirror mirrorpath ARCHREPOS ARCHPKGPOOL            ) ;;
+		packages|community)       vars=(ARCHMIRROR ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
+		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHTAGS ARCHPKGPOOL            ) ;;
 	esac
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
 
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
-	trap "rm -rf -- $(printf '%q' "${WORKDIR}")" EXIT
+	trap "rm -rf -- ${WORKDIR@Q}" EXIT
 
 	##############################################################
 	# 1. Fetch package info                                      #
 	##############################################################
 
 	# Get the blacklisted packages
-	libreblacklist update
-	local blacklist
-	readarray -t blacklist < <(libreblacklist cat | libreblacklist get-pkg)
-	if test ${#blacklist[@]} -eq 0; then
-		fatal_error "Empty blacklist"
-	fi
-	msg2 "%d packages in blacklist" ${#blacklist[@]}
+	blacklist-update
 
 	# Sync the repos databases
 	msg 'Retrieving .db and .files files'
 	mkdir "${WORKDIR}/rsync"
-	sync_dbs "rsync://${mirror}/${mirrorpath}/" "$WORKDIR/rsync"
+	fetch_dbs "${ARCHMIRROR}/" "$WORKDIR/rsync"
 
 	##############################################################
-	# 2. Enumerate the repo-arch pairs we'll be operating on     #
-	##############################################################
-
-	# Create a list of all repo-arch pairs
-	local tags=()
-	local _repo _arch _dir
-	for _repo in "${ARCHREPOS[@]}"; do
-		for _arch in "${ARCHARCHES[@]}"; do
-			_dir=$(get_repo_workdir "${_repo}" "${_arch}")
-			if [[ -f "${_dir}/${_repo}${DBEXT}" && -f "${_dir}/${_repo}${FILESEXT}" ]]; then
-				tags+=("$_repo-$_arch")
-			else
-				warning "%s-%s doesn't exist, skipping this repo-arch" "$_repo" "$_arch"
-			fi
-		done
-	done
-
-	##############################################################
-	# 3. Fetch the packages we want                              #
+	# 2. Fetch the packages we want                              #
 	##############################################################
 
 	# Traverse all repo-arch pairs
 	local whitelists=()
 	local _tag reponame _arch
-	for _tag in "${tags[@]}"; do
+	for _tag in "${ARCHTAGS[@]}"; do
 		reponame=${_tag%-*}
 		_arch=${_tag##*-}
 		msg "Processing %s-%s" "${_arch}" "${reponame}"
 		_dir=$(get_repo_workdir "${reponame}" "${_arch}")
 		local db_file="${_dir}/${reponame}${DBEXT}"
 		make_whitelist "${WORKDIR}/${reponame}-${_arch}.whitelist" \
-			"$db_file" \
-			"${blacklist[@]}"
+			"$db_file"
 		case "$UPSTREAM" in
 			packages|community)
 				# Append to whitelists array so that we can
@@ -311,7 +279,7 @@ main() {
 				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
 				sync_repo \
-					"rsync://${mirror}/${mirrorpath}/${reponame}/os/${_arch}/" \
+					"${ARCHMIRROR}/${reponame}/os/${_arch}/" \
 					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					"${FTP_BASE}/${reponame}/os/${_arch}/"
 				;;
@@ -320,7 +288,7 @@ main() {
 				filter_duplicates \
 					< "${WORKDIR}/${reponame}-${_arch}.whitelist" \
 					> "${WORKDIR}/${reponame}-${_arch}-nodups.whitelist"
-				sync_pool "rsync://${mirror}/${mirrorpath}/${_arch}/${reponame}/" \
+				sync_pool "${ARCHMIRROR}/${_arch}/${reponame}/" \
 					"${WORKDIR}/${reponame}-${_arch}-nodups.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				;;
@@ -333,17 +301,17 @@ main() {
 			cat "${whitelists[@]}" | grep -v "^\*$" |
 				sort -u > "${WORKDIR}/${UPSTREAM}-all.whitelist"
 			# FIXME: make_whitelist() wildcards should be narrowed
-			#        down to respect ${ARCHARCHES[@]}
+			#        down to respect the architecture of the tag
 
 			msg "Syncing package pool"
 			sync_pool \
-				"rsync://${mirror}/${mirrorpath}/${ARCHPKGPOOL}/" \
+				"${ARCHMIRROR}}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
 			sync_pool \
-				"rsync://${mirror}/${mirrorpath}/${ARCHSRCPOOL}/" \
+				"${ARCHMIRROR}/${ARCHSRCPOOL}/" \
 				"${WORKDIR}/${UPSTREAM}-all.whitelist" \
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
@@ -351,29 +319,29 @@ main() {
 			msg "Generating symbolic links to pool"
 
 			local _arch _repo
-			for _arch in "${ARCHARCHES[@]}"; do
-				for _repo in "${ARCHREPOS[@]}"; do
-					make_repo_symlinks \
-						"$ARCHPKGPOOL" \
-						"${WORKDIR}/${_repo}-${_arch}.whitelist" \
-						"$_repo" \
-						"$_arch"
-				done
+			for _tag in "${ARCHTAGS[@]}"; do
+				_repo=${_tag%-*}
+				_arch=${_tag##*-}
+				make_repo_symlinks \
+					"$ARCHPKGPOOL" \
+					"${WORKDIR}/${_repo}-${_arch}.whitelist" \
+					"$_repo" \
+					"$_arch"
 			done
 			;;
 	esac
 
 	##############################################################
-	# 4. Put the packages in the repos                           #
+	# 3. Put the packages in the repos                           #
 	##############################################################
 
 	msg "Putting databases back in place"
 
 	# FIXME: all repo DBs should be replaced at once (per architecture)
-	for _arch in "${ARCHARCHES[@]}"; do
-		for _repo in "${ARCHREPOS[@]}"; do
-			make_repo_dbs "$_repo" "$_arch"
-		done
+	for _tag in "${ARCHTAGS[@]}"; do
+		_repo=${_tag%-*}
+		_arch=${_tag##*-}
+		make_repo_dbs "$_repo" "$_arch"
 	done
 }
 

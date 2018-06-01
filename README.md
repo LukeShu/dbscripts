@@ -22,7 +22,6 @@ The executables that you (might) care about are:
     ├── db-check-unsigned-packages      [Parabola only]
     ├── db-check-unsigned-packages.py   [Parabola only]
     ├── db-import-archlinuxarm-src      [Parabola only]
-    ├── db-import-archlinux-any-to-ours [Parabola only]
     ├── db-import-archlinux-src         [Parabola only]
     ├── db-import-pkg                   [Parabola only]
     ├── db-init                         [Parabola only]

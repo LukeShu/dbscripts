@@ -434,11 +434,10 @@ arch_repo_add() {
 	local arch=$2
 	local pkgs=("${@:3}")
 
-	printf -v pkgs_str -- '%q ' "${pkgs[@]}"
 	# package files might be relative to repo dir
 	pushd "${FTP_BASE}/${repo}/os/${arch}" >/dev/null
 	/usr/bin/repo-add -q "${repo}${DBEXT}" "${pkgs[@]}" \
-		|| error 'repo-add %q %s' "${repo}${DBEXT}" "${pkgs_str% }"
+		|| error '%s' "repo-add ${repo@Q}${DBEXT@Q} ${pkgs[*]@Q}"
 	popd >/dev/null
 	set_repo_permission "${repo}" "${arch}"
 
@@ -455,9 +454,8 @@ arch_repo_remove() {
 		error "No database found at '%s'" "$dbfile"
 		return 1
 	fi
-	printf -v pkgs_str -- '%q ' "${pkgs[@]}"
 	/usr/bin/repo-remove -q "${dbfile}" "${pkgs[@]}" \
-		|| error 'repo-remove %q %s' "${dbfile}" "${pkgs_str% }"
+		|| error '%s' "repo-remove ${dbfile@Q} ${pkgs[*]@Q}"
 	set_repo_permission "${repo}" "${arch}"
 
 	REPO_MODIFIED=1
