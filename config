@@ -22,7 +22,9 @@ SOURCE_CLEANUP_KEEP=30
 LOCK_DELAY=10
 
 [ -n "${STAGING:-}" ] || STAGING="$HOME/staging/unknown/staging"
-TMPDIR="/tmp"
+#TMPDIR="/tmp"
+TMPDIR=/srv/repo/tmp
+mkdir -p "$TMPDIR"
 ARCHES=(x86_64 i686 armv7h)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
