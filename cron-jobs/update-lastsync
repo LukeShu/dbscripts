@@ -1,0 +1,4 @@
+#!/bin/bash
+
+. "$(dirname "$(readlink -e "$0")")/../config"
+date -u +'%s' > "${FTP_BASE}/lastsync"
