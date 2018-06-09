@@ -81,7 +81,7 @@ sync_pool() {
 	mkdir -p -- "$_into"
 	msg2 "Retrieving %d packages from %s pool" \
 		"$(wc -l < "$_whitelist")" \
-		"$(basename "$_from")"
+		"$(basename "$_into")"
 
 	# *Don't delete-after*, this is the job of
 	# cleanup scripts. It will remove our packages too
@@ -125,7 +125,7 @@ sync_repo() {
 make_repo_symlinks() {
 	local -r pool=$1 whitelist=$2 repo=$3 arch=$4
 
-	local repodir="${WORKDIR}/staging-rsync/${repo}-${arch}"
+	local repodir="${WORKDIR}/staging-rsync/${repo}/os/${arch}"
 
 	msg2 "Putting symlinks in ${repo}/os/${arch}"
 	mkdir -p -- "${repodir}"
@@ -160,7 +160,7 @@ make_repo_symlinks() {
 
 # usage: make_repo_dbs <repo> <arch>
 make_repo_dbs() {
-	local -r from=${WORKDIR}/staging-rsync/${1}-${2}
+	local -r from=${WORKDIR}/staging-rsync/${1}/os/${2}
 	local -r into=${FTP_BASE}/${1}/os/${2}/
 	local -r db_file=${from}/${1}${DBEXT}
 	local -r files_file=${from}/${1}${FILESEXT}
@@ -169,10 +169,12 @@ make_repo_dbs() {
 	# create fresh databases to reflect actual `any.pkg.tar.xz` packages.
 	# this also avoids corrupt upstream metadata (ALARM)
 	msg2 "Adding whitelisted packages to clean DBs ..."
-	local pkgfiles=()
+
+	pushd "${from}"
+	local pkgfiles
 	case "$UPSTREAM" in
 		packages|community)
-			pkgfiles=($(sed "s|^|${into}|; s|$|${PKGEXT}|" "$whitelist"))
+			pkgfiles=($(sed -e "s|\$|${PKGEXT}|" "$whitelist"))
 			;;
 		archlinux32|archlinuxarm)
 			pkgfiles=($(cat "$whitelist"))
@@ -182,6 +184,7 @@ make_repo_dbs() {
 	umask 002
 	repo-add "$db_file" "${pkgfiles[@]}"
 	umask "$UMASK" >/dev/null
+	popd >/dev/null
 
 	mkdir -p -- "$into"
 	# This bit is based on db-functions:set_repo_permission()
@@ -311,8 +314,6 @@ main() {
 	# So, just nuke the current repos and entirely re-create
 	# everything from /new/.
 
-	mkdir "${WORKDIR}/staging-rsync"
-
 	local whitelists=()
 	local reponame
 	for _tag in "${ARCHTAGS[@]}"; do
@@ -334,11 +335,11 @@ main() {
 				# later sync_pool() all packages
 				whitelists+=("${WORKDIR}/${reponame}-${_arch}.whitelist")
 				# Get repo packages (symlinks)
-				mkdir "${WORKDIR}/staging-rsync/${_tag}"
+				mkdir -p "${WORKDIR}/staging-rsync/${reponame}/os/${_arch}"
 				sync_repo \
 					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${reponame}" "${_arch}")/" \
 					"${WORKDIR}/${reponame}-${_arch}.whitelist" \
-					"${WORKDIR}/staging-rsync/${_tag}/"
+					"${WORKDIR}/staging-rsync/${reponame}/os/${_arch}/"
 				;;
 			archlinux32|archlinuxarm)
 				# Upstream doesn't use an $ARCHPKGPOOL
@@ -395,6 +396,7 @@ main() {
 	msg "Putting databases back in place"
 
 	# FIXME: all repo DBs should be replaced at once (per architecture)
+	ln -srT "$FTP_BASE/pool" "${WORKDIR}/staging-rsync/pool"
 	for _tag in "${ARCHTAGS[@]}"; do
 		_repo=${_tag%-*}
 		_arch=${_tag##*-}
