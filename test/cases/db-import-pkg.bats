@@ -189,7 +189,7 @@ __doesNotExist() {
 
 ######################################################################
 
-@test "imports no blacklisted packages (x86_64)" {
+@test "import no blacklisted packages (x86_64)" {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
@@ -199,7 +199,7 @@ __doesNotExist() {
 	__doesNotExist "$TMP"/ftp/{core/os/x86_64,pool/packages,sources/packages}/slavery-*
 }
 
-@test "imports no blacklisted packages (i686)" {
+@test "import no blacklisted packages (i686)" {
 	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 
@@ -209,7 +209,7 @@ __doesNotExist() {
 	__doesNotExist "$TMP"/ftp/{core/os/i686,pool/archlinux32,sources/archlinux32}/slavery-*
 }
 
-@test "imports DBs with no blacklisted packages" {
+@test "import DBs with no blacklisted packages" {
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
@@ -217,7 +217,7 @@ __doesNotExist() {
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 }
 
-@test "imports updated packages" {
+@test "import updated packages" {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
@@ -233,7 +233,7 @@ __doesNotExist() {
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-2-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-2-x86_64.pkg.tar.xz"
 }
 
-@test "imports .db files as 0664 (x86_64)" {
+@test "import .db files as 0664 (x86_64)" {
 	__releaseImportedPackage slavery      x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
@@ -244,7 +244,7 @@ __doesNotExist() {
 	[[ "$(stat -c '%a' -- "$TMP/ftp/core/os/x86_64/core.db.tar.gz")" = 664 ]]
 }
 
-@test "imports .db files as 0664 (i686)" {
+@test "import .db files as 0664 (i686)" {
 	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 
@@ -256,7 +256,7 @@ __doesNotExist() {
 	[[ "$(stat -c '%a' -- "$TMP/ftp/core/os/i686/core.db.tar.gz")" = 664 ]]
 }
 
-@test "imports fully-masked upstream" {
+@test "import fully-masked upstream" {
 	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-any-a i686   "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 
@@ -291,7 +291,7 @@ __doesNotExist() {
 	__doesNotExist "$TMP/ftp/core/os/i686/pkg-any-a-1-2-any.pkg.tar.xz"
 }
 
-@test "imports arch=any packages with sub-pkgrel" {
+@test "import arch=any packages with sub-pkgrel" {
 	# This is modeled after the situation with 'asp' and 'asp32'
 
 	__releaseImportedPackage pkg-any64 x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
