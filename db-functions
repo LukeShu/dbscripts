@@ -135,7 +135,7 @@ repo_lock () {
 	fi
 
 	_count=0
-	while (( _count <= _trial )) || "$_lockblock" ; do
+	while (( _count <= _trial )) || [[ $_lockblock = true ]]; do
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
 			warning "Repo [%s] (%s) is already locked by %s." "$1" "$2" "$_owner"
@@ -278,7 +278,7 @@ getpkgfile() {
 
 getpkgfiles() {
 	local f files
-	if [[ ! -z "$(printf '%s\n' "${@%\.*}" | sort | uniq -D)" ]]; then
+	if ! printf '%s\n' "${@%\.*}" | awk 'a[$0]++{exit 1}'; then
 		error 'Duplicate packages found!'
 		exit 1
 	fi
@@ -299,11 +299,7 @@ check_pkgfile() {
 
 	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
 
-	if echo "${pkgfile##*/}" | grep "^${pkgname}-${pkgver}-${pkgarch}" &>/dev/null; then
-		return 0
-	else
-		return 1
-	fi
+	[[ ${pkgfile##*/} = ${pkgname}-${pkgver}-${pkgarch}* ]]
 }
 
 check_pkgxbs() {
