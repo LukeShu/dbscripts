@@ -2,7 +2,8 @@
 ## Configuration
 * The default configuration can be found in `config`.
 * An optional `config.local` may override the default configuration.
-* The path and name of the local configuration file can be overridden by setting the `DBSCRIPTS_CONFIG` environment variable.
+* The path and name of the local configuration file can be overridden
+  by setting the `DBSCRIPTS_CONFIG` environment variable.
 ## Overview
 The executables that you (might) care about are:
 
@@ -53,9 +54,9 @@ have
 
  - `cron-jobs/integrity-check`
 
-Instead of enhancing `integrity-check`, Parabola developers have decided
-to write multiple stand-alone tools that should probably be merged
-into `integrity-check`
+Instead of enhancing `integrity-check`, Parabola developers have
+decided to write multiple stand-alone tools that should probably be
+merged into `integrity-check`
 
  - `db-check-*`
 
@@ -87,6 +88,8 @@ Things that haven't been mentioned yet:
  - `db-init`
  - `make_individual_torrent`
 ## Testing
-* Install the `base-devel` package group, as well as the `bash-bats`, `kcov`, `subversion`, and `xbs` packages.
+* Install the `base-devel` package group, as well as the `bash-bats`,
+  `kcov`, `subversion`, and `xbs` packages.
 * The test suite can now be run with `make test`.
-* A coverage report can be generated with `make test-coverage`. Open `coverage/index.html` in your web browser to inspect the results.
+* A coverage report can be generated with `make test-coverage`. Open
+  `coverage/index.html` in your web browser to inspect the results.
