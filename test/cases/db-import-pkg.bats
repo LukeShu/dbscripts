@@ -105,14 +105,16 @@ __withRoTmp() {
 }
 
 __db-import-pkg() {
+	local ret=0
 	# Since common.bash->config.local sets TMPDIR=${TMP}/tmp,
 	# TMPDIR is necessarily != /tmp.
 	# Which means that if we try to write anything directly under /tmp,
 	# then we are erroneously disregarding TMPDIR.
 	# So, make /tmp read-only to make that be an error.
-	__withRoTmp db-import-pkg "$@"
+	__withRoTmp db-import-pkg "$@" || ret=$?
 	# Verify that it cleaned up after itself and TMPDIR is empty
 	find "$TMPDIR" -mindepth 1 | diff - /dev/null
+	return $ret
 }
 
 # releaseImportedPackage PKGBASE ARCH DBFILE [POOLDIR]
@@ -252,4 +254,39 @@ __doesNotExist() {
 	__doesNotExist "$TMP"/ftp/{core/os/i686,pool/archlinux32,sources/archlinux32}/slavery-*
 	stat -- "$TMP/ftp/core/os/i686/core.db.tar.gz"
 	[[ "$(stat -c '%a' -- "$TMP/ftp/core/os/i686/core.db.tar.gz")" = 664 ]]
+}
+
+@test "imports fully-masked upstream" {
+	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	__releaseImportedPackage pkg-any-a i686   "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
+
+	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-a-1-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
+	__isLinkTo "$TMP/ftp/core/os/i686/pkg-any-a-1-1-any.pkg.tar.xz"   "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
+}
+
+@test "import errors on pkgpool selection failures" {
+	# pkg-simple-a is just to make sure that the "fully-masked
+	# upstream" bug isn't being tested here
+	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	__updateImportedPackage pkg-any-a
+	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
+	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-a-1-2-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-2-any.pkg.tar.xz"
+
+	# This assumes that a package nested too deelply under /pool/
+	# is filtered from being downloaded, but isn't found when
+	# poolifying.
+	mkdir -- "$TMP/ftp/pool/nested"
+	mv -T -- "$TMP/ftp/pool/packages" "$TMP/ftp/pool/nested/packages"
+	__releaseImportedPackage pkg-any-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+
+	local status=0
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32 || status=$?
+	[[ $status != 0 ]]
+	__doesNotExist "$TMP/ftp/core/os/i686/pkg-any-a-1-2-any.pkg.tar.xz"
 }
