@@ -90,6 +90,13 @@ Things that haven't been mentioned yet:
 ## Testing
 * Install the `base-devel` package group, as well as the `bash-bats`,
   `kcov`, `subversion`, and `xbs` packages.
-* The test suite can now be run with `make test`.
-* A coverage report can be generated with `make test-coverage`. Open
+* Arrange for `gpg` to sign files using a key that is trusted by the
+  pacman keyring.  This is easy if you are already a Parabola
+  packager--your PGP key is already trusted by the pacman keyring, as
+  it is included in the `parabola-keyring` package.
+* The test suite can now be run with `make check`.
+* A coverage report can be generated with `make check-coverage`. Open
   `coverage/index.html` in your web browser to inspect the results.
+* The test suite will use `sudo` to run `unshare -m`, `librechroot`,
+  and `libremakepkg`.  It should be safe, but if this makes you
+  nervous, run the test suite in a VM or container.
