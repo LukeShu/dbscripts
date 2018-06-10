@@ -290,3 +290,15 @@ __doesNotExist() {
 	[[ $status != 0 ]]
 	__doesNotExist "$TMP/ftp/core/os/i686/pkg-any-a-1-2-any.pkg.tar.xz"
 }
+
+@test "imports arch=any packages with sub-pkgrel" {
+	# This is modeled after the situation with 'asp' and 'asp32'
+
+	__releaseImportedPackage pkg-any64 x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
+	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-2-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-2-1-any.pkg.tar.xz"
+
+	__releaseImportedPackage pkg-any32 i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
+	__isLinkTo "$TMP/ftp/core/os/i686/pkg-any-1-1.2-any.pkg.tar.xz" "$TMP/ftp/pool/archlinux32/pkg-any-1-1.2-any.pkg.tar.xz"
+}
