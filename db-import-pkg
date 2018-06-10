@@ -31,7 +31,7 @@ fetch_dbs() {
 
 # usage: get_repo_dir <repo> <arch>
 #
-# Prints repo directory path fo rthe given <repo> <arch> combination,
+# Prints repo directory path for the given <repo> <arch> combination,
 # relative to the rsync root.
 get_repo_dir() {
 	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHMIRROR_path"
