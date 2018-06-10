@@ -23,7 +23,7 @@ __buildPackage() {
 	local cache
 	local pkgarches
 	local tarch
-	local pkgnames
+	local pkgfiles
 
 	if [[ -n ${BUILDDIR} ]]; then
 		cache=${BUILDDIR}/$(__getCheckSum PKGBUILD)
@@ -38,16 +38,16 @@ __buildPackage() {
 	for tarch in ${pkgarches[@]}; do
 		if [ "${tarch}" == 'any' ]; then
 			sudo librechroot -n "dbscripts@${tarch}" sync
+			mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} makepkg --packagelist)
 		else
 			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" sync
+			mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} CARCH=${tarch} makepkg --packagelist)
 		fi
 		sudo librechroot -n "dbscripts@${tarch}" run bash -c "$(printf '%q ' echo "PKGEXT=${PKGEXT@Q}") >> /etc/makepkg.conf"
 		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
 	done
 
-	pkgnames=($(. PKGBUILD; print_all_package_names))
-	pushd ${pkgdest}
-	for p in ${pkgnames[@]/%/${PKGEXT}}; do
+	for p in ${pkgfiles[@]}; do
 		# Manually sign packages as "makepkg --sign" is buggy
 		gpg -v --detach-sign --no-armor --use-agent ${p}
 
@@ -55,7 +55,6 @@ __buildPackage() {
 			cp -Lv ${p}{,.sig} ${cache}/
 		fi
 	done
-	popd
 }
 
 setup() {

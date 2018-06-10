@@ -1,0 +1,13 @@
+pkgname=pkg-any
+pkgver=1
+pkgrel=1.2
+pkgdesc="A package called ${pkgname} (32)"
+arch=('any')
+url='http://www.archlinux.org/'
+license=('GPL')
+options=(!strip)
+
+package() {
+	install -d -m755 "${pkgdir}"/usr/share/${pkgname}
+	echo 'test' > "${pkgdir}"/usr/share/${pkgname}/test
+}
