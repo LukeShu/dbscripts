@@ -4,6 +4,7 @@
 # License: GPLv3
 
 set -eE
+shopt -s extglob globstar nullglob
 source "$(librelib messages)"
 source "$(librelib blacklist)"
 source "$(librelib conf)"
@@ -72,14 +73,15 @@ filter_blacklisted() {
 # parabolaweb, librechroot, and who-knows-what-else.  This only
 # filters exact pkgname/epoch/pkgver/pkgrel matches.
 filter_duplicates() {
-	# FIXME: this will need to be adjusted when we turn PKGEXTS in
-	# to an extglob.
-	sort -u | comm -23 \
-		- \
-		<(find "${FTP_BASE}/pool/" -name "*-any${PKGEXTS}" -printf "%f\n" |
-			sed 's/-any\.pkg.*//' |
-			sed -r 's/-([^-]*-[^-]*)$/ \1/' |
-			sort -u)
+	sort -u | comm -23 - <(
+		for f in "${FTP_BASE}"/pool/**/*-any${PKGEXTS}; do
+			f=${f##*/}
+			f=${f%-any$PKGEXTS}
+			pkgname=${f%-*-*}
+			fullpkgver=${f#"${pkgname}-"}
+			printf '%s %s\n' "$pkgname" "$fullpkgver"
+		done | sort -u
+	)
 }
 
 # usage: sync_pool <from> <path-to-whitelist> <into>
@@ -144,18 +146,15 @@ poolify() {
 	local pkgname fullpkgver
 	local restore paths path
 	while read -r pkgname fullpkgver; do
-		restore=$(shopt -p extglob)
-		shopt -s extglob
 		paths=(
-			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}.pkg.tar.xz"
-			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any.pkg.tar.xz"
-			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver}-any.pkg.tar.xz"
+			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}"${PKGEXTS}
+			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any"${PKGEXTS}
+			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver}-any"${PKGEXTS}
 			# HACK: Arch32 appends '.digits' to pkgrels. That
 			# prevents us from finding the corresponding package
 			# if we're using an upstream Arch pool.
-			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver%.+([0-9])}-any.pkg.tar.xz"
+			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver%.+([0-9])}-any"${PKGEXTS}
 		)
-		$restore
 		for path in "${paths[@]}"; do
 			if [[ -f $path ]]; then
 				break
