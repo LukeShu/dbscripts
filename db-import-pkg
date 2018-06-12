@@ -34,7 +34,7 @@ fetch_dbs() {
 # Prints repo directory path for the given <repo> <arch> combination,
 # relative to the rsync root.
 get_repo_dir() {
-	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHMIRRORPATH"
+	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHPATH"
 }
 
 # usage: db_list_pkgs <path-to-db>
@@ -256,8 +256,8 @@ main() {
 
 	local vars
 	case "$UPSTREAM" in
-		packages|community)       vars=(ARCHMIRROR ARCHMIRRORPATH ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
-		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHMIRRORPATH ARCHTAGS ARCHPKGPOOL            ) ;;
+		packages|community)       vars=(ARCHMIRROR ARCHPATH ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
+		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHPATH ARCHTAGS ARCHPKGPOOL            ) ;;
 	esac
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
