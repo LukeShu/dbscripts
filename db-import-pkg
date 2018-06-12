@@ -106,27 +106,6 @@ sync_pool() {
 		"$_into"
 }
 
-# usage: sync_repo <from> <path-to-whitelist> <into>
-#
-# Sync excluding everything but whitelist.
-# TODO: this is too similar to sync_pool(). Merge?
-sync_repo() {
-	local -r _from=$1 _whitelist=$2 _into=$3
-	mkdir -p -- "$_into"
-	msg2 "Retrieving %d files from repo" \
-		"$(wc -l < "$_whitelist")"
-
-	# We delete here for cleanup
-	rsync "${extra[@]}" --no-motd -rtlH \
-		--delete-after \
-		--delete-excluded \
-		--delay-updates \
-		--include-from="$_whitelist" \
-		--exclude="*" \
-		"$_from" \
-		"$_into"
-}
-
 # usage: poolify <arch> <preferred-pool>
 #
 # Given a list of packages in the format:
@@ -149,12 +128,18 @@ poolify() {
 		paths=(
 			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}"${PKGEXTS}
 			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any"${PKGEXTS}
-			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver}-any"${PKGEXTS}
-			# HACK: Arch32 appends '.digits' to pkgrels. That
-			# prevents us from finding the corresponding package
-			# if we're using an upstream Arch pool.
-			"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver%.+([0-9])}-any"${PKGEXTS}
 		)
+		case "$UPSTREAM" in
+			packages|community) :;;
+			archlinux32|archlinuxarm)
+				paths+=(
+					"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver}-any"${PKGEXTS}
+					# HACK: Arch32 appends '.digits' to pkgrels. That
+					# prevents us from finding the corresponding package
+					# if we're using an upstream Arch pool.
+					"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver%.+([0-9])}-any"${PKGEXTS}
+				);;
+		esac
 		for path in "${paths[@]}"; do
 			if [[ -f $path ]]; then
 				break
@@ -231,7 +216,7 @@ make_repo_dbs() {
 #       (using blacklist.txt) the desired repo state
 #  3. Fetch the packages we want
 #     * Create sync whitelist (based on package blacklist)
-#     * Call sync_repo and/or sync_pool to fetch packages and signatures
+#     * Call sync_pool to fetch packages and signatures
 #  4. Put the packages in the repos
 #     * Create new repo.db with them (repo-add)
 #     * rsync scratch directory => repos
@@ -254,13 +239,20 @@ main() {
 		exit $EXIT_INVALIDARGUMENT
 	fi
 
-	local vars
-	case "$UPSTREAM" in
-		packages|community)       vars=(ARCHMIRROR ARCHPATH ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
-		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHPATH ARCHTAGS ARCHPKGPOOL            ) ;;
-	esac
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
-	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
+	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" \
+		ARCHMIRROR ARCHTAGS ARCHPATH OURPKGPOOL # optional: OURSRCPOOL ARCH{PKG,SRC}POOL
+	if [[ -n ${ARCHSRCPOOL:-} && -z ${OURSRCPOOL:-} ]]; then
+		print 'If you set %s, then you must set %s' {ARCH,OUR}SRCPOOL
+		exit $EXIT_NOTCONFIGURED
+	elif [[ -n ${OURSRCPOOL:-} && -z ${ARCHSRCPOOL:-} ]]; then
+		print 'If you set %s, then you must set %s' {OUR,ARCH}SRCPOOL
+		exit $EXIT_NOTCONFIGURED
+	fi
+	if [[ -n ${ARCHSRCPOOL:-} && -z ${ARCHPKGPOOL:-} ]]; then
+		print '%s requires that %s is also set' ARCH{SRC,PKG}POOL
+		exit $EXIT_NOTCONFIGURED
+	fi
 
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 	trap "rm -rf -- ${WORKDIR@Q}" EXIT
@@ -348,58 +340,62 @@ main() {
 				sed -e 's/ /-/' -e 's|.$|&*|g' \
 					<"${WORKDIR}/new/${_tag}.txt" \
 					>"${WORKDIR}/${_tag}.whitelist"
-				# Append to whitelists array so that we can
-				# later sync_pool() all packages
-				whitelists+=("${WORKDIR}/${_tag}.whitelist")
-				# Get repo packages (symlinks)
-				sync_repo \
-					"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
-					"${WORKDIR}/${_tag}.whitelist" \
-					"${WORKDIR}/staging-rsync/${_repo}/os/${_arch}/"
 				;;
 			archlinux32|archlinuxarm)
-				# Upstream doesn't use an $ARCHPKGPOOL
 				filter_duplicates \
 					<"${WORKDIR}/new/${_tag}.txt" \
 					| sed -e 's/ /-/' -e 's|.$|&*|g' \
 					> "${WORKDIR}/${_tag}.whitelist"
-				sync_pool \
-					"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
-					"${WORKDIR}/${_tag}.whitelist" \
-					"${FTP_BASE}/${ARCHPKGPOOL}/"
-				poolify "${_arch}" "${ARCHPKGPOOL}" \
-					<"${WORKDIR}/new/${_tag}.txt" \
-					>"${WORKDIR}/${_tag}.pool"
-				make_repo_symlinks "$_tag" \
-					<"${WORKDIR}/${_tag}.pool"
 				;;
 		esac
+		if [[ -n ${ARCHPKGPOOL:-} ]]; then
+			# Append to whitelists array so that we can
+			# later sync_pool() all packages
+			whitelists+=("${WORKDIR}/${_tag}.whitelist")
+		else
+			# Upstream doesn't use an $ARCHPKGPOOL
+			sync_pool \
+				"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
+				"${WORKDIR}/${_tag}.whitelist" \
+				"${FTP_BASE}/${OURPKGPOOL}/"
+			poolify "${_arch}" "${OURPKGPOOL}" \
+				<"${WORKDIR}/new/${_tag}.txt" \
+				>"${WORKDIR}/${_tag}.pool"
+			make_repo_symlinks "$_tag" \
+				<"${WORKDIR}/${_tag}.pool"
+		fi
 	done
 
-	case "$UPSTREAM" in
-		packages|community)
-			# Concatenate all whitelists, check for single *s just in case
-			cat "${whitelists[@]}" | grep -v "^\*$" |
-				sort -u > "${WORKDIR}/all.whitelist"
-			# FIXME: make_whitelist() wildcards should be narrowed
-			#        down to respect the architecture of the tag
+	if (( ${#whitelists[@]} > 0 )); then
+		# Concatenate all whitelists, check for single *s just in case
+		cat "${whitelists[@]}" | grep -v "^\*$" |
+			sort -u > "${WORKDIR}/all.whitelist"
+		# FIXME: make_whitelist() wildcards should be narrowed
+		#        down to respect the architecture of the tag
 
-			msg "Syncing package pool"
-			sync_pool \
-				"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
-				"${WORKDIR}/all.whitelist" \
-				"${FTP_BASE}/${ARCHPKGPOOL}/"
+		msg "Syncing package pool"
+		sync_pool \
+			"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
+			"${WORKDIR}/all.whitelist" \
+			"${FTP_BASE}/${OURPKGPOOL}/"
+		for _tag in "${ARCHTAGS[@]}"; do
+			_repo=${_tag%-*}
+			_arch=${_tag##*-}
+			poolify "${_arch}" "${OURPKGPOOL}" \
+				<"${WORKDIR}/new/${_tag}.txt" \
+				>"${WORKDIR}/${_tag}.pool"
+			make_repo_symlinks "$_tag" \
+				<"${WORKDIR}/${_tag}.pool"
+		done
 
+		if [[ -n ${ARCHSRCPOOL:-} ]]; then
 			msg "Syncing source pool"
 			sync_pool \
 				"${ARCHMIRROR}/${ARCHSRCPOOL}/" \
 				"${WORKDIR}/all.whitelist" \
-				"${FTP_BASE}/${ARCHSRCPOOL}/"
-			;;
-		archlinux32|archlinuxarm)
-			: # do nothing
-			;;
-	esac
+				"${FTP_BASE}/${OURSRCPOOL}/"
+		fi
+	fi
 
 	##############################################################
 	# 4. Put the packages in the repos                           #
