@@ -354,3 +354,13 @@ __doesNotExist() {
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-a-1-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
 	__isLinkTo "$TMP/ftp/core/os/armv7h/pkg-any-a-1-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
 }
+
+@test "import doesn't backdate packages" {
+	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+
+	touch "$TMP/stamp"
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
+
+	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
+	[[ "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz" -nt "$TMP/stamp" ]]
+}

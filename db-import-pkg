@@ -99,7 +99,7 @@ sync_pool() {
 
 	# *Don't delete-after*, this is the job of
 	# cleanup scripts. It will remove our packages too
-	rsync "${extra[@]}" --no-motd -rtlH \
+	rsync "${extra[@]}" --no-motd -rtlH --no-t \
 		--delay-updates \
 		--safe-links \
 		--include-from="$_whitelist" \
@@ -188,7 +188,7 @@ make_repo_dbs() {
 	chmod g+w "${files_file}"
 
 	msg2 "Updating %s-%s databases" "$2" "$1"
-	rsync "${extra[@]}" --no-motd -rtlpH \
+	rsync "${extra[@]}" --no-motd -rtlpH --no-t \
 		--delay-updates \
 		--delete-after \
 		--links \
