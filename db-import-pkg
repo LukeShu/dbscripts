@@ -74,12 +74,14 @@ filter_blacklisted() {
 # filters exact pkgname/epoch/pkgver/pkgrel matches.
 filter_duplicates() {
 	sort -u | comm -23 - <(
-		for f in "${FTP_BASE}"/pool/**/*-any${PKGEXTS}; do
-			f=${f##*/}
-			f=${f%-any$PKGEXTS}
-			pkgname=${f%-*-*}
-			fullpkgver=${f#"${pkgname}-"}
-			printf '%s %s\n' "$pkgname" "$fullpkgver"
+		for pool in "${INHERIT[@]}"; do
+			for f in "${FTP_BASE}/${pool}"/*-any${PKGEXTS}; do
+				f=${f##*/}
+				f=${f%-any$PKGEXTS}
+				pkgname=${f%-*-*}
+				fullpkgver=${f#"${pkgname}-"}
+				printf '%s %s\n' "$pkgname" "$fullpkgver"
+			done
 		done | sort -u
 	)
 }
@@ -106,7 +108,7 @@ sync_pool() {
 		"$_into"
 }
 
-# usage: poolify <arch> <preferred-pool>
+# usage: poolify <arch>
 #
 # Given a list of packages in the format:
 #
@@ -120,34 +122,21 @@ sync_pool() {
 #     archlinux32/zip-3.0-7-i686.pkg.tar.xz
 #     packages/rhino-1.7.7.1-1-any.pkg.tar.xz
 poolify() {
-	local -r arch=$1 pool=$2
+	local -r arch=$1
 
 	local pkgname fullpkgver
 	local restore paths path
 	while read -r pkgname fullpkgver; do
-		paths=(
-			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}"${PKGEXTS}
-			"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any"${PKGEXTS}
-		)
-		case "$UPSTREAM" in
-			packages|community) :;;
-			archlinux32|archlinuxarm)
-				paths+=(
-					"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver}-any"${PKGEXTS}
-					# HACK: Arch32 appends '.digits' to pkgrels. That
-					# prevents us from finding the corresponding package
-					# if we're using an upstream Arch pool.
-					"${FTP_BASE}/pool"/*/"${pkgname}-${fullpkgver%.+([0-9])}-any"${PKGEXTS}
-				);;
-		esac
-		for path in "${paths[@]}"; do
-			if [[ -f $path ]]; then
-				break
-			fi
+		paths=()
+		for pool in "${INHERIT[@]}" "$OURPKGPOOL"; do
+			paths+=(
+				"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any"${PKGEXTS}
+				"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}"${PKGEXTS}
+			)
 		done
+		path="${paths[0]:-}"
 		if ! [[ -f "$path" && -f "${path}.sig" ]]; then
 			error "No file was found for %q=%q, aborting" "$pkgname" "$fullpkgver"
-			printf ' -> %q\n' "${paths[@]}" >&2
 			exit 1
 		fi
 		printf '%s\n' "${path#"${FTP_BASE}/pool/"}"
@@ -241,7 +230,7 @@ main() {
 
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" \
-		ARCHMIRROR ARCHTAGS ARCHPATH OURPKGPOOL # optional: OURSRCPOOL ARCH{PKG,SRC}POOL
+		ARCHMIRROR ARCHTAGS ARCHPATH OURPKGPOOL # optional: OURSRCPOOL ARCH{PKG,SRC}POOL INHERIT
 	if [[ -n ${ARCHSRCPOOL:-} && -z ${OURSRCPOOL:-} ]]; then
 		print 'If you set %s, then you must set %s' {ARCH,OUR}SRCPOOL
 		exit $EXIT_NOTCONFIGURED
@@ -335,19 +324,10 @@ main() {
 		# IMPORTANT: the . in the sed command is needed
 		# because an empty whitelist would consist of a single
 		# * allowing any package to pass through.
-		case "$UPSTREAM" in
-			packages|community)
-				sed -e 's/ /-/' -e 's|.$|&*|g' \
-					<"${WORKDIR}/new/${_tag}.txt" \
-					>"${WORKDIR}/${_tag}.whitelist"
-				;;
-			archlinux32|archlinuxarm)
-				filter_duplicates \
-					<"${WORKDIR}/new/${_tag}.txt" \
-					| sed -e 's/ /-/' -e 's|.$|&*|g' \
-					> "${WORKDIR}/${_tag}.whitelist"
-				;;
-		esac
+		filter_duplicates \
+			<"${WORKDIR}/new/${_tag}.txt" \
+			| sed -e 's/ /-/' -e 's|.$|&*|g' \
+			> "${WORKDIR}/${_tag}.whitelist"
 		if [[ -n ${ARCHPKGPOOL:-} ]]; then
 			# Append to whitelists array so that we can
 			# later sync_pool() all packages
@@ -358,7 +338,7 @@ main() {
 				"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
 				"${WORKDIR}/${_tag}.whitelist" \
 				"${FTP_BASE}/${OURPKGPOOL}/"
-			poolify "${_arch}" "${OURPKGPOOL}" \
+			poolify "${_arch}" \
 				<"${WORKDIR}/new/${_tag}.txt" \
 				>"${WORKDIR}/${_tag}.pool"
 			make_repo_symlinks "$_tag" \
