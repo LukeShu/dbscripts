@@ -48,11 +48,11 @@ setup() {
 	# Configure db-import to use that rsyncd server
 	cat <<-eot >"${TMP}/db-import-archlinux.local.conf"
 		ARCHTAGS=('core-x86_64')
-		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux/"\${ARCHMIRROR#rsync://*/*/}"
+		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux/
 	eot
 	cat <<-eot >"${TMP}/db-import-archlinux32.local.conf"
 		ARCHTAGS=('core-i686')
-		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux32/"\${ARCHMIRROR#rsync://*/*/}"
+		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/archlinux32/
 	eot
 
 	# Set up HTTP server

@@ -34,7 +34,7 @@ fetch_dbs() {
 # Prints repo directory path for the given <repo> <arch> combination,
 # relative to the rsync root.
 get_repo_dir() {
-	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHMIRROR_path"
+	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHMIRRORPATH"
 }
 
 # usage: db_list_pkgs <path-to-db>
@@ -256,14 +256,11 @@ main() {
 
 	local vars
 	case "$UPSTREAM" in
-		packages|community)       vars=(ARCHMIRROR ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
-		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHTAGS ARCHPKGPOOL            ) ;;
+		packages|community)       vars=(ARCHMIRROR ARCHMIRRORPATH ARCHTAGS ARCHPKGPOOL ARCHSRCPOOL) ;;
+		archlinux32|archlinuxarm) vars=(ARCHMIRROR ARCHMIRRORPATH ARCHTAGS ARCHPKGPOOL            ) ;;
 	esac
 	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
 	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" "${vars[@]}"
-
-	declare -rg ARCHMIRROR_path="${ARCHMIRROR#rsync://*/*/}"
-	declare -rg ARCHMIRROR_fullmodule="${ARCHMIRROR%"/${ARCHMIRROR_path}"}"
 
 	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
 	trap "rm -rf -- ${WORKDIR@Q}" EXIT
@@ -278,7 +275,7 @@ main() {
 	# Sync the repos databases
 	msg 'Downloading .db and .files files to import'
 	mkdir "${WORKDIR}/rsync"
-	fetch_dbs "${ARCHMIRROR_fullmodule}/" "$WORKDIR/rsync"
+	fetch_dbs "${ARCHMIRROR}/" "$WORKDIR/rsync"
 
 	##############################################################
 	# 2. Figure out what we want                                 #
@@ -356,7 +353,7 @@ main() {
 				whitelists+=("${WORKDIR}/${_tag}.whitelist")
 				# Get repo packages (symlinks)
 				sync_repo \
-					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${_repo}" "${_arch}")/" \
+					"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
 					"${WORKDIR}/${_tag}.whitelist" \
 					"${WORKDIR}/staging-rsync/${_repo}/os/${_arch}/"
 				;;
@@ -367,7 +364,7 @@ main() {
 					| sed -e 's/ /-/' -e 's|.$|&*|g' \
 					> "${WORKDIR}/${_tag}.whitelist"
 				sync_pool \
-					"${ARCHMIRROR_fullmodule}/$(get_repo_dir "${_repo}" "${_arch}")/" \
+					"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
 					"${WORKDIR}/${_tag}.whitelist" \
 					"${FTP_BASE}/${ARCHPKGPOOL}/"
 				poolify "${_arch}" "${ARCHPKGPOOL}" \
@@ -389,13 +386,13 @@ main() {
 
 			msg "Syncing package pool"
 			sync_pool \
-				"${ARCHMIRROR_fullmodule}/${ARCHPKGPOOL}/" \
+				"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
 				"${WORKDIR}/all.whitelist" \
 				"${FTP_BASE}/${ARCHPKGPOOL}/"
 
 			msg "Syncing source pool"
 			sync_pool \
-				"${ARCHMIRROR_fullmodule}/${ARCHSRCPOOL}/" \
+				"${ARCHMIRROR}/${ARCHSRCPOOL}/" \
 				"${WORKDIR}/all.whitelist" \
 				"${FTP_BASE}/${ARCHSRCPOOL}/"
 			;;
