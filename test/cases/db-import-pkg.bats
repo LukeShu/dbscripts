@@ -43,6 +43,12 @@ setup() {
 	date +%s > "${TMP}/rsyncd/archlinux32/lastupdate"
 	date +%s > "${TMP}/rsyncd/archlinux32/lastsync"
 
+	mkdir -p -- "${TMP}/rsyncd/archlinuxarm/armv7h/core"
+	touch -- "${TMP}/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
+	ln -s core.db.tar.gz "${TMP}/rsyncd/archlinuxarm/armv7h/core/core.db"
+	date +%s > "${TMP}/rsyncd/archlinuxarm/lastupdate"
+	date +%s > "${TMP}/rsyncd/archlinuxarm/lastsync"
+
 	# Configure db-import to use that rsyncd server
 	cat <<-eot >"${TMP}/db-import-archlinux.local.conf"
 		ARCHTAGS=('core-x86_64')
@@ -51,6 +57,10 @@ setup() {
 	cat <<-eot >"${TMP}/db-import-archlinux32.local.conf"
 		ARCHTAGS=('core-i686')
 		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/rsyncd/archlinux32/
+	eot
+	cat <<-eot >"${TMP}/db-import-archlinuxarm.local.conf"
+		ARCHTAGS=('core-armv7h')
+		ARCHMIRROR=rsync://localhost:${rsyncport@Q}/rsyncd/archlinuxarm/
 	eot
 
 	# Set up HTTP server
@@ -71,11 +81,12 @@ setup() {
 	eot
 
 	# Set up repo contents
-	mkdir -p -- "${TMP}/ftp/core/os"/{x86_64,i686}
-	touch -- "${TMP}"/ftp/core/os/{x86_64,i686}/core.db.tar.gz
+	mkdir -p -- "${TMP}/ftp/core/os"/{x86_64,i686,armv7h}
+	touch -- "${TMP}"/ftp/core/os/{x86_64,i686,armv7h}/core.db.tar.gz
 	ln -s core.db.tar.gz "${TMP}/ftp/core/os/x86_64/core.db"
 	ln -s core.db.tar.gz "${TMP}/ftp/core/os/i686/core.db"
-	mkdir -p -- "${TMP}/ftp"/{pool,sources}/{packages,community,archlinux32}
+	ln -s core.db.tar.gz "${TMP}/ftp/core/os/armv7h/core.db"
+	mkdir -p -- "${TMP}/ftp"/{pool,sources}/{packages,community,archlinux32,alarm}
 	date +%s > "${TMP}/ftp/lastupdate"
 	date +%s > "${TMP}/ftp/lastsync"
 }
@@ -207,6 +218,16 @@ __doesNotExist() {
 	__doesNotExist "$TMP"/ftp/{core/os/i686,pool/archlinux32,sources/archlinux32}/slavery-*
 }
 
+@test "import no blacklisted packages (armv7h)" {
+	__releaseImportedPackage slavery      armv7h "$TMP/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-simple-a armv7h "$TMP/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
+
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinuxarm.local.conf" __db-import-pkg archlinuxarm
+
+	__isLinkTo "$TMP/ftp/core/os/armv7h/pkg-simple-a-1-1-armv7h.pkg.tar.xz" "$TMP/ftp/pool/alarm/pkg-simple-a-1-1-armv7h.pkg.tar.xz"
+	__doesNotExist "$TMP"/ftp/{core/os/alarm,pool/alarm,sources/alarm}/slavery-*
+}
+
 @test "import DBs with no blacklisted packages" {
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 
@@ -254,15 +275,30 @@ __doesNotExist() {
 	[[ "$(stat -c '%a' -- "$TMP/ftp/core/os/i686/core.db.tar.gz")" = 664 ]]
 }
 
+@test "import .db files as 0664 (armv7h)" {
+	__releaseImportedPackage slavery      armv7h "$TMP/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-simple-a armv7h "$TMP/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
+
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinuxarm.local.conf" __db-import-pkg archlinuxarm
+
+	__isLinkTo "$TMP/ftp/core/os/armv7h/pkg-simple-a-1-1-armv7h.pkg.tar.xz" "$TMP/ftp/pool/alarm/pkg-simple-a-1-1-armv7h.pkg.tar.xz"
+	__doesNotExist "$TMP"/ftp/{core/os/armv7h,pool/alarm,sources/alarm}/slavery-*
+	stat -- "$TMP/ftp/core/os/armv7h/core.db.tar.gz"
+	[[ "$(stat -c '%a' -- "$TMP/ftp/core/os/armv7h/core.db.tar.gz")" = 664 ]]
+}
+
 @test "import fully-masked upstream" {
 	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-any-a i686   "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-any-a armv7h "$TMP/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
 
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
+	DBIMPORT_CONFIG="${TMP}/db-import-archlinuxarm.local.conf" __db-import-pkg archlinuxarm
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-a-1-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
 	__isLinkTo "$TMP/ftp/core/os/i686/pkg-any-a-1-1-any.pkg.tar.xz"   "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
+	__isLinkTo "$TMP/ftp/core/os/armv7h/pkg-any-a-1-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-1-any.pkg.tar.xz"
 }
 
 @test "import errors on pkgpool selection failures" {
