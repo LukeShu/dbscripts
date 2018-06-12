@@ -390,6 +390,7 @@ main() {
 		_arch=${_tag##*-}
 		make_repo_dbs "$_repo" "$_arch"
 	done
+	date +%s > "${FTP_BASE}/lastupdate"
 }
 
 main "$@"

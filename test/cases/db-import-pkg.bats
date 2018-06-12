@@ -363,4 +363,5 @@ __doesNotExist() {
 
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-simple-a-1-1-x86_64.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz"
 	[[ "$TMP/ftp/pool/packages/pkg-simple-a-1-1-x86_64.pkg.tar.xz" -nt "$TMP/stamp" ]]
+	[[ "$TMP/ftp/lastupdate" -nt "$TMP/stamp" ]]
 }
