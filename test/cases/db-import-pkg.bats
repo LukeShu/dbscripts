@@ -40,6 +40,7 @@ setup() {
 	mkdir -p -- "${TMP}/rsyncd/archlinux32/i686/core"
 	touch -- "${TMP}/rsyncd/archlinux32/i686/core/core.db.tar.gz"
 	ln -s core.db.tar.gz "${TMP}/rsyncd/archlinux32/i686/core/core.db"
+	mkdir -p -- "${TMP}/rsyncd/archlinux32/pool"
 	date +%s > "${TMP}/rsyncd/archlinux32/lastupdate"
 	date +%s > "${TMP}/rsyncd/archlinux32/lastsync"
 
@@ -209,8 +210,8 @@ __doesNotExist() {
 }
 
 @test "import no blacklisted packages (i686)" {
-	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
-	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
+	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
 
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
 
@@ -264,8 +265,8 @@ __doesNotExist() {
 }
 
 @test "import .db files as 0664 (i686)" {
-	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
-	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage slavery      i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
+	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
 
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
 
@@ -289,7 +290,7 @@ __doesNotExist() {
 
 @test "import fully-masked upstream" {
 	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
-	__releaseImportedPackage pkg-any-a i686   "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-any-a i686   "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"    "$TMP/rsyncd/archlinux32/pool"
 	__releaseImportedPackage pkg-any-a armv7h "$TMP/rsyncd/archlinuxarm/armv7h/core/core.db.tar.gz"
 
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
@@ -304,10 +305,10 @@ __doesNotExist() {
 @test "import errors on pkgpool selection failures" {
 	# pkg-simple-a is just to make sure that the "fully-masked
 	# upstream" bug isn't being tested here
-	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	__releaseImportedPackage pkg-any-a    x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__releaseImportedPackage pkg-simple-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	__updateImportedPackage pkg-any-a
-	__releaseImportedPackage pkg-any-a x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
+	__releaseImportedPackage pkg-any-a    x86_64 "$TMP/rsyncd/archlinux/core/os/x86_64/core.db.tar.gz" "$TMP/rsyncd/archlinux/pool/packages"
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-a-1-2-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-a-1-2-any.pkg.tar.xz"
 
@@ -316,8 +317,8 @@ __doesNotExist() {
 	# poolifying.
 	mkdir -- "$TMP/ftp/pool/nested"
 	mv -T -- "$TMP/ftp/pool/packages" "$TMP/ftp/pool/nested/packages"
-	__releaseImportedPackage pkg-any-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
-	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-any-a    i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
+	__releaseImportedPackage pkg-simple-a i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
 
 	local status=0
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32 || status=$?
@@ -332,7 +333,7 @@ __doesNotExist() {
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux.local.conf" __db-import-pkg packages
 	__isLinkTo "$TMP/ftp/core/os/x86_64/pkg-any-2-1-any.pkg.tar.xz" "$TMP/ftp/pool/packages/pkg-any-2-1-any.pkg.tar.xz"
 
-	__releaseImportedPackage pkg-any32 i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz"
+	__releaseImportedPackage pkg-any32 i686 "$TMP/rsyncd/archlinux32/i686/core/core.db.tar.gz" "$TMP/rsyncd/archlinux32/pool"
 	DBIMPORT_CONFIG="${TMP}/db-import-archlinux32.local.conf" __db-import-pkg archlinux32
 	__isLinkTo "$TMP/ftp/core/os/i686/pkg-any-1-1.2-any.pkg.tar.xz" "$TMP/ftp/pool/archlinux32/pkg-any-1-1.2-any.pkg.tar.xz"
 }
