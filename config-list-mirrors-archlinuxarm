@@ -3,8 +3,27 @@
 
 require 'json'
 require 'net/http'
+require 'optparse'
 require 'set'
 devnull = open("/dev/null")
+
+begin
+	OptionParser.new do |parser|
+	parser.on("-h", "--help", "Display this help") do
+		puts parser
+		exit
+	end
+	end.parse!
+rescue OptionParser::ParseError => e
+	STDERR.puts "#{$0}: #{e}"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
+unless ARGV.empty?
+	STDERR.puts "#{$0}: extra argument '#{ARGV[0]}'"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
 
 data = JSON::parse(Net::HTTP.post(
 	URI("https://archlinuxarm.org/data/mirrors/list"), "", {

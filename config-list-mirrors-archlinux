@@ -13,7 +13,6 @@ begin
 	parser.on("--require=DIR", "Optional directory that the mirror needs ('archive', 'iso', 'other', or 'sources')") do |dir|
 		requires.add(dir)
 	end
-
 	parser.on("-h", "--help", "Display this help") do
 		puts parser
 		exit
@@ -21,6 +20,11 @@ begin
 	end.parse!
 rescue OptionParser::ParseError => e
 	STDERR.puts "#{$0}: #{e}"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
+unless ARGV.empty?
+	STDERR.puts "#{$0}: extra argument '#{ARGV[0]}'"
 	STDERR.puts "Try '#{$0} --help' for more information."
 	exit 2
 end
