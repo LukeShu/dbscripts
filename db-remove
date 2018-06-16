@@ -30,16 +30,15 @@ remove_pkgs=()
 for pkgbase in "${pkgbases[@]}"; do
 	msg "Removing %s from [%s]..." "$pkgbase" "$repo"
 
+	mapfile -t pkgnames < <(getdbinfo "$repo" "${tarches[0]}" "$pkgbase" NAME)
+	remove_pkgs+=("${pkgnames[@]}")
+
 	path="$(xbs releasepath "$pkgbase" "$repo" "$arch")"
 	if [[ -d $path ]]; then
-		remove_pkgs+=($(. "$path/PKGBUILD"; echo "${pkgname[@]}"))
 		xbs unrelease "$pkgbase" "$repo" "$arch"
 	else
-		warning "%s not found in %s for %s" \
+		warning "pkgbase '%s' not found in %s for %s; unable to commit removal there" \
 			"$pkgbase" "$(xbs name)" "$repo-$arch"
-		warning "Removing only %s from the repo" "$pkgbase"
-		warning "If it was a split package you have to remove the others yourself!"
-		remove_pkgs+=("$pkgbase")
 	fi
 done
 

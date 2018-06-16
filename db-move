@@ -26,31 +26,14 @@ done
 
 # First loop is to check that all necessary files exist
 for pkgbase in "${args[@]:2}"; do
-	for pkgarch in "${ARCHES[@]}" 'any'; do
-		xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
-		if [[ -r ${xbsrepo_from}/PKGBUILD ]]; then
-			pkgnames=($(. "${xbsrepo_from}/PKGBUILD"; echo "${pkgname[@]}"))
-			if (( ${#pkgnames[@]} < 1 )); then
-				die "Could not read pkgname"
+	for tarch in "${ARCHES[@]}"; do
+		while read -r pkgarch pkgfile; do
+			xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
+			if [[ -r ${xbsrepo_from}/PKGBUILD ]]; then
+				getpkgfile "${ftppath_from}/${tarch}/${pkgfile}" >/dev/null
+				continue 3
 			fi
-
-			if [[ ${pkgarch} = any ]]; then
-				tarches=("${ARCHES[@]}")
-			else
-				tarches=("${pkgarch}")
-			fi
-
-			for pkgname in "${pkgnames[@]}"; do
-				pkgver=$(. "${xbsrepo_from}/PKGBUILD"; get_full_version "${pkgname}")
-				if [[ -z ${pkgver} ]]; then
-					die "Could not read pkgver"
-				fi
-				for tarch in "${tarches[@]}"; do
-					getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXTS} >/dev/null
-				done
-			done
-			continue 2
-		fi
+		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" ARCH,FILENAME)
 	done
 	die "%s not found in %s" "$pkgbase" "$repo_from"
 done
@@ -61,35 +44,19 @@ declare -A add_pkgs
 declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
 	# move the package in xbs
-	arches="$(xbs move "${repo_from}" "${repo_to}" "${pkgbase}")" || die
-	read -ra arches <<<"$arches"
+	xbs move "${repo_from}" "${repo_to}" "${pkgbase}"
 	# move the package in ftp
-	for pkgarch in "${arches[@]}"; do
-		xbsrepo_to="$(xbs releasepath "$pkgbase" "$repo_to" "$pkgarch")"
-		if true; then # to add an indent level to make merging easier
-			if [[ ${pkgarch} = any ]]; then
-				tarches=("${ARCHES[@]}")
-			else
-				tarches=("${pkgarch}")
+	for tarch in "${ARCHES[@]}"; do
+		while read -r pkgname pkgver pkgarch pkgfile; do
+			msg2 "%s (%s)" "$pkgbase" "$pkgarch"
+
+			ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
+			if [[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]]; then
+				ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "${ftppath_to}/${tarch}/"
 			fi
-			msg2 "%s (%s)" "$pkgbase" "${tarches[*]}"
-			pkgnames=($(. "${xbsrepo_to}/PKGBUILD"; echo "${pkgname[@]}"))
-
-			for pkgname in "${pkgnames[@]}"; do
-				pkgver=$(. "${xbsrepo_to}/PKGBUILD"; get_full_version "${pkgname}")
-				for tarch in "${tarches[@]}"; do
-					pkgpath=$(getpkgfile "${ftppath_from}/${tarch}/${pkgname}-${pkgver}-${pkgarch}"${PKGEXTS})
-					pkgfile="${pkgpath##*/}"
-
-					ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
-					if [[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]]; then
-						ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "${ftppath_to}/${tarch}/"
-					fi
-					add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
-					remove_pkgs[${tarch}]+="${pkgname} "
-				done
-			done
-		fi
+			add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
+			remove_pkgs[${tarch}]+="${pkgname} "
+		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" NAME,VERSION,ARCH,FILENAME)
 	done
 done
 

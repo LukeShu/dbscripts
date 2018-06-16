@@ -4,9 +4,6 @@
 shopt -s extglob globstar nullglob
 
 
-# Some PKGBUILDs need CARCH to be set
-CARCH=$(. "$(librelib conf.sh)"; load_conf makepkg.conf; echo "$CARCH")
-
 # Useful functions
 UMASK=""
 set_umask () {
@@ -288,6 +285,41 @@ getpkgfiles() {
 	done
 
 	echo "${files[@]}"
+}
+
+# usage: getdbinfo repo arch <pkgbase|pkgname> fields
+getdbinfo() {
+	local repo=$1
+	local arch=$2
+	local pkgbase=$3
+	local fields=$4
+
+	local dbfile="${FTP_BASE}/${repo}/os/${arch}/${repo}${DBEXT}"
+	local dbdir="${WORKDIR}/dbfiles/${repo}-${arch}"
+	if ! [[ -d $dbdir ]]; then
+		mkdir -p "$dbdir"
+		bsdtar -xf "$dbfile" -C "$dbdir" --include='*/desc'
+	fi
+
+	# The grep/xargs is just a fast filter with possible
+	# false-postives (like a Bloom filter), because awk is
+	# comparatively slow.  You could remove the grep/xargs line,
+	# and append `"$dbdir"/*/desc` to the awk command, and it
+	# would do the same thing; just several times slower.
+	grep -r -lZ -Fx -e "$pkgbase" -- "$dbdir" | xargs -r0 \
+	awk -v pkgbase="$pkgbase" -v fields="$fields"  -vFS='\n' -vRS='' '
+		{ dat[gensub(/^%(.*)%$/, "\\1", 1, $1)] = gensub(FS, ",", "g", gensub($1 FS, "", 1)) }
+		ENDFILE {
+			if (dat["BASE"] == pkgbase || dat["NAME"] == pkgbase) {
+				n=split(fields, fieldlist, ",")
+				str = ""
+				for (i=1; i<=n; i++)
+					str = str (i==1?"":" ") dat[fieldlist[i]]
+				print str
+			}
+			delete dat
+		}
+	'
 }
 
 check_pkgfile() {
