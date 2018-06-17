@@ -1,0 +1,54 @@
+#!/hint/bash
+
+abs_move_preflight_check() {
+	local repo_from=$1
+	local pkgarch=$2
+	local pkgbase=$3
+	local xbsrepo_from
+
+      	xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
+	[[ -r ${xbsrepo_from}/PKGBUILD ]]
+}
+
+abs_move_start() {
+	local repo_from=$1
+	local repo_to=$2
+	local pkgbase=$3
+
+	xbs move "${repo_from}" "${repo_to}" "${pkgbase}"
+}
+
+abs_move_arch() {
+	local pkgarch=$1
+	# no-op, everything was taken care of in _start
+}
+
+abs_move_finish() {
+	:
+	# no-op, everything was taken care of in _start
+}
+
+abs_remove() {
+	local repo=$1
+	local arch=$2
+	local pkgbase=$3
+	local path
+
+	path="$(xbs releasepath "$pkgbase" "$repo" "$arch")"
+	if [[ -d $path ]]; then
+		xbs unrelease "$pkgbase" "$repo" "$arch"
+	else
+		warning "pkgbase '%s' not found in %s for %s; unable to commit removal there" \
+			"$pkgbase" "$(xbs name)" "$repo-$arch"
+	fi
+}
+
+abs_export() {
+	local repo=$1
+	local pkgarch=$2
+	local pkgbase=$3
+	local dest=$4
+
+	cp -a "$(xbs releasepath "${pkgbase}" "${repo}" "${pkgarch}")" \
+		"$dest"
+}

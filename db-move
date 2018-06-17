@@ -30,8 +30,7 @@ for pkgbase in "${args[@]:2}"; do
 	for tarch in "${ARCHES[@]}"; do
 		while read -r pkgarch pkgfile; do
 
-			xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
-			if ! [[ -r ${xbsrepo_from}/PKGBUILD ]]; then
+			if ! abs_move_preflight_check "$repo_from" "$pkgarch" "$pkgbase"; then
 				die "%s not found in %s-%s" "$pkgbase" "$repo_from" "$pkgarch"
 			fi
 
@@ -50,12 +49,11 @@ msg "Moving packages from [%s] to [%s]..." "$repo_from" "$repo_to"
 declare -A add_pkgs
 declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
-	# move the package in xbs
-	xbs move "${repo_from}" "${repo_to}" "${pkgbase}"
-	# move the package in ftp
+	abs_move_start "$repo_from" "$repo_to" "$pkgbase"
 	for tarch in "${ARCHES[@]}"; do
 		while read -r pkgname pkgver pkgarch pkgfile; do
 			msg2 "%s (%s)" "$pkgbase" "$pkgarch"
+			abs_move_arch "$pkgarch"
 
 			ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
 			if [[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]]; then
@@ -65,6 +63,7 @@ for pkgbase in "${args[@]:2}"; do
 			remove_pkgs[${tarch}]+="${pkgname} "
 		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" NAME,VERSION,ARCH,FILENAME)
 	done
+	abs_move_finish
 done
 
 for tarch in "${ARCHES[@]}"; do

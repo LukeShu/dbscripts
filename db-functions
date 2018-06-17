@@ -1,5 +1,8 @@
 #!/hint/bash
 
+. /usr/share/makepkg/util.sh
+. "$(dirname "${BASH_SOURCE[0]}")/db-abs"
+
 # global shell options for enhanced bash scripting
 shopt -s extglob globstar nullglob
 
@@ -344,10 +347,16 @@ check_pkgxbs() {
 
 	in_array "${repo}" "${PKGREPOS[@]}" || return 1
 
-	local xbsver="$(. "$(xbs releasepath "${_pkgbase}" "${repo}" "${_pkgarch}")/PKGBUILD"; get_full_version "${_pkgname}")"
+	if [[ ! -f ${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}/PKGBUILD ]]; then
+		mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
+		abs_export "$repo" "$_pkgarch" "$_pkgbase" \
+			"${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null || return 1
+	fi
+
+	local xbsver="$(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}/PKGBUILD"; get_full_version)"
 	[[ "${xbsver}" = "${_pkgver}" ]] || return 1
 
-	local xbsnames=($(. "$(xbs releasepath "${_pkgbase}" "${repo}" "${_pkgarch}")/PKGBUILD"; echo "${pkgname[@]}"))
+	local xbsnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}/PKGBUILD"; echo "${pkgname[@]}"))
 	in_array "${_pkgname}" "${xbsnames[@]}" || return 1
 
 	return 0
@@ -372,7 +381,13 @@ check_splitpkgs() {
 		mkdir -p "${repo}/${_pkgarch}/${_pkgbase}"
 		echo "${_pkgname}" >> "${repo}/${_pkgarch}/${_pkgbase}/staging"
 
-		local xbsnames=($(. "$(xbs releasepath "${_pkgbase}" "${repo}" "${_pkgarch}")/PKGBUILD"; echo "${pkgname[@]}"))
+		if [[ ! -f ${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}/PKGBUILD ]]; then
+			mkdir -p "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}"
+			abs_export "$repo" "$_pkgarch" "$_pkgbase" \
+				"${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}" >/dev/null || return 1
+		fi
+
+		local xbsnames=($(. "${WORKDIR}/pkgbuilds/${repo}-${_pkgarch}/${_pkgbase}/PKGBUILD"; echo "${pkgname[@]}"))
 		printf '%s\n' "${xbsnames[@]}" >> "${repo}/${_pkgarch}/${_pkgbase}/xbs"
 	done
 	popd >/dev/null
@@ -472,12 +487,4 @@ arch_repo_modify() {
 	popd >/dev/null
 
 	REPO_MODIFIED=1
-}
-
-arch_svn() {
-	if [[ -z ${SVNUSER} ]]; then
-		/usr/bin/svn "${@}"
-	else
-		sudo -u "${SVNUSER}" -- /usr/bin/svn --username "${USER}" "${@}"
-	fi
 }

@@ -33,13 +33,7 @@ for pkgbase in "${pkgbases[@]}"; do
 	mapfile -t pkgnames < <(getdbinfo "$repo" "${tarches[0]}" "$pkgbase" NAME)
 	remove_pkgs+=("${pkgnames[@]}")
 
-	path="$(xbs releasepath "$pkgbase" "$repo" "$arch")"
-	if [[ -d $path ]]; then
-		xbs unrelease "$pkgbase" "$repo" "$arch"
-	else
-		warning "pkgbase '%s' not found in %s for %s; unable to commit removal there" \
-			"$pkgbase" "$(xbs name)" "$repo-$arch"
-	fi
+	abs_remove "$repo" "$arch" "$pkgbase"
 done
 
 for tarch in "${tarches[@]}"; do

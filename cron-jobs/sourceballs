@@ -79,8 +79,8 @@ for repo in "${PKGREPOS[@]}"; do
 
 			# Get the sources from xbs
 			mkdir -p -m0770 "${WORKDIR}/pkgbuilds/${repo}-${pkgarch}"
-			cp -a "$(xbs releasepath "${pkgbase}" "${repo}" "${pkgarch}")" \
-				"${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/${pkgbase}" >/dev/null 2>&1
+			abs_export "$repo" "$pkgarch" "$pkgbase" \
+				"${WORKDIR}/pkgbuilds/${repo}-${pkgarch}/${pkgbase}"
 			if (( $? >= 1 )); then
 				failedpkgs+=("${pkgbase}-${pkgver}${SRCEXT}")
 				continue
