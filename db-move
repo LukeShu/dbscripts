@@ -26,16 +26,23 @@ done
 
 # First loop is to check that all necessary files exist
 for pkgbase in "${args[@]:2}"; do
+	found=false
 	for tarch in "${ARCHES[@]}"; do
 		while read -r pkgarch pkgfile; do
+
 			xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
-			if [[ -r ${xbsrepo_from}/PKGBUILD ]]; then
-				getpkgfile "${ftppath_from}/${tarch}/${pkgfile}" >/dev/null
-				continue 3
+			if ! [[ -r ${xbsrepo_from}/PKGBUILD ]]; then
+				die "%s not found in %s-%s" "$pkgbase" "$repo_from" "$pkgarch"
 			fi
+
+			# getpkgfile will `exit` for us if it fails;
+			# no need to check its result
+			getpkgfile "${ftppath_from}/${tarch}/${pkgfile}" >/dev/null
+
+			found=true
 		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" ARCH,FILENAME)
 	done
-	die "%s not found in %s" "$pkgbase" "$repo_from"
+	[[ $found = true ]] || die "%s not found in %s" "$pkgbase" "$repo_from"
 done
 
 msg "Moving packages from [%s] to [%s]..." "$repo_from" "$repo_to"
