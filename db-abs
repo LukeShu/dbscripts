@@ -1,0 +1,106 @@
+#!/hint/bash
+
+arch_svn() {
+	if [[ -z ${SVNUSER} ]]; then
+		/usr/bin/svn "${@}"
+	else
+		sudo -u "${SVNUSER}" -- /usr/bin/svn --username "${USER}" "${@}"
+	fi
+}
+
+_abs_checkout() {
+	local pkgbase=$1
+	if ! [[ -d ${WORKDIR}/svn ]]; then
+		arch_svn checkout -q -N "${SVNREPO}" "${WORKDIR}/svn" >/dev/null
+	fi
+	if ! [[ -d ${WORKDIR}/svn/${pkgbase} ]]; then
+		arch_svn up -q "${WORKDIR}/svn/${pkgbase}" >/dev/null
+	fi
+}
+
+abs_move_preflight_check() {
+	local repo_from=$1
+	local pkgarch=$2
+	local pkgbase=$3
+
+	_abs_checkout "$pkgbase"
+	local svnrepo_from="${WORKDIR}/svn/${pkgbase}/repos/${repo_from}-${pkgarch}"
+	[[ -r ${svnrepo_from}/PKGBUILD ]]
+}
+
+abs_move_start() {
+	abs_move_repo_from=$1
+	abs_move_repo_to=$2
+	abs_move_pkgbase=$3
+
+	abs_move_tag_list=""
+}
+
+# If the "from" PKGBUILD doesn't exist, this is a no-op (not an
+# error), so that it can be run for each arch, and the invoker doesn't
+# need to worry about hoisting it out of the loop if arch=(any).  If
+# the nonexistence is such that it should be an error, we count on
+# abs_move_preflight_check having already caught that.
+abs_move_arch() {
+	local pkgarch=$1
+
+	local repo_from=$abs_move_repo_from
+	local repo_to=$abs_move_repo_to
+	local pkgbase=$abs_move_pkgbase
+
+	local svnrepo_from="${WORKDIR}/svn/${pkgbase}/repos/${repo_from}-${pkgarch}"
+	local svnrepo_to="${WORKDIR}/svn/${pkgbase}/repos/${repo_to}-${pkgarch}"
+	if [[ -f ${svnrepo_from}/PKGBUILD ]]; then
+		msg2 "%s (%s)" "$pkgbase" "$pkgarch"
+
+		if [[ -d ${svnrepo_to} ]]; then
+			for file in $(arch_svn ls "${svnrepo_to}"); do
+				arch_svn rm -q "${svnrepo_to}/$file@"
+			done
+		else
+			mkdir "${svnrepo_to}"
+			arch_svn add -q "${svnrepo_to}"
+		fi
+
+		for file in $(arch_svn ls "${svnrepo_from}"); do
+			arch_svn mv -q -r HEAD "${svnrepo_from}/$file@" "${svnrepo_to}/"
+		done
+		arch_svn rm --force -q "${svnrepo_from}"
+		abs_move_tag_list+=", $pkgarch"
+	fi
+}
+
+abs_move_finish() {
+	local repo_from=$abs_move_repo_from
+	local repo_to=$abs_move_repo_to
+	local pkgbase=$abs_move_pkgbase
+
+	local tag_list="${abs_move_tag_list#, }"
+	arch_svn commit -q "${WORKDIR}/svn/${pkgbase}" -m "${0##*/}: moved ${pkgbase} from [${repo_from}] to [${repo_to}] (${tag_list})"
+}
+
+abs_remove() {
+	local repo=$1
+	local arch=$2
+	local pkgbase=$3
+
+	local svnrepo="$repo-$arch"
+
+	_abs_checkout "$pkgbase"
+	if [[ -d ${WORKDIR}/svn/$pkgbase/repos/$svnrepo ]]; then
+		arch_svn rm --force -q "${WORKDIR}/svn/$pkgbase/repos/$svnrepo"
+		arch_svn commit -q "${WORKDIR}/svn/$pkgbase" -m "${0##*/}: $pkgbase removed by $(id -un)"
+	else
+		warning "pkgbase '%s' not found in svn; unable to commit removal to svn" "$pkgbase"
+	fi
+}
+
+abs_export() {
+	local repo=$1
+	local pkgarch=$2
+	local pkgbase=$3
+	local dest=$4
+
+	arch_svn export -q "${SVNREPO}/${pkgbase}/repos/${repo}-${pkgarch}" \
+		 "${dest}" >/dev/null 2>&1
+}
