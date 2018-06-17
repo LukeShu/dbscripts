@@ -27,19 +27,18 @@ done
 # check if packages to be moved exist in svn and ftp dir
 for pkgbase in "${args[@]:2}"; do
 	for tarch in "${ARCHES[@]}"; do
+		if ! abs_move_preflight_check "$repo_from" "$tarch" "$pkgbase"; then
+			die "%s not found in %s" "$pkgbase" "$repo_from"
+		fi
+
 		found=false
-		while read -r pkgarch pkgfile; do
-
-			if ! abs_move_preflight_check "$repo_from" "$pkgarch" "$pkgbase"; then
-				die "%s not found in %s" "$pkgbase" "$repo_from"
-			fi
-
+		while read -r pkgfile; do
 			# getpkgfile will `exit` for us if it fails;
 			# no need to check its result
 			getpkgfile "${ftppath_from}/${tarch}/${pkgfile}" >/dev/null
 
 			found=true
-		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" ARCH,FILENAME)
+		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" FILENAME)
 		[[ $found = true ]] || die "%s not found in %s" "$pkgbase" "$repo_from"
 	done
 done
@@ -51,16 +50,15 @@ declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
 	abs_move_start "$repo_from" "$repo_to" "$pkgbase"
 	for tarch in "${ARCHES[@]}"; do
-		while read -r pkgname pkgver pkgarch pkgfile; do
-			abs_move_arch "$pkgarch"
-
+		abs_move_arch "$tarch"
+		while read -r pkgname pkgver pkgfile; do
 			ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
 			if [[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]]; then
 				ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "${ftppath_to}/${tarch}/"
 			fi
 			add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
 			remove_pkgs[${tarch}]+="${pkgname} "
-		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" NAME,VERSION,ARCH,FILENAME)
+		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" NAME,VERSION,FILENAME)
 	done
 	abs_move_finish
 done
