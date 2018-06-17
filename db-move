@@ -28,10 +28,10 @@ done
 for pkgbase in "${args[@]:2}"; do
 	found=false
 	for tarch in "${ARCHES[@]}"; do
-		while read -r pkgarch pkgfile; do
+		while read -r pkgfile; do
 
-			if ! abs_move_preflight_check "$repo_from" "$pkgarch" "$pkgbase"; then
-				die "%s not found in %s-%s" "$pkgbase" "$repo_from" "$pkgarch"
+			if ! abs_move_preflight_check "$repo_from" "$tarch" "$pkgbase"; then
+				die "%s not found in %s-%s" "$pkgbase" "$repo_from" "$tarch"
 			fi
 
 			# getpkgfile will `exit` for us if it fails;
@@ -39,7 +39,7 @@ for pkgbase in "${args[@]:2}"; do
 			getpkgfile "${ftppath_from}/${tarch}/${pkgfile}" >/dev/null
 
 			found=true
-		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" ARCH,FILENAME)
+		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" FILENAME)
 	done
 	[[ $found = true ]] || die "%s not found in %s" "$pkgbase" "$repo_from"
 done
@@ -51,17 +51,16 @@ declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
 	abs_move_start "$repo_from" "$repo_to" "$pkgbase"
 	for tarch in "${ARCHES[@]}"; do
-		while read -r pkgname pkgver pkgarch pkgfile; do
-			msg2 "%s (%s)" "$pkgbase" "$pkgarch"
-			abs_move_arch "$pkgarch"
-
+		msg2 "%s (%s)" "$pkgbase" "$tarch"
+		abs_move_arch "$tarch"
+		while read -r pkgname pkgver pkgfile; do
 			ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
 			if [[ -f ${FTP_BASE}/${PKGPOOL}/${pkgfile}.sig ]]; then
 				ln -s "../../../${PKGPOOL}/${pkgfile}.sig" "${ftppath_to}/${tarch}/"
 			fi
 			add_pkgs[${tarch}]+="${FTP_BASE}/${PKGPOOL}/${pkgfile} "
 			remove_pkgs[${tarch}]+="${pkgname} "
-		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" NAME,VERSION,ARCH,FILENAME)
+		done < <(getdbinfo "$repo_from" "$tarch" "$pkgbase" NAME,VERSION,FILENAME)
 	done
 	abs_move_finish
 done

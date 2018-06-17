@@ -2,12 +2,13 @@
 
 abs_move_preflight_check() {
 	local repo_from=$1
-	local pkgarch=$2
+	local tarch=$2
 	local pkgbase=$3
-	local xbsrepo_from
+	local dir_tarch dir_any
 
-      	xbsrepo_from="$(xbs releasepath "${pkgbase}" "${repo_from}" "${pkgarch}")"
-	[[ -r ${xbsrepo_from}/PKGBUILD ]]
+	dir_tarch="$(xbs releasepath "${pkgbase}" "${repo_from}" "${tarch}")"
+	dir_any="$(xbs releasepath "${pkgbase}" "${repo_from}" any)"
+	[[ -r ${dir_tarch}/PKGBUILD || -r ${dir_any}/PKGBUILD ]]
 }
 
 abs_move_start() {
