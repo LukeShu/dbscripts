@@ -88,7 +88,7 @@ Things that haven't been mentioned yet:
  - `make_individual_torrent`
 ## Testing
 * Install the `base-devel` package group, as well as the `bash-bats`,
-  `kcov`, `subversion`, and `xbs` packages.
+  `kcov`, `qemu-user-static-binfmt`, `subversion`, and `xbs` packages.
 * Arrange for `gpg` to sign files using a key that is trusted by the
   pacman keyring.  This is easy if you are already a Parabola
   packager--your PGP key is already trusted by the pacman keyring, as

@@ -60,6 +60,7 @@ __checkRemovedSourcePackage() {
 }
 
 @test "sourceballs cleanup" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -70,7 +71,7 @@ __checkRemovedSourcePackage() {
 	db-update
 	sourceballs
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		db-remove extra "${arch}" pkg-simple-a
 	done
 

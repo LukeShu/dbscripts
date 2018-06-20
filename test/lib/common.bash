@@ -1,7 +1,6 @@
 #!/hint/bash
 
 . /usr/share/makepkg/util.sh
-. "$(dirname "${BASH_SOURCE[0]}")"/../test.conf
 
 __updatePKGBUILD() {
 	local pkgrel
@@ -47,12 +46,10 @@ __buildPackage() {
 	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
 	for tarch in ${pkgarches[@]}; do
 		if [ "${tarch}" == 'any' ]; then
-			sudo librechroot -n "dbscripts@${tarch}" sync
-			mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} makepkg --packagelist)
-		else
-			sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" sync
-			mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} CARCH=${tarch} makepkg --packagelist)
+			tarch=$(source "$(librelib conf)" && load_conf makepkg.conf CARCH && printf '%s\n' "$CARCH")
 		fi
+		sudo librechroot -n "dbscripts@${tarch}" -A "$tarch" sync
+		mapfile -tO "${#pkgfiles[@]}" pkgfiles < <(PKGDEST=${pkgdest} PKGEXT=${PKGEXT} CARCH=${tarch} makepkg --packagelist)
 		sudo librechroot -n "dbscripts@${tarch}" run bash -c "$(printf '%q ' echo "PKGEXT=${PKGEXT@Q}") >> /etc/makepkg.conf"
 		sudo PKGDEST="${pkgdest}" libremakepkg -n "dbscripts@${tarch}"
 	done
@@ -85,7 +82,6 @@ setup() {
 	SRCPOOL='sources/packages'
 	TESTING_REPO='testing'
 	STABLE_REPOS=('core' 'extra')
-	ARCHES=(${ARCH_BUILD[*]@Q})
 	CLEANUP_DESTDIR="${TMP}/package-cleanup"
 	SOURCE_CLEANUP_DESTDIR="${TMP}/source-cleanup"
 	STAGING="${TMP}/staging"
@@ -116,7 +112,7 @@ eot
 	SVNREPOS=(
 		"svn-packages-copy file://${TMP}/svn-packages-repo core extra testing"
 	)
-	ARCHES=(${ARCH_BUILD[*]@Q})
+	ARCHES=(${ARCHES[*]@Q})
 eot
 	echo 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs/xbs.conf"
 }

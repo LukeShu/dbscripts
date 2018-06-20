@@ -19,6 +19,7 @@ __checkRepoRemovedPackage() {
 }
 
 @test "cleanup simple packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -29,14 +30,14 @@ __checkRepoRemovedPackage() {
 
 	db-update
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		db-remove extra "${arch}" pkg-simple-a
 	done
 
 	ftpdir-cleanup
 
 	checkRemovedPackage extra 'pkg-simple-a'
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		__checkRepoRemovedPackage extra 'pkg-simple-a' ${arch}
 	done
 
@@ -44,6 +45,7 @@ __checkRepoRemovedPackage() {
 }
 
 @test "cleanup epoch packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -54,19 +56,20 @@ __checkRepoRemovedPackage() {
 
 	db-update
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		db-remove extra "${arch}" pkg-simple-epoch
 	done
 
 	ftpdir-cleanup
 
 	checkRemovedPackage extra 'pkg-simple-epoch'
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		__checkRepoRemovedPackage extra 'pkg-simple-epoch' ${arch}
 	done
 }
 
 @test "cleanup any packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 	local arch='any'
@@ -81,7 +84,7 @@ __checkRepoRemovedPackage() {
 
 	local pkg1="pkg-any-a-1-1-any${PKGEXT}"
 	checkRemovedPackage extra 'pkg-any-a'
-	for arch in ${ARCH_BUILD[@]}; do
+	for arch in ${arches[@]}; do
 		__checkRepoRemovedPackage extra 'pkg-any-a' ${arch}
 	done
 
@@ -89,6 +92,7 @@ __checkRepoRemovedPackage() {
 }
 
 @test "cleanup split packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -100,13 +104,13 @@ __checkRepoRemovedPackage() {
 
 	db-update
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		db-remove extra "${arch}" "${pkgs[0]}"
 	done
 
 	ftpdir-cleanup
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		__checkRepoRemovedPackage extra ${pkgs[0]} ${arch}
 	done
 
@@ -115,6 +119,7 @@ __checkRepoRemovedPackage() {
 }
 
 @test "cleanup old packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -126,7 +131,7 @@ __checkRepoRemovedPackage() {
 	db-update
 
 	for pkgbase in ${pkgs[@]}; do
-		for arch in "${ARCH_BUILD[@]}"; do
+		for arch in ${arches[@]}; do
 			db-remove extra ${arch} ${pkgbase}
 		done
 	done
@@ -135,7 +140,7 @@ __checkRepoRemovedPackage() {
 
 	local pkgfilea="pkg-simple-a-1-1-${arch}${PKGEXT}"
 	local pkgfileb="pkg-simple-b-1-1-${arch}${PKGEXT}"
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		touch -d "-$(expr ${CLEANUP_KEEP} + 1)days" ${CLEANUP_DESTDIR}/${pkgfilea}{,.sig}
 	done
 
