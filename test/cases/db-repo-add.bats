@@ -21,14 +21,15 @@ __movePackageToRepo() {
 	done
 }
 
-@test "add simple packages" {
+@test "add single packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
 
 	for pkgbase in "${pkgs[@]}"; do
 		releasePackage extra "$pkgbase"
-		for arch in "${ARCH_BUILD[@]}"; do
+		for arch in ${arches[@]}; do
 			__movePackageToRepo extra ${pkgbase} ${arch}
 			db-repo-add extra "${arch}" "${pkgbase}-1-1-${arch}${PKGEXT}"
 		done
@@ -40,6 +41,7 @@ __movePackageToRepo() {
 }
 
 @test "add multiple packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -48,7 +50,7 @@ __movePackageToRepo() {
 		releasePackage extra "$pkgbase"
 	done
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		add_pkgs=()
 		for pkgbase in "${pkgs[@]}"; do
 			__movePackageToRepo extra ${pkgbase} ${arch}

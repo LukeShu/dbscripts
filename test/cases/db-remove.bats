@@ -1,6 +1,7 @@
 load ../lib/common
 
 @test "remove packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-split-a' 'pkg-split-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -12,7 +13,7 @@ load ../lib/common
 	db-update
 
 	for pkgbase in "${pkgs[@]}"; do
-		for arch in "${ARCH_BUILD[@]}"; do
+		for arch in ${arches[@]}; do
 			db-remove extra "${arch}" "${pkgbase}"
 		done
 	done
@@ -23,6 +24,7 @@ load ../lib/common
 }
 
 @test "remove multiple packages" {
+	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-split-a' 'pkg-split-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -33,7 +35,7 @@ load ../lib/common
 
 	db-update
 
-	for arch in "${ARCH_BUILD[@]}"; do
+	for arch in ${arches[@]}; do
 		db-remove extra "${arch}" "${pkgs[@]}"
 	done
 

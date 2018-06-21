@@ -98,6 +98,7 @@ Packages:
  - `kcov` package
  - `libretools` package
  - `subversion` package
+ - `qemu-user-static-binfmt` package
 
 Other setup:
 

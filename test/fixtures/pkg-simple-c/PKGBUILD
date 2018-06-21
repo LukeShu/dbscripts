@@ -1,8 +1,8 @@
-pkgname=pkg-simple-a
+pkgname=pkg-simple-c
 pkgver=1
 pkgrel=1
 pkgdesc="A package called ${pkgname}"
-arch=('i686' 'x86_64')
+arch=('i686' 'x86_64' 'armv7h')
 url='http://www.archlinux.org/'
 license=('GPL' 'LGPL')
 depends=('glibc')
