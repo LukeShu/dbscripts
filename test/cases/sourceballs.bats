@@ -59,7 +59,7 @@ __checkRemovedSourcePackage() {
 	done
 }
 
-@test "sourceballs cleanup" {
+@test "cleanup sourceballs" {
 	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase

@@ -1,6 +1,6 @@
 load ../lib/common
 
-@test "remove packages" {
+@test "remove single packages" {
 	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase

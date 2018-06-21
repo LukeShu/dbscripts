@@ -21,7 +21,7 @@ __movePackageToRepo() {
 	done
 }
 
-@test "add simple packages" {
+@test "add single packages" {
 	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
