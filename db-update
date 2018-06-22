@@ -46,9 +46,6 @@ for repo in "${repos[@]}"; do
 			if ! pacman-key -v "${pkg}.sig" >/dev/null 2>&1; then
 				die "Package %s does not have a valid signature" "$repo/${pkg##*/}"
 			fi
-			if ! check_pkgsvn "${pkg}" "${repo}"; then
-				die "Package %s is not consistent with svn repository" "$repo/${pkg##*/}"
-			fi
 			if ! check_pkgrepos "${pkg}"; then
 				die "Package %s already exists in another repository" "$repo/${pkg##*/}"
 			fi
@@ -62,9 +59,10 @@ for repo in "${repos[@]}"; do
 				die "Package %s was not built in a chroot" "$repo/${pkg##*/}"
 			fi
 		done
-		if ! check_splitpkgs "${repo}" "${pkgs[@]}"; then
-			die "Missing split packages for %s" "$repo"
-		fi
+		# This is fucking obnoxious
+		#if ! check_splitpkgs ${repo} "${pkgs[@]}"; then
+		#	die "Missing split packages for %s" "${repo}"
+		#fi
 	else
 		die "Could not read %s" "$STAGING"
 	fi
