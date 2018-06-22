@@ -64,30 +64,6 @@ __buildPackage() {
 	done
 }
 
-__archrelease() {
-	local repo=$1
-	local pkgarches
-	local tarch
-	local tag
-
-	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
-	pushd ..
-	for tarch in ${pkgarches[@]}; do
-		tag=${repo}-${tarch}
-
-		if [[ -d repos/$tag ]]; then
-			svn rm repos/$tag/PKGBUILD
-		else
-			mkdir -p repos/$tag
-			svn add repos/$tag
-		fi
-
-		svn copy -r HEAD trunk/PKGBUILD repos/$tag/
-	done
-	svn commit -m "__archrelease"
-	popd
-}
-
 setup() {
 	local p
 	local pkg
@@ -129,6 +105,17 @@ eot
 
 	svnadmin create "${TMP}/svn-packages-repo"
 	svn checkout -q "file://${TMP}/svn-packages-repo" "${TMP}/svn-packages-copy"
+
+	mkdir -p "${TMP}/home/.config/xbs"
+	export XDG_CONFIG_HOME="${TMP}/home/.config"
+	cat <<eot > "$XDG_CONFIG_HOME/xbs/xbs-abs.conf"
+	SVNDIR="${TMP}"
+	SVNREPOS=(
+		"svn-packages-copy file://${TMP}/svn-packages-repo core extra testing"
+	)
+	ARCHES=(${ARCHES[*]@Q})
+eot
+	echo 'BUILDSYSTEM=abs' > "$XDG_CONFIG_HOME/xbs/xbs.conf"
 }
 
 teardown() {
@@ -138,6 +125,8 @@ teardown() {
 releasePackage() {
 	local repo=$1
 	local pkgbase=$2
+	local pkgarches
+	local tarch
 
 	if [ ! -d "${TMP}/svn-packages-copy/${pkgbase}/trunk" ]; then
 		mkdir -p "${TMP}/svn-packages-copy/${pkgbase}"/{trunk,repos}
@@ -147,8 +136,12 @@ releasePackage() {
 	fi
 
 	pushd "${TMP}/svn-packages-copy/${pkgbase}/trunk/"
+
 	__buildPackage "${STAGING}"/${repo}
-	__archrelease ${repo}
+	pkgarches=($(. PKGBUILD; echo ${arch[@]}))
+	for tarch in "${pkgarches[@]}"; do
+		xbs release-client "${repo}" "${tarch}"
+	done
 	popd
 }
 
