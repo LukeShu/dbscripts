@@ -334,7 +334,7 @@ check_pkgfile() {
 
 	in_array "${pkgarch}" "${ARCHES[@]}" 'any' || return 1
 
-	[[ ${pkgfile##*/} = ${pkgname}-${pkgver}-${pkgarch}* ]]
+	[[ ${pkgfile##*/} = "${pkgname}-${pkgver}-${pkgarch}"* ]]
 }
 
 check_pkgxbs() {

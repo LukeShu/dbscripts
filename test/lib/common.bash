@@ -206,7 +206,7 @@ checkPackageDB() {
 			for repoarch in "${repoarches[@]}"; do
 				# Only 'any' packages can be found in repos of both arches
 				if [[ $pkgarch != any ]]; then
-					if [[ $pkgarch != ${repoarch} ]]; then
+					if [[ $pkgarch != "$repoarch" ]]; then
 						continue
 					fi
 				fi
