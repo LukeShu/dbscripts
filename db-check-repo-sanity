@@ -1,0 +1,57 @@
+#!/bin/bash
+# Solves issue165... on the old roundup install.  From the database
+# backups, the title was "Older/deprecated packages never leave the
+# repo", I don't know how the body of the issue is stored in the DB,
+# but the title says enough, I think.
+
+. "$(dirname "$(readlink -e "$0")")/../config"
+. "$(dirname "$(readlink -e "$0")")/../db-functions"
+
+# Traverse all repos
+for _repo in "${PKGREPOS[@]}"; do
+	msg "Cleaning up [%s]" "${_repo}"
+
+	# Find all pkgnames on this repo's abs
+	on_abs=($(
+			find "${SVNREPO}/${_repo}" -name PKGBUILD | \
+				while read pkgbuild; do
+				source "${pkgbuild}" >/dev/null 2>&1
+				# cleanup to save memory
+				unset build package source md5sums pkgdesc pkgver pkgrel epoch \
+					url license arch depends makedepends optdepends options \
+					>/dev/null 2>&1
+
+				# also cleanup package functions
+				for _pkg in "${pkgname[@]}"; do
+					unset "package_${pkg}" >/dev/null 2>&1
+				done
+
+				# this fills the on_abs array
+				echo "${pkgname[@]}"
+			done
+			))
+
+	# quit if abs is empty
+	if [ ${#on_abs[*]} -eq 0 ]; then
+		warning "[%s]'s ABS tree is empty, skipping" "${_repo}"
+		break
+	fi
+
+	# Find all pkgnames on repos
+	on_repo=($(
+			find "${FTP_BASE}/${_repo}" -name "*.pkg.tar.?z" \
+				-printf "%f\n" | sed "s/^\(.\+\)-[^-]\+-[^-]\+-[^-]\+$/\1/"
+			))
+
+	# Compares them, whatever is on repos but not on abs should be removed
+	remove=($(comm -13 \
+	               <(printf '%s\n' "${on_abs[@]}"  | sort -u) \
+	               <(printf '%s\n' "${on_repo[@]}" | sort -u) ))
+
+	# Remove them from databases, ftpdir-cleanup will take care of the rest
+	find "${FTP_BASE}/${_repo}" -name "*.db.tar.?z" \
+		-exec repo-remove {} "${remove[@]}" \; >/dev/null 2>&1
+
+	msg2 "Removed the following packages:"
+	plain '%s' "${remove[@]}"
+done
