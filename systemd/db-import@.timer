@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily db-import %I
+
+[Timer]
+Persistent=true
+
+[Install]
+WantedBy=timers.target

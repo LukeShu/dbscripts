@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# 2013, 2016, 2018  Luke Shumaker
+
+require 'json'
+require 'net/http'
+require 'optparse'
+require 'set'
+devnull = open("/dev/null")
+
+requires = Set.new()
+begin
+	OptionParser.new do |parser|
+	parser.on("--require=DIR", "Optional directory that the mirror needs ('archive', 'iso', 'other', or 'sources')") do |dir|
+		requires.add(dir)
+	end
+	parser.on("-h", "--help", "Display this help") do
+		puts parser
+		exit
+	end
+	end.parse!
+rescue OptionParser::ParseError => e
+	STDERR.puts "#{$0}: #{e}"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
+unless ARGV.empty?
+	STDERR.puts "#{$0}: extra argument '#{ARGV[0]}'"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
+
+data = JSON::parse(Net::HTTP.get(URI("https://www.archlinux.org/mirrors/status/tier/1/json/")))
+
+if data["version"] != 3
+	print "Data format version != 3"
+	exit 1
+end
+
+# Filter out URLs with incomplete information
+urls = data["urls"].select{|a| a.none?{|k,v|v.nil?}}
+
+# Filter based on our criteria
+rsync_urls = urls.select{|a| a["protocol"]=="rsync"}
+if requires.include?("iso")
+	rsync_urls = rsync_urls.select{|a| a["isos"]==true}
+	requires.delete("iso")
+end
+unless requires.empty?
+	listing_procs = {}
+	rsync_urls.each do |a|
+		# trailing slash is important; ensure we have one
+		listing_procs[a["url"]] ||= IO.popen(["rsync", "--no-motd", "--list-only", "--", a["url"]+"/"], :err => devnull)
+	end
+	listings = {}
+	listing_procs.map.each do |url,listing_proc|
+		listings[url] = listing_proc.read.lines.map{|line|line.chomp.sub(/.*\s/,'')}
+		listing_proc.close
+	end
+	rsync_urls = rsync_urls.select{|a|requires.all?{|dir|listings[a["url"]].include?(dir)}}
+end
+puts JSON.dump(rsync_urls)

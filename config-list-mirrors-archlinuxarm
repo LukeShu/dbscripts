@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+# 2018  Luke Shumaker
+
+require 'json'
+require 'net/http'
+require 'optparse'
+require 'set'
+devnull = open("/dev/null")
+
+begin
+	OptionParser.new do |parser|
+	parser.on("-h", "--help", "Display this help") do
+		puts parser
+		exit
+	end
+	end.parse!
+rescue OptionParser::ParseError => e
+	STDERR.puts "#{$0}: #{e}"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
+unless ARGV.empty?
+	STDERR.puts "#{$0}: extra argument '#{ARGV[0]}'"
+	STDERR.puts "Try '#{$0} --help' for more information."
+	exit 2
+end
+
+data = JSON::parse(Net::HTTP.post(
+	URI("https://archlinuxarm.org/data/mirrors/list"), "", {
+		'Referer' => 'https://archlinuxarm.org/about/mirrors',
+		'X-Requested-With' => 'XMLHttpRequest',
+	}).body)
+
+hosts = data["data"].map{|m|m[2]}
+
+# Get a listing of rsync modules for each host
+modulelist_procs = {}
+hosts.each do |host|
+	modulelist_procs[host] ||= IO.popen(["timeout", "2s", "rsync", "#{host}::"], :err => devnull)
+end
+modulelists = {}
+modulelist_procs.each do |host,modulelist_proc|
+	modulelists[host] = modulelist_proc.read
+	modulelist_proc.close
+end
+# Look for modules that look like ALARM mirrors
+modules = Set.new()
+modulelists.each do |host,listing|
+	hostmodules = listing.lines.select{|line| line =~ /(alarm|arch.*arm)/i }.map{|line| line.chomp.sub(/\s.*/, '') }
+	modules.merge(hostmodules.map{|m| "rsync://#{host}/#{m}"})
+end
+# Filter the ones that we have read access for
+listing_procs = {}
+modules.each do |m|
+	listing_procs[m] ||= IO.popen(["rsync", "--no-motd", "--list-only", "--", m], :err => devnull)
+end
+listing_procs.map.each do |url,listing_proc|
+	listing_proc.read
+	listing_proc.close
+	if $?.exitstatus == 0
+		puts url
+	end
+end

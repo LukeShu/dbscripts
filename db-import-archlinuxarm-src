@@ -1,0 +1,125 @@
+#!/bin/bash
+
+set -e
+
+source "$(dirname "$(readlink -e "$0")")/config"
+source "$(dirname "$(readlink -e "$0")")/db-import-archlinuxarm.conf"
+
+# Steps
+# * Sync abs
+# * Download blacklist.txt
+# * Sync abslibre from abs excluding from blacklist
+# * Create repo.abs.tar.gz tarballs
+
+function sync_abs() {
+	# sync from ${REPO}.abs.tar.gz files in ALARM mirrors
+	local TMP_SUBDIR="${tmpdir}/abs-alarm/"
+	rm -rf -- "$TMP_SUBDIR" "$ABS_ROOT"
+	mkdir -- "$TMP_SUBDIR"
+	for ARCH in armv7h; do
+		for REPO in "${ARCHTAGS[@]%-*}"; do
+			rsync ${SYNCARGS} \
+			      rsync://${ABS_SERVER}/${ARCH}/${REPO}/${REPO}.abs.tar.gz \
+			      "$TMP_SUBDIR" || return $?
+			mkdir -p -- "${ABS_ROOT}/${ARCH}"
+			bsdtar xf "${TMP_SUBDIR}/${REPO}.abs.tar.gz" \
+			       -C "${ABS_ROOT}/${ARCH}"
+		done
+	done
+
+	# add changes by ALARM since those aren't present in .abs.tar.gz files
+	if ! git -C "$ALARM_ROOT" pull &>/dev/null; then
+		rm -rf -- "$ALARM_ROOT"
+		if ! git clone "$ALARM_GIT" "$ALARM_ROOT"; then
+			printf "[FAILED]\n"
+			return 1
+		fi
+	fi
+	# FIXME: $ALARM_ROOT doesn't separate packages by architecture
+	for ARCH in armv7h; do
+		for REPO in "${ARCHTAGS[@]%-*}"; do
+			rsync -mrtq --no-p --no-o --no-g --exclude='README' \
+			      "${ALARM_ROOT}/${REPO}/" \
+			      "${ABS_ROOT}/${ARCH}/${REPO}"
+		done
+	done
+
+	# fix some permissions
+	find "${ABS_ROOT}" -type d -print0 | xargs -0 chmod 755
+	find "${ABS_ROOT}" -type f -print0 | xargs -0 chmod 644
+}
+
+function get_blacklist() {
+	libreblacklist update
+	if ! libreblacklist cat | libreblacklist get-pkg | sort -u | sed "s/^/**\//" > ${BLFILE}; then
+		printf "[FAILED]\n"
+		return 1
+	fi
+
+	# Prevent using an empty blacklist
+	[ $(wc -l ${BLFILE} | cut -d " " -f1) -eq 0 ] && return 1
+
+	printf "[OK]\n"
+}
+
+function sync_abs_libre() {
+
+	# Clone ABSLibre git repo
+	rm -rf -- "$tmpdir/abslibre"
+	git clone "$ABSLIBRE_GIT" "$tmpdir/abslibre"
+
+	# Sync from ABS and then sync from ABSLibre
+	printf ":: Syncing ABSLibre...\t"
+	if ! rsync ${SYNCARGS} --delete-excluded --exclude-from=${BLFILE} ${ABS_ROOT} ${ABSLIBRE_ROOT}; then
+		printf "[FAILED]\n"
+		return 1
+	fi
+	for ARCH in armv7h; do
+		if ! rsync -v -mrtq --no-motd --no-p --no-o --no-g --quiet --exclude=.git/ "$tmpdir/abslibre/" ${ABSLIBRE_ROOT}/${ARCH}/; then
+			printf "[FAILED]\n"
+			return 1
+		fi
+	done
+
+	# fix some permissions
+	find "${ABSLIBRE_ROOT}" -type d -print0 | xargs -0 chmod 755
+	find "${ABSLIBRE_ROOT}" -type f -print0 | xargs -0 chmod 644
+
+	printf "[OK]\n"
+}
+
+# Create .abs.tar.gz tarballs
+create_tarballs() {
+	for repo in ${ABSLIBRE_ROOT}/armv7h/*; do
+		baserepo=${repo##*/}
+		arch=$(basename $(dirname $repo))
+
+		# Remove the old one
+		mkdir -p $FTP_BASE/$baserepo/os/$arch/
+		rm -fv $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz
+		# Create a new one joining arch and any
+		# Remove the first part of the path (it could be $repo but any isn't hit)
+		include=($repo/*)
+		if [[ -d ${ABSLIBRE_ROOT}/any/${baserepo}/ ]]; then
+			include+=(${ABSLIBRE_ROOT}/any/${baserepo}/*)
+		fi
+		bsdtar -czf $FTP_BASE/$baserepo/os/$arch/$baserepo.abs.tar.gz \
+			-s ":${ABSLIBRE_ROOT}/[a-z0-9_]\+/[a-z]\+::" \
+			"${include[@]}"
+	done
+}
+
+main() {
+	trap 'rm -rf -- "$tmpdir"' EXIT
+	tmpdir=$(mktemp --tmpdir -d "${0##*/}.XXXXXXXXXX")
+
+	BLFILE=${tmpdir}/blacklist.txt
+	mkdir -p -- "$ABSLIBRE_ROOT" "$ABS_ROOT" "$ALARM_ROOT"
+
+	sync_abs
+	get_blacklist
+	sync_abs_libre
+	create_tarballs
+}
+
+main "$@"

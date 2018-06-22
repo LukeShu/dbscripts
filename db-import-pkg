@@ -1,0 +1,396 @@
+#!/bin/bash
+# Syncs Arch, ALARM or Arch32 repos based on info contained in the
+# accompanying .conf files.
+# License: GPLv3
+
+set -eE
+shopt -s extglob globstar nullglob
+source "$(librelib messages)"
+source "$(librelib blacklist)"
+source "$(librelib conf)"
+setup_traps
+
+readonly -a UPSTREAMS=(packages community archlinux{32,arm})
+
+# usage: fetch_dbs <from> <into>
+#
+# Fetch excluding everything but db files
+# TODO: we could be doing without things other than what is in
+#       ${ARCHTAGS[@]}
+fetch_dbs() {
+	rsync "${extra[@]}" --no-motd -mrtlH --no-p \
+		--include="*/" \
+		--include="*.db" \
+		--include="*${DBEXT}" \
+		--include="*.files" \
+		--include="*${FILESEXT}" \
+		--exclude="*" \
+		--delete-after \
+		"$1" "$2"
+}
+
+# usage: get_repo_dir <repo> <arch>
+#
+# Prints repo directory path for the given <repo> <arch> combination,
+# relative to the rsync root.
+get_repo_dir() {
+	repo=$1 arch=$2 envsubst '$repo $arch' <<<"$ARCHPATH"
+}
+
+# usage: db_list_pkgs <path-to-db>
+#
+# Prints a list of packages within a given <path-to-db>, one-per-line,
+# in the format:
+#
+#     pkgname [epoch:]pkgver-pkgrel
+db_list_pkgs() {
+	bsdtar tf "$1" |
+		cut -d "/" -f 1 |
+		sed -r 's/-([^-]*-[^-]*)$/ \1/' |
+		sort -u
+}
+
+# usage: filter_blacklisted <FULL_LIST >FILTERED_LIST
+#
+# Given a list of packages in the format:
+#
+#     pkgname [epoch:]pkgver-pkgrel
+#
+# filter out all of the packages named in blacklist.txt.
+filter_blacklisted() {
+	sort -u | join -v1 \
+		- \
+		<(blacklist-cat | blacklist-get-pkg | sort -u)
+}
+
+# usage: filter_duplicates <FULL_LIST >FILTERED_LIST
+#
+# Given a list of packages in the format:
+#
+#     pkgname [epoch:]pkgver-pkgrel
+#
+# filter out arch=(any) packages present elsewhere, as it confuses
+# parabolaweb, librechroot, and who-knows-what-else.  This only
+# filters exact pkgname/epoch/pkgver/pkgrel matches.
+filter_duplicates() {
+	sort -u | comm -23 - <(
+		for pool in "${INHERIT[@]}"; do
+			for f in "${FTP_BASE}/${pool}"/*-any${PKGEXTS}; do
+				f=${f##*/}
+				f=${f%-any$PKGEXTS}
+				pkgname=${f%-*-*}
+				fullpkgver=${f#"${pkgname}-"}
+				printf '%s %s\n' "$pkgname" "$fullpkgver"
+			done
+		done | sort -u
+	)
+}
+
+# usage: sync_pool <from> <path-to-whitelist> <into>
+#
+# Sync excluding everything but whitelist
+sync_pool() {
+	local -r _from=$1 _whitelist=$2 _into=$3
+
+	mkdir -p -- "$_into"
+	msg2 "Retrieving %d packages from %s pool" \
+		"$(wc -l < "$_whitelist")" \
+		"$(basename "$_into")"
+
+	# *Don't delete-after*, this is the job of
+	# cleanup scripts. It will remove our packages too
+	rsync "${extra[@]}" --no-motd -rtlH --no-t \
+		--delay-updates \
+		--safe-links \
+		--include-from="$_whitelist" \
+		--exclude="*" \
+		"$_from" \
+		"$_into"
+}
+
+# usage: poolify <arch>
+#
+# Given a list of packages in the format:
+#
+#     pkgname [epoch:]pkgver-pkgrel
+#
+# Resolve each to a file in `${FTP_BASE}/pool/`.  The output is
+# relative to `${FTP_BASE}/pool/`.  That is, something along the lines
+# of:
+#
+#     poolname/pkgname-[epoch:]pkgver-pkgrel-arch.pkg.tar.xz
+#     archlinux32/zip-3.0-7-i686.pkg.tar.xz
+#     packages/rhino-1.7.7.1-1-any.pkg.tar.xz
+poolify() {
+	local -r arch=$1
+
+	local pkgname fullpkgver
+	local restore paths path
+	while read -r pkgname fullpkgver; do
+		paths=()
+		for pool in "${INHERIT[@]}" "$OURPKGPOOL"; do
+			paths+=(
+				"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-any"${PKGEXTS}
+				"${FTP_BASE}/${pool}/${pkgname}-${fullpkgver}-${arch}"${PKGEXTS}
+			)
+		done
+		path="${paths[0]:-}"
+		if ! [[ -f "$path" && -f "${path}.sig" ]]; then
+			error "No file was found for %q=%q, aborting" "$pkgname" "$fullpkgver"
+			exit 1
+		fi
+		printf '%s\n' "${path#"${FTP_BASE}/pool/"}"
+	done
+}
+
+# usage: make_repo_symlinks TAG <POOLFILELIST
+make_repo_symlinks() {
+	local -r tag=$1
+
+	local -r repo=${tag%-*}
+	local -r arch=${tag##*-}
+	local -r repodir=${WORKDIR}/staging-rsync/${repo}/os/${arch}
+
+	msg2 "Putting symlinks in %s" "${repo}/os/${arch}"
+	mkdir -p -- "${repodir}"
+
+	local poolfile
+	while read -r poolfile; do
+		ln -sfvT "../../../pool/${poolfile##*/pool/}"     "${repodir}/${poolfile##*/}"
+		ln -sfvT "../../../pool/${poolfile##*/pool/}.sig" "${repodir}/${poolfile##*/}.sig"
+	done
+}
+
+# usage: make_repo_dbs <repo> <arch>
+make_repo_dbs() {
+	local -r from=${WORKDIR}/staging-rsync/${1}/os/${2}
+	local -r into=${FTP_BASE}/${1}/os/${2}/
+	local -r db_file=${from}/${1}${DBEXT}
+	local -r files_file=${from}/${1}${FILESEXT}
+
+	# create fresh databases to reflect actual `any.pkg.tar.xz` packages.
+	# this also avoids corrupt upstream metadata (ALARM)
+	msg2 "Adding whitelisted packages to clean DBs ..."
+
+	pushd "${from}"
+	local -r UMASK=$(umask)
+	umask 002
+	repo-add "${db_file##*/}" *${PKGEXTS}
+	umask "$UMASK" >/dev/null
+	popd >/dev/null
+
+	mkdir -p -- "$into"
+	# This bit is based on db-functions:set_repo_permission()
+	local -r group=$(/usr/bin/stat --printf='%G' "${into}")
+	chgrp "$group" "${db_file}"
+	chgrp "$group" "${files_file}"
+	chmod g+w "${db_file}"
+	chmod g+w "${files_file}"
+
+	msg2 "Updating %s-%s databases" "$2" "$1"
+	rsync "${extra[@]}" --no-motd -rtlpH --no-t \
+		--delay-updates \
+		--delete-after \
+		--links \
+		"$from/" "$into"
+}
+
+# Main function. Process the databases and get the libre packages
+# Outline:
+#  1. Fetch package info
+#     * Get blacklist.txt
+#     * Get repo.db from an Arch-like repo
+#  2. Figure out what we want
+#     * Generate textfiles describing the current repo state, and
+#       (using blacklist.txt) the desired repo state
+#  3. Fetch the packages we want
+#     * Create sync whitelist (based on package blacklist)
+#     * Call sync_pool to fetch packages and signatures
+#  4. Put the packages in the repos
+#     * Create new repo.db with them (repo-add)
+#     * rsync scratch directory => repos
+main() {
+	##############################################################
+	# 0. Initialization                                          #
+	##############################################################
+
+	# Run as `V=true db-import-pkg` to get verbose output
+	readonly VERBOSE=${V}
+	extra=()
+	${VERBOSE} && extra+=(-v)
+	readonly extra
+	readonly UPSTREAM=$1
+
+	# Print usage message
+	if [[ $# -ne 1 ]] || ! in_array "$UPSTREAM" "${UPSTREAMS[@]}" ; then
+		IFS='|'
+		msg 'usage: [V=true] %s {%s}' "${0##*/}" "${UPSTREAMS[*]}"
+		exit $EXIT_INVALIDARGUMENT
+	fi
+
+	load_conf "$(dirname "$(readlink -e "$0")")/config" DBEXT FILESEXT FTP_BASE
+	load_conf "$(dirname "$(readlink -e "$0")")/db-import-${UPSTREAM}.conf" \
+		ARCHMIRROR ARCHTAGS ARCHPATH OURPKGPOOL # optional: OURSRCPOOL ARCH{PKG,SRC}POOL INHERIT
+	if [[ -n ${ARCHSRCPOOL:-} && -z ${OURSRCPOOL:-} ]]; then
+		print 'If you set %s, then you must set %s' {ARCH,OUR}SRCPOOL
+		exit $EXIT_NOTCONFIGURED
+	elif [[ -n ${OURSRCPOOL:-} && -z ${ARCHSRCPOOL:-} ]]; then
+		print 'If you set %s, then you must set %s' {OUR,ARCH}SRCPOOL
+		exit $EXIT_NOTCONFIGURED
+	fi
+	if [[ -n ${ARCHSRCPOOL:-} && -z ${ARCHPKGPOOL:-} ]]; then
+		print '%s requires that %s is also set' ARCH{SRC,PKG}POOL
+		exit $EXIT_NOTCONFIGURED
+	fi
+
+	WORKDIR=$(mktemp -dt "${0##*/}.XXXXXXXXXX")
+	trap "rm -rf -- ${WORKDIR@Q}" EXIT
+
+	##############################################################
+	# 1. Fetch package info                                      #
+	##############################################################
+
+	# Get the blacklisted packages
+	blacklist-update
+
+	# Sync the repos databases
+	msg 'Downloading .db and .files files to import'
+	mkdir "${WORKDIR}/rsync"
+	fetch_dbs "${ARCHMIRROR}/" "$WORKDIR/rsync"
+
+	##############################################################
+	# 2. Figure out what we want                                 #
+	##############################################################
+
+	mkdir "${WORKDIR}"/{old,new,dif}
+	local _tag _repo _arch db_file
+	for _tag in "${ARCHTAGS[@]}"; do
+		_repo=${_tag%-*}
+		_arch=${_tag##*-}
+		# FIXME: this assumes that the local DBEXT and the
+		# imported DBEXT are the same, which is potentially
+		# not true.
+		#
+		# FIXME: this should use db-functions to lock the
+		# repos while we read them.
+		db_file="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
+		db_list_pkgs "$db_file" > "${WORKDIR}/old/${_tag}.txt"
+
+		db_file="${WORKDIR}/rsync/$(get_repo_dir "${_repo}" "${_arch}")/${_repo}${DBEXT}"
+		db_list_pkgs "$db_file" | filter_blacklisted > "${WORKDIR}/new/${_tag}.txt"
+	done
+
+	# We now have $WORKDIR/old/ describing the way the repos are,
+	# and $WORKDIR/new/ describing the way we want them to be.  We
+	# now create $WORKDIR/dif/ describing how to get from point A
+	# to point B.
+	#
+	# TODO: finish this section
+	for _tag in "${ARCHTAGS[@]}"; do
+		comm -23 "${WORKDIR}"/{old,new}/"${_tag}.txt" # take packages that have been "removed"
+	done | grep -rFx -f /dev/stdin "${WORKDIR}/new/" | # but now appear in another repo
+		sort -u > "${WORKDIR}/dif/moved.txt"
+	comm -23 \
+		<(cat "${WORKDIR}"/old/* | cut -d' ' -f1 | sort -u) \
+		<(cat "${WORKDIR}"/new/* | cut -d' ' -f1 | sort -u) \
+		> "${WORKDIR}/dif/removed.txt"
+
+	##############################################################
+	# 3. Fetch the packages we want                              #
+	##############################################################
+
+	# OK, now we have $WORKDIR/old/ describing the way the repos
+	# are, $WORKDIR/new/ describing the way we want them to be,
+	# and $WORKDIR/dif/ describing how to get from `old` to `new`.
+	# We should (TODO) now use db-move, db-update, and db-remove
+	# to apply that diff.
+	#
+	# But,
+	#  - db-move is broken
+	#  - The code that populates /dif/ isn't finished
+	# So, just nuke the current repos and entirely re-create
+	# everything from /new/.
+
+	local whitelists=()
+	for _tag in "${ARCHTAGS[@]}"; do
+		msg "Processing %s" "$_tag"
+		_repo=${_tag%-*}
+		_arch=${_tag##*-}
+		# Create a whitelist, add * wildcard to end.
+		#
+		# FIXME: due to lack of -arch suffix, the pool sync
+		# retrieves every arch even if we aren't syncing them.
+		#
+		# IMPORTANT: the . in the sed command is needed
+		# because an empty whitelist would consist of a single
+		# * allowing any package to pass through.
+		filter_duplicates \
+			<"${WORKDIR}/new/${_tag}.txt" \
+			| sed -e 's/ /-/' -e 's|.$|&*|g' \
+			> "${WORKDIR}/${_tag}.whitelist"
+		if [[ -n ${ARCHPKGPOOL:-} ]]; then
+			# Append to whitelists array so that we can
+			# later sync_pool() all packages
+			whitelists+=("${WORKDIR}/${_tag}.whitelist")
+		else
+			# Upstream doesn't use an $ARCHPKGPOOL
+			sync_pool \
+				"${ARCHMIRROR}/$(get_repo_dir "${_repo}" "${_arch}")/" \
+				"${WORKDIR}/${_tag}.whitelist" \
+				"${FTP_BASE}/${OURPKGPOOL}/"
+			poolify "${_arch}" \
+				<"${WORKDIR}/new/${_tag}.txt" \
+				>"${WORKDIR}/${_tag}.pool"
+			make_repo_symlinks "$_tag" \
+				<"${WORKDIR}/${_tag}.pool"
+		fi
+	done
+
+	if (( ${#whitelists[@]} > 0 )); then
+		# Concatenate all whitelists, check for single *s just in case
+		cat "${whitelists[@]}" | grep -v "^\*$" |
+			sort -u > "${WORKDIR}/all.whitelist"
+		# FIXME: make_whitelist() wildcards should be narrowed
+		#        down to respect the architecture of the tag
+
+		msg "Syncing package pool"
+		sync_pool \
+			"${ARCHMIRROR}/${ARCHPKGPOOL}/" \
+			"${WORKDIR}/all.whitelist" \
+			"${FTP_BASE}/${OURPKGPOOL}/"
+		for _tag in "${ARCHTAGS[@]}"; do
+			_repo=${_tag%-*}
+			_arch=${_tag##*-}
+			poolify "${_arch}" "${OURPKGPOOL}" \
+				<"${WORKDIR}/new/${_tag}.txt" \
+				>"${WORKDIR}/${_tag}.pool"
+			make_repo_symlinks "$_tag" \
+				<"${WORKDIR}/${_tag}.pool"
+		done
+
+		if [[ -n ${ARCHSRCPOOL:-} ]]; then
+			msg "Syncing source pool"
+			sync_pool \
+				"${ARCHMIRROR}/${ARCHSRCPOOL}/" \
+				"${WORKDIR}/all.whitelist" \
+				"${FTP_BASE}/${OURSRCPOOL}/"
+		fi
+	fi
+
+	##############################################################
+	# 4. Put the packages in the repos                           #
+	##############################################################
+
+	msg "Putting databases back in place"
+
+	# FIXME: all repo DBs should be replaced at once (per architecture)
+	ln -srT "$FTP_BASE/pool" "${WORKDIR}/staging-rsync/pool"
+	for _tag in "${ARCHTAGS[@]}"; do
+		_repo=${_tag%-*}
+		_arch=${_tag##*-}
+		make_repo_dbs "$_repo" "$_arch"
+	done
+	date +%s > "${FTP_BASE}/lastupdate"
+}
+
+main "$@"
