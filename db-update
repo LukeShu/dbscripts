@@ -51,13 +51,13 @@ for repo in "${repos[@]}"; do
 				die "Package %s already exists in another repository" "$repo/${pkg##*/}"
 			fi
 			if ! check_packager "${pkg}"; then
-				die "Package ${repo}/${pkg##*/} does not have a valid packager"
+				die "Package %s does not have a valid packager" "$repo/${pkg##*/}"
 			fi
 			if ! check_buildinfo "${pkg}"; then
-				die "Package ${repo}/${pkg##*/} does not have a .BUILDINFO file"
+				die "Package %s does not have a .BUILDINFO file" "$repo/${pkg##*/}"
 			fi
 			if ! check_builddir "${pkg}"; then
-				die "Package ${repo}/${pkg##*/} was not built in a chroot"
+				die "Package %s was not built in a chroot" "$repo/${pkg##*/}"
 			fi
 		done
 		# This is fucking obnoxious
