@@ -1,0 +1,6 @@
+#!/bin/bash
+# Creates the repo structure defined in config
+
+source "$(dirname "$(readlink -e "$0")")/config"
+
+mkdir -p -- "${FTP_BASE}"/{"${PKGPOOL}","${SRCPOOL}"} "${CLEANUP_DESTDIR}" "${SOURCE_CLEANUP_DESTDIR}" "${STAGING}"
