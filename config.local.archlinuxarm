@@ -1,0 +1,5 @@
+#!/hint/bash
+
+PKGREPOS=(alarm aur community core extra)
+PKGPOOL='pool/alarm'
+SRCPOOL='sources/alarm'

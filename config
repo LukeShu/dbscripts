@@ -3,28 +3,27 @@
 # Instead, create separate ${toolname}.conf files.  Only add a
 # variable here if multiple tools start needing the option.
 
+FTP_BASE="/srv/repo/main"
 
-FTP_BASE="/srv/ftp"
 PKGREPOS=()
 PKGPOOL=''
 SRCPOOL=''
 
-CLEANUP_DESTDIR="/var/tmp"
+CLEANUP_DESTDIR="/srv/repo/package-cleanup"
 CLEANUP_DRYRUN=false
 # Time in days to keep moved packages
 CLEANUP_KEEP=30
 
-SOURCE_CLEANUP_DESTDIR="/var/tmp"
-SOURCE_CLEANUP_DRYRUN=false
+SOURCE_CLEANUP_DESTDIR="/srv/repo/source-cleanup"
+SOURCE_CLEANUP_DRYRUN=true
 # Time in days to keep moved sourcepackages
-SOURCE_CLEANUP_KEEP=14
+SOURCE_CLEANUP_KEEP=30
 
 LOCK_DELAY=10
-LOCK_TIMEOUT=300
 
-STAGING="$HOME/staging"
-export TMPDIR="/var/tmp"
-ARCHES=(x86_64)
+[ -n "${STAGING:-}" ] || STAGING="$HOME/staging/unknown/staging"
+export TMPDIR="/tmp"
+ARCHES=(x86_64 i686 armv7h)
 DBEXT=".db.tar.gz"
 FILESEXT=".files.tar.gz"
 SRCEXT=".src.tar.gz"
@@ -32,13 +31,9 @@ SRCEXT=".src.tar.gz"
 # bash glob listing allowed extensions. Note that db-functions turns on extglob.
 PKGEXTS=".pkg.tar.@(gz|bz2|xz|lzo|lrz|Z)"
 
-# Allowed licenses: get sourceballs only for licenses in this array
-ALLOWED_LICENSES=('GPL' 'GPL1' 'GPL2' 'GPL3' 'LGPL' 'LGPL1' 'LGPL2' 'LGPL2.1' 'LGPL3')
-
 # Where to send error emails, and who they are from
-LIST="arch-dev-public@archlinux.org"
-#LIST="aaronmgriffin@gmail.com"
-FROM="repomaint@archlinux.org"
+LIST="maintenance@lists.parabola.nu"
+FROM="repo@repo.parabola.nu"
 
 # Override default config with config.local
 LOCAL_CONFIG=${DBSCRIPTS_CONFIG:-"$(dirname ${BASH_SOURCE[0]})/config.local"}

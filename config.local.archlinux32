@@ -1,0 +1,5 @@
+#!/hint/bash
+
+PKGREPOS=(build-support community community-staging community-testing core extra gnome-unstable kde-unstable staging testing)
+PKGPOOL='pool/archlinux32'
+SRCPOOL='sources/archlinux32'
