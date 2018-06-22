@@ -464,7 +464,7 @@ set_repo_permission() {
 
 	if [[ -w ${dbfile} ]]; then
 		local group=$(/usr/bin/stat --printf='%G' "$(dirname "${dbfile}")")
-		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "$dbfile" "$group"
+		chgrp "$group" "${dbfile}"    || error "Could not change group of %s to %s" "$dbfile"    "$group"
 		chgrp "$group" "${filesfile}" || error "Could not change group of %s to %s" "$filesfile" "$group"
 		chmod g+w "${dbfile}"    || error "Could not set write permission for group %s to %s" "$group" "$dbfile"
 		chmod g+w "${filesfile}" || error "Could not set write permission for group %s to %s" "$group" "$filesfile"

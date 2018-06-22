@@ -222,7 +222,7 @@ load ../lib/common
 	checkRemovedPackageDB extra 'pkg-any-b'
 }
 
-@test "package has to be aregular file" {
+@test "package has to be a regular file" {
 	local p
 	local target=$(mktemp -d)
 

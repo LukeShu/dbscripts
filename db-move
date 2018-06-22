@@ -24,7 +24,7 @@ for pkgarch in "${ARCHES[@]}"; do
 	repo_lock "${repo_from}" "${pkgarch}" || exit 1
 done
 
-# check if packages to be moved exist in svn and ftp dir
+# First loop is to check that all necessary files exist
 for pkgbase in "${args[@]:2}"; do
 	found=false
 	for tarch in "${ARCHES[@]}"; do
@@ -51,6 +51,7 @@ declare -A remove_pkgs
 for pkgbase in "${args[@]:2}"; do
 	abs_move_start "$repo_from" "$repo_to" "$pkgbase"
 	for tarch in "${ARCHES[@]}"; do
+		msg2 "%s (%s)" "$pkgbase" "$tarch"
 		abs_move_arch "$tarch"
 		while read -r pkgname pkgver pkgfile; do
 			ln -s "../../../${PKGPOOL}/${pkgfile}" "${ftppath_to}/${tarch}/"
