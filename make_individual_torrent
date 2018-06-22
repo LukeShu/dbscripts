@@ -1,0 +1,52 @@
+#!/bin/bash
+# Copyright (C) 2014, 2017 Joseph Graham <joseph@xylon.me.uk>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This script is called by `make_repo_torrents' to make a torrent. It
+# depends on `mktorrent'. It takes the following args:
+# $1 - path of package
+# $2 - public location
+
+# Comma seperated list of trackers, no spaces
+# taskenizer.crabdance.com is run by Xylon. the others come from https://github.com/ngosang/trackerslist
+trackers='http://taskenizer.crabdance.com:6969/announce,http://tracker.opentrackr.org:1337/announce,udp://tracker.pirateparty.gr:6969/announce'
+
+# This mirror is put as a webseed. Which mirror we use for a webseed
+# doesn't really matter since it's re-written on the client machine by
+# pacman2pacman so it won't normally be used anyway.
+seed_url='http://repo.parabolagnulinux.org/'
+
+if [[ -z "${1}" ]]
+then
+    echo "Error. First arg must be the path of the package."
+    echo 1
+fi
+
+if [[ -z "${2}" ]]
+then
+    echo "Error. Second arg must be the public location."
+    echo 1
+fi
+
+pkg="${1}"
+public_location="${2}"
+
+pkg_name="${pkg##*/}"
+
+# URL of the actual package for the webseed
+webseed="${seed_url}${pkg#${public_location}}"
+
+mktorrent -a "${trackers}" "${pkg}" -w "${webseed}" >/dev/null ||
+echo "Error making torrent for \"${pkg}\""
