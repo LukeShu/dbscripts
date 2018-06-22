@@ -65,7 +65,6 @@ __movePackageToRepo() {
 }
 
 @test "add any packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 	local arch

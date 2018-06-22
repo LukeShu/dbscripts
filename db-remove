@@ -12,8 +12,6 @@ repo="$1"
 arch="$2"
 pkgbases=("${@:3}")
 
-ftppath="$FTP_BASE/$repo/os"
-
 if ! check_repo_permission "$repo"; then
 	die "You don't have permission to remove packages from %s" "$repo"
 fi

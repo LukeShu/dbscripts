@@ -11,7 +11,6 @@ __checkRemovedSourcePackage() {
 }
 
 @test "create simple package sourceballs" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -43,7 +42,6 @@ __checkRemovedSourcePackage() {
 }
 
 @test "create split package sourceballs" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase

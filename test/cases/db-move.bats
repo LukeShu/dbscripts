@@ -1,7 +1,6 @@
 load ../lib/common
 
 @test "move single packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -20,7 +19,6 @@ load ../lib/common
 }
 
 @test "move multiple packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -59,7 +57,6 @@ load ../lib/common
 }
 
 @test "move epoch packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -93,7 +90,6 @@ load ../lib/common
 }
 
 @test "move split packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase

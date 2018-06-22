@@ -1,7 +1,6 @@
 load ../lib/common
 
 @test "add simple packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch
@@ -45,7 +44,6 @@ load ../lib/common
 }
 
 @test "add split packages" {
-	local arches=('i686' 'x86_64')
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
@@ -105,8 +103,6 @@ load ../lib/common
 }
 
 @test "update same any package to different repositories fails" {
-	local arch
-
 	releasePackage extra pkg-any-a
 	db-update
 	checkPackage extra pkg-any-a
@@ -119,7 +115,6 @@ load ../lib/common
 }
 
 @test "add incomplete split package fails" {
-	local arches=('i686' 'x86_64')
 	local repo='extra'
 	local pkgbase='pkg-split-a'
 	local arch
@@ -230,7 +225,6 @@ load ../lib/common
 @test "package has to be aregular file" {
 	local p
 	local target=$(mktemp -d)
-	local arches=('i686' 'x86_64')
 
 	releasePackage extra 'pkg-simple-a'
 
