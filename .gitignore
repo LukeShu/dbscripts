@@ -1,4 +1,12 @@
 *~
 /config.local
+\#*#
+.#*
+*.pyc
 /.idea
 /coverage
+
+yftime
+src*
+pkg*
+!/test/fixtures/pkg-*/

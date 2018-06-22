@@ -1,0 +1,15 @@
+* README-WORKING-ON.txt
+Message from aurelien.
+
+Working on #bug 5 https://labs.parabola.nu/issues/5
+
+db-update~old is the untouched file
+
+db-update is the testing file
+
+
+db-update-mailer is another (testing) one for the moment. in cron/
+* TODO.txt
+** Fix db-move
+
+  - Make it use abslibre

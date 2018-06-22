@@ -1,4 +1,8 @@
 #!/hint/bash
+# Please try to refrain from adding new variables to this file.
+# Instead, create separate ${toolname}.conf files.  Only add a
+# variable here if multiple tools start needing the option.
+
 
 FTP_BASE="/srv/ftp"
 PKGREPOS=()
