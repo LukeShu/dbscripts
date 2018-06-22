@@ -1,6 +1,6 @@
 load ../lib/common
 
-@test "move simple packages" {
+@test "move single packages" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b')
 	local pkgbase
 	local arch

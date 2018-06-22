@@ -85,7 +85,7 @@ load ../lib/common
 	checkPackage testing pkg-any-a
 }
 
-@test "update same any package to same repository" {
+@test "update same any package to same repository fails" {
 	releasePackage extra pkg-any-a
 	db-update
 	checkPackage extra pkg-any-a
@@ -95,7 +95,7 @@ load ../lib/common
 	[ "$status" -ne 0 ]
 }
 
-@test "update same any package to different repositories" {
+@test "update same any package to different repositories fails" {
 	releasePackage extra pkg-any-a
 	db-update
 	checkPackage extra pkg-any-a
@@ -107,7 +107,7 @@ load ../lib/common
 	checkRemovedPackageDB testing pkg-any-a
 }
 
-@test "add incomplete split package" {
+@test "add incomplete split package fails" {
 	skip # commented out with "This is fucking obnoxious" -- abslibre is broken
 	local repo='extra'
 	local pkgbase='pkg-split-a'
@@ -124,7 +124,7 @@ load ../lib/common
 	checkRemovedPackageDB ${repo} ${pkgbase}
 }
 
-@test "unknown repo" {
+@test "add package to unknown repo fails" {
 	mkdir "${STAGING}/unknown/"
 	releasePackage extra 'pkg-any-a'
 	releasePackage unknown 'pkg-any-b'

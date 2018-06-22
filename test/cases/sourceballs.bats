@@ -10,7 +10,7 @@ __checkRemovedSourcePackage() {
 	! __isGlobfile "${FTP_BASE}/${SRCPOOL}/${pkgbase}"-*"${SRCEXT}"
 }
 
-@test "sourceballs" {
+@test "create simple package sourceballs" {
 	local pkgs=('pkg-simple-a' 'pkg-simple-b' 'pkg-simple-epoch')
 	local pkgbase
 	local arch
@@ -26,7 +26,7 @@ __checkRemovedSourcePackage() {
 	done
 }
 
-@test "any sourceballs" {
+@test "create any package sourceballs" {
 	local pkgs=('pkg-any-a' 'pkg-any-b')
 	local pkgbase
 
@@ -41,7 +41,7 @@ __checkRemovedSourcePackage() {
 	done
 }
 
-@test "split sourceballs" {
+@test "create split package sourceballs" {
 	local pkgs=('pkg-split-a' 'pkg-split-b')
 	local pkg
 	local pkgbase
