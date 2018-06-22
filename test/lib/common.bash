@@ -1,3 +1,5 @@
+#!/hint/bash
+
 . /usr/share/makepkg/util.sh
 
 __updatePKGBUILD() {
