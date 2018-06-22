@@ -121,7 +121,7 @@ repo_lock () {
 
 	# This is the lock file used by repo-add and repo-remove
 	if [[ -f ${DBLOCKFILE} ]]; then
-		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(<"$DBLOCKFILE")"
+		error "Repo [%s] (%s) is already locked by repo-{add,remove} process %s" "$1" "$2" "$(cat "$DBLOCKFILE")"
 		return 1
 	fi
 
@@ -139,7 +139,7 @@ repo_lock () {
 		if ! mkdir "$LOCKDIR" >/dev/null 2>&1 ; then
 			_owner="$(/usr/bin/stat -c %U "$LOCKDIR")"
 			warning "Repo [%s] (%s) is already locked by %s." "$1" "$2" "$_owner"
-			msg2 "Retrying in %d seconds..." "$LOCK_DELAY"
+			msg2 "Retrying in %s seconds..." "$LOCK_DELAY"
 		else
 			LOCKS+=("$1.$2")
 			set_umask
