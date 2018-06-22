@@ -21,6 +21,7 @@ for staging_repo in "${staging_repos[@]##*/}"; do
 		repos+=("${staging_repo}")
 	fi
 done
+repos=($(echo "${repos[@]}" | tr " " "\n" | sort -u))
 
 # TODO: this might lock too much (architectures)
 for repo in "${repos[@]}"; do
@@ -102,3 +103,14 @@ for repo in "${repos[@]}"; do
 		repo_unlock "${repo}" "${pkgarch}"
 	done
 done
+
+cd "${STAGING}"
+while read -r file; do
+	pub="${FTP_BASE}/${file}"
+	if [[ -f "$pub" ]]; then
+		warning "file already exists: %s" "$file"
+	else
+		mkdir -p -- "${pub%/*}"
+		mv -vn "$file" "$pub"
+	fi
+done < <(find other sources -type f 2>/dev/null)

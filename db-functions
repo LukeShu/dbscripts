@@ -3,20 +3,6 @@
 . /usr/share/makepkg/util.sh
 . "$(dirname "${BASH_SOURCE[0]}")/db-abs"
 
-# Used:
-#   libmakepkg/util/message.sh:
-#     plain, msg, msg2, warning, error
-#   libmakepkg/util/pkgbuild.sh:
-#     get_full_version
-#   libmakepkg/util/util.sh:
-#     in_array
-#   devtools/common.sh:
-#     abort, die
-# Overwritten:
-#   devtools/common.sh:
-#     cleanup
-. "$(librelib common)"
-
 # global shell options for enhanced bash scripting
 shopt -s extglob globstar nullglob
 
@@ -58,6 +44,14 @@ if [[ -n ${SVNUSER} ]]; then
 fi
 LOCKS=()
 REPO_MODIFIED=0
+
+# Used: plain, msg, msg2, warning, error, in_array, get_full_version, abort, die
+# Overwritten: cleanup
+# Ignored: stat_busy, stat_done,
+#          setup_workdir, trap_abort, trap_exit,
+#          lock, slock, lock_close
+#          pkgver_equal, find_cached_package, check_root
+. "$(librelib common)"
 
 script_lock() {
 	local LOCKDIR="$TMPDIR/.scriptlock.${0##*/}"
