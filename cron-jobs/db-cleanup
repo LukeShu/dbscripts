@@ -1,0 +1,70 @@
+#!/bin/bash
+# Syncs pools against themselves using database contents as filter to cleanup
+# them up
+# License: GPLv3
+
+# Principles
+# * Get repos dbs contents
+# * Make them a include list
+# * Rsync pools against themselves removing excluded files
+# * Instant cleanup!
+
+trap_exit() {
+	echo
+	error "$@"
+	exit 1
+}
+
+source "$(dirname $(dirname "$(readlink -e "$0")"))/config"
+source "$(dirname $(dirname "$(readlink -e "$0")"))/db-cleanup.conf"
+source "$(librelib messages)"
+
+# From makepkg
+set -E
+
+trap 'trap_exit "$(gettext "TERM signal caught. Exiting...")"' TERM HUP QUIT
+trap 'trap_exit "$(gettext "Aborted by user! Exiting...")"' INT
+trap 'trap_exit "$(gettext "An unknown error has occurred. Exiting...")"' ERR
+
+EXTRAFLAGS=()
+"${CLEANUP_DRYRUN}" && EXTRAFLAGS+=(--dry-run)
+
+filter=$(mktemp -t "${0##*/}.XXXXXXXXXX")
+trap "rm -f -- ${filter@Q}" EXIT
+
+for _repo in "${PKGREPOS[@]}"; do
+	for _arch in "${ARCHES[@]}"; do
+		msg "Getting %s-%s database" "${_repo}" "${_arch}"
+
+		dbfile="${FTP_BASE}/${_repo}/os/${_arch}/${_repo}${DBEXT}"
+
+		if [ ! -r "${dbfile}" ]; then
+			warning "Not found"
+			continue
+		fi
+
+		# Echo the contents into a filter file
+		bsdtar tf "${dbfile}" | \
+			cut -d'/' -f1 | \
+			sort -u | \
+			sed "s|$|*|" >> "$filter"
+
+	done
+done
+
+msg "Removing old files:"
+
+for POOL in "${PKGPOOLS[@]}" "${SRCPOOLS[@]}"; do
+	msg2 '%s' "${POOL}"
+
+	rsync "${EXTRAFLAGS[@]}" -va --delete-excluded \
+		--include-from="$filter" \
+		--exclude="*" \
+		"${FTP_BASE}/${POOL}/" \
+		"${FTP_BASE}/${POOL}/"
+done
+
+msg "Removing dead symlinks:"
+actions=(-print)
+"${CLEANUP_DRYRUN}" || actions+=(-delete)
+find -L "${FTP_BASE}/" -type l "${actions[@]}"

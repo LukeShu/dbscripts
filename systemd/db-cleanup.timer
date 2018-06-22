@@ -1,0 +1,9 @@
+[Unit]
+Description=Periodic cleaning of old packages
+
+[Timer]
+OnCalendar=Sun,Tue,Thu,Sat *-*-* 14:13:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
